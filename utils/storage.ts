@@ -1,0 +1,572 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const KEYS = {
+  USER_PROFILE: "@trailguard/user_profile",
+  SAVED_GUIDES: "@trailguard/saved_guides",
+  EMERGENCY_CONTACTS: "@trailguard/emergency_contacts",
+  SCAN_HISTORY: "@trailguard/scan_history",
+  HELP_REQUESTS: "@trailguard/help_requests",
+  NEARBY_OFFROADERS: "@trailguard/nearby_offroaders",
+  COMMUNITY_TIPS: "@trailguard/community_tips",
+  CHAT_CONVERSATIONS: "@trailguard/chat_conversations",
+  FRIENDS_DATA: "@trailguard/friends_data",
+  STATUS_UPDATES: "@trailguard/status_updates",
+};
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  vehicleType: string;
+  avatarIndex: number;
+  vehicleSpecs?: {
+    make: string;
+    model: string;
+    year: string;
+    modifications: string;
+  };
+  equipment?: string[];
+}
+
+export interface EmergencyContact {
+  id: string;
+  name: string;
+  phone: string;
+}
+
+export interface ScanHistoryItem {
+  id: string;
+  imageUri: string;
+  timestamp: number;
+  situationType: string;
+  analysis?: string;
+}
+
+export interface HelpRequest {
+  id: string;
+  timestamp: number;
+  situation: string;
+  situationLabel: string;
+  description: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  targetAudience: "nearby" | "contacts";
+  status: "active" | "resolved" | "cancelled";
+  photos?: string[];
+}
+
+export interface NearbyOffroader {
+  id: string;
+  name: string;
+  vehicleType: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  equipment: string[];
+  lastSeen: number;
+}
+
+export interface CommunityTip {
+  id: string;
+  title: string;
+  description: string;
+  category: "recovery" | "navigation" | "trail_condition" | "maintenance" | "safety";
+  timestamp: number;
+  location?: {
+    latitude: number;
+    longitude: number;
+    name?: string;
+  };
+  author: {
+    name: string;
+    vehicleType: string;
+  };
+  helpful: number;
+}
+
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  timestamp: number;
+  read: boolean;
+}
+
+export interface ChatConversation {
+  id: string;
+  participantId: string;
+  participantName: string;
+  participantVehicle: string;
+  messages: ChatMessage[];
+  lastMessageTime: number;
+  unreadCount: number;
+}
+
+export interface Adventure {
+  id: string;
+  title: string;
+  location: string;
+  timestamp: number;
+  difficulty: "Easy" | "Moderate" | "Hard";
+}
+
+export interface Friend {
+  id: string;
+  name: string;
+  vehicleType: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  lastSeen: number;
+  adventures: Adventure[];
+}
+
+export interface StatusUpdate {
+  id: string;
+  userId: string;
+  userName: string;
+  vehicleType: string;
+  status: "mobile" | "stuck" | "recovering";
+  location?: string;
+  timestamp: number;
+  details?: string;
+}
+
+export const storage = {
+  async addStatusUpdate(update: StatusUpdate): Promise<void> {
+    const updates = await this.getStatusUpdates();
+    updates.unshift(update);
+    await AsyncStorage.setItem(KEYS.STATUS_UPDATES, JSON.stringify(updates.slice(0, 50)));
+  },
+
+  async getStatusUpdates(): Promise<StatusUpdate[]> {
+    const data = await AsyncStorage.getItem(KEYS.STATUS_UPDATES);
+    return data ? JSON.parse(data) : [];
+  },
+
+  async getRecentUpdates(limit: number = 10): Promise<StatusUpdate[]> {
+    const updates = await this.getStatusUpdates();
+    return updates.slice(0, limit);
+  },
+
+  async getUserProfile(): Promise<UserProfile | null> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.USER_PROFILE);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error("Error loading user profile:", error);
+      return null;
+    }
+  },
+
+  async saveUserProfile(profile: UserProfile): Promise<void> {
+    try {
+      await AsyncStorage.setItem(KEYS.USER_PROFILE, JSON.stringify(profile));
+    } catch (error) {
+      console.error("Error saving user profile:", error);
+    }
+  },
+
+  async getSavedGuides(): Promise<string[]> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.SAVED_GUIDES);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error("Error loading saved guides:", error);
+      return [];
+    }
+  },
+
+  async toggleSavedGuide(guideId: string): Promise<void> {
+    try {
+      const saved = await this.getSavedGuides();
+      const index = saved.indexOf(guideId);
+      
+      if (index === -1) {
+        saved.push(guideId);
+      } else {
+        saved.splice(index, 1);
+      }
+      
+      await AsyncStorage.setItem(KEYS.SAVED_GUIDES, JSON.stringify(saved));
+    } catch (error) {
+      console.error("Error toggling saved guide:", error);
+    }
+  },
+
+  async getEmergencyContacts(): Promise<EmergencyContact[]> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.EMERGENCY_CONTACTS);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error("Error loading emergency contacts:", error);
+      return [];
+    }
+  },
+
+  async saveEmergencyContacts(contacts: EmergencyContact[]): Promise<void> {
+    try {
+      await AsyncStorage.setItem(KEYS.EMERGENCY_CONTACTS, JSON.stringify(contacts));
+    } catch (error) {
+      console.error("Error saving emergency contacts:", error);
+    }
+  },
+
+  async getScanHistory(): Promise<ScanHistoryItem[]> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.SCAN_HISTORY);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error("Error loading scan history:", error);
+      return [];
+    }
+  },
+
+  async addScanHistory(item: ScanHistoryItem): Promise<void> {
+    try {
+      const history = await this.getScanHistory();
+      history.unshift(item);
+      await AsyncStorage.setItem(KEYS.SCAN_HISTORY, JSON.stringify(history.slice(0, 20)));
+    } catch (error) {
+      console.error("Error saving scan history:", error);
+    }
+  },
+
+  async getHelpRequests(): Promise<HelpRequest[]> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.HELP_REQUESTS);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error("Error loading help requests:", error);
+      return [];
+    }
+  },
+
+  async addHelpRequest(request: HelpRequest): Promise<void> {
+    try {
+      const requests = await this.getHelpRequests();
+      requests.unshift(request);
+      await AsyncStorage.setItem(KEYS.HELP_REQUESTS, JSON.stringify(requests.slice(0, 50)));
+    } catch (error) {
+      console.error("Error saving help request:", error);
+    }
+  },
+
+  async updateHelpRequestStatus(
+    requestId: string,
+    status: "active" | "resolved" | "cancelled"
+  ): Promise<void> {
+    try {
+      const requests = await this.getHelpRequests();
+      const index = requests.findIndex((r) => r.id === requestId);
+      if (index !== -1) {
+        requests[index].status = status;
+        await AsyncStorage.setItem(KEYS.HELP_REQUESTS, JSON.stringify(requests));
+      }
+    } catch (error) {
+      console.error("Error updating help request:", error);
+    }
+  },
+
+  async getNearbyOffroaders(): Promise<NearbyOffroader[]> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.NEARBY_OFFROADERS);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error("Error loading nearby offroaders:", error);
+      return [];
+    }
+  },
+
+  async addNearbyOffroader(offroader: NearbyOffroader): Promise<void> {
+    try {
+      const offroaders = await this.getNearbyOffroaders();
+      const index = offroaders.findIndex((o) => o.id === offroader.id);
+      
+      if (index !== -1) {
+        offroaders[index] = offroader;
+      } else {
+        offroaders.push(offroader);
+      }
+      
+      await AsyncStorage.setItem(KEYS.NEARBY_OFFROADERS, JSON.stringify(offroaders));
+    } catch (error) {
+      console.error("Error adding nearby offroader:", error);
+    }
+  },
+
+  async removeOldOffroaders(maxAgeMinutes: number = 30): Promise<void> {
+    try {
+      const offroaders = await this.getNearbyOffroaders();
+      const cutoffTime = Date.now() - maxAgeMinutes * 60 * 1000;
+      const activeOffroaders = offroaders.filter((o) => o.lastSeen > cutoffTime);
+      await AsyncStorage.setItem(KEYS.NEARBY_OFFROADERS, JSON.stringify(activeOffroaders));
+    } catch (error) {
+      console.error("Error removing old offroaders:", error);
+    }
+  },
+
+  async getCommunityTips(): Promise<CommunityTip[]> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.COMMUNITY_TIPS);
+      const tips = data ? JSON.parse(data) : [];
+      return tips.sort((a: CommunityTip, b: CommunityTip) => b.timestamp - a.timestamp);
+    } catch (error) {
+      console.error("Error loading community tips:", error);
+      return [];
+    }
+  },
+
+  async saveCommunityTip(tip: CommunityTip): Promise<void> {
+    try {
+      const tips = await this.getCommunityTips();
+      tips.unshift(tip);
+      await AsyncStorage.setItem(KEYS.COMMUNITY_TIPS, JSON.stringify(tips));
+    } catch (error) {
+      console.error("Error saving community tip:", error);
+    }
+  },
+
+  async markTipAsHelpful(tipId: string): Promise<void> {
+    try {
+      const tips = await this.getCommunityTips();
+      const index = tips.findIndex((t) => t.id === tipId);
+      if (index !== -1) {
+        tips[index].helpful += 1;
+        await AsyncStorage.setItem(KEYS.COMMUNITY_TIPS, JSON.stringify(tips));
+      }
+    } catch (error) {
+      console.error("Error marking tip as helpful:", error);
+    }
+  },
+
+  async getChatConversations(): Promise<ChatConversation[]> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.CHAT_CONVERSATIONS);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error("Error loading chat conversations:", error);
+      return [];
+    }
+  },
+
+  async getConversation(participantId: string): Promise<ChatConversation | null> {
+    try {
+      const conversations = await this.getChatConversations();
+      return conversations.find((c) => c.participantId === participantId) || null;
+    } catch (error) {
+      console.error("Error loading conversation:", error);
+      return null;
+    }
+  },
+
+  async createOrUpdateConversation(
+    participantId: string,
+    participantName: string,
+    participantVehicle: string
+  ): Promise<ChatConversation> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.CHAT_CONVERSATIONS);
+      const conversations: ChatConversation[] = data ? JSON.parse(data) : [];
+      const index = conversations.findIndex((c) => c.participantId === participantId);
+
+      if (index !== -1) {
+        return conversations[index];
+      }
+
+      const newConversation: ChatConversation = {
+        id: `conv_${Date.now()}_${participantId}`,
+        participantId,
+        participantName,
+        participantVehicle,
+        messages: [],
+        lastMessageTime: Date.now(),
+        unreadCount: 0,
+      };
+      
+      conversations.push(newConversation);
+      await AsyncStorage.setItem(KEYS.CHAT_CONVERSATIONS, JSON.stringify(conversations));
+      
+      return newConversation;
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      throw error;
+    }
+  },
+
+  async sendMessage(
+    participantId: string,
+    participantName: string,
+    participantVehicle: string,
+    senderId: string,
+    senderName: string,
+    text: string
+  ): Promise<void> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.CHAT_CONVERSATIONS);
+      const conversations: ChatConversation[] = data ? JSON.parse(data) : [];
+      let index = conversations.findIndex((c) => c.participantId === participantId);
+
+      if (index === -1) {
+        const newConversation: ChatConversation = {
+          id: `conv_${Date.now()}_${participantId}`,
+          participantId,
+          participantName,
+          participantVehicle,
+          messages: [],
+          lastMessageTime: Date.now(),
+          unreadCount: 0,
+        };
+        conversations.push(newConversation);
+        index = conversations.length - 1;
+      }
+
+      const message: ChatMessage = {
+        id: `msg_${Date.now()}`,
+        senderId,
+        senderName,
+        text,
+        timestamp: Date.now(),
+        read: false,
+      };
+
+      conversations[index].messages.push(message);
+      conversations[index].lastMessageTime = message.timestamp;
+
+      await AsyncStorage.setItem(KEYS.CHAT_CONVERSATIONS, JSON.stringify(conversations));
+    } catch (error) {
+      console.error("Error sending message:", error);
+      throw error;
+    }
+  },
+
+  async markMessagesAsRead(participantId: string, currentUserId: string): Promise<void> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.CHAT_CONVERSATIONS);
+      const conversations: ChatConversation[] = data ? JSON.parse(data) : [];
+      const index = conversations.findIndex((c) => c.participantId === participantId);
+
+      if (index !== -1) {
+        let hasUnread = false;
+        conversations[index].messages.forEach((msg) => {
+          if (msg.senderId !== currentUserId && !msg.read) {
+            msg.read = true;
+            hasUnread = true;
+          }
+        });
+        
+        if (hasUnread) {
+          conversations[index].unreadCount = 0;
+          await AsyncStorage.setItem(KEYS.CHAT_CONVERSATIONS, JSON.stringify(conversations));
+        }
+      }
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+    }
+  },
+
+  async sendSimulatedResponse(
+    participantId: string,
+    participantName: string
+  ): Promise<void> {
+    const simulatedResponses = [
+      "Got it! I'm about 2 miles away, heading your direction.",
+      "I have recovery straps and a winch. What's your exact situation?",
+      "On my way. Should be there in 10 minutes.",
+      "I can help! Do you need a pull or a tow?",
+      "Saw your location. I'm close by with recovery gear.",
+      "Hang tight, I'll be there soon with my Jeep and winch.",
+      "Roger that. What kind of vehicle are you driving?",
+      "I'm nearby. Let me grab my recovery equipment and head over.",
+    ];
+
+    const randomResponse = simulatedResponses[Math.floor(Math.random() * simulatedResponses.length)];
+    
+    try {
+      const conversation = await this.getConversation(participantId);
+      if (!conversation) {
+        console.error("Conversation not found for participant:", participantId);
+        return;
+      }
+
+      await this.sendMessage(
+        participantId,
+        participantName,
+        conversation.participantVehicle,
+        participantId,
+        participantName,
+        randomResponse
+      );
+    } catch (error) {
+      console.error("Error sending simulated response:", error);
+    }
+  },
+
+  async getFriendsData(): Promise<Friend[]> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.FRIENDS_DATA);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error("Error loading friends data:", error);
+      return [];
+    }
+  },
+
+  async saveFriendsData(friends: Friend[]): Promise<void> {
+    try {
+      await AsyncStorage.setItem(KEYS.FRIENDS_DATA, JSON.stringify(friends));
+    } catch (error) {
+      console.error("Error saving friends data:", error);
+    }
+  },
+
+  async addFriend(friend: Friend): Promise<void> {
+    try {
+      const friends = await this.getFriendsData();
+      const index = friends.findIndex((f) => f.id === friend.id);
+      if (index !== -1) {
+        friends[index] = friend;
+      } else {
+        friends.push(friend);
+      }
+      await AsyncStorage.setItem(KEYS.FRIENDS_DATA, JSON.stringify(friends));
+    } catch (error) {
+      console.error("Error adding friend:", error);
+    }
+  },
+
+  async removeFriend(friendId: string): Promise<void> {
+    try {
+      const friends = await this.getFriendsData();
+      const filtered = friends.filter((f) => f.id !== friendId);
+      await AsyncStorage.setItem(KEYS.FRIENDS_DATA, JSON.stringify(filtered));
+    } catch (error) {
+      console.error("Error removing friend:", error);
+    }
+  },
+
+  async addAdventure(friendId: string, adventure: Adventure): Promise<void> {
+    try {
+      const friends = await this.getFriendsData();
+      const friend = friends.find((f) => f.id === friendId);
+      if (friend) {
+        friend.adventures.unshift(adventure);
+        await AsyncStorage.setItem(KEYS.FRIENDS_DATA, JSON.stringify(friends));
+      }
+    } catch (error) {
+      console.error("Error adding adventure:", error);
+    }
+  },
+
+  async clearAll(): Promise<void> {
+    try {
+      await AsyncStorage.multiRemove(Object.values(KEYS));
+    } catch (error) {
+      console.error("Error clearing storage:", error);
+    }
+  },
+};

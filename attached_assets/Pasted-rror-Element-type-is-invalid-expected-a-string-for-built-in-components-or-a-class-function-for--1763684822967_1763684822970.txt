@@ -1,0 +1,18 @@
+rror: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `GuidesScreen`.
+
+Stack Trace:
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+
+Check the render method of `GuidesScreen`.
+    at createFiberFromTypeAndProps (https://178b986f-1f82-493e-b0fc-cefe06655894-00-3jprd2dclv1p0.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&transform.reactCompiler=true&unstable_transformProfile=hermes-stable:7217:26)
+    at createFiberFromElement (https://178b986f-1f82-493e-b0fc-cefe06655894-00-3jprd2dclv1p0.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&transform.reactCompiler=true&unstable_transformProfile=hermes-stable:7228:14)
+    at createChild (https://178b986f-1f82-493e-b0fc-cefe06655894-00-3jprd2dclv1p0.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&transform.reactCompiler=true&unstable_transformProfile=hermes-stable:9131:30)
+    at reconcileChildrenArray (https://178b986f-1f82-493e-b0fc-cefe06655894-00-3jprd2dclv1p0.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&transform.reactCompiler=true&unstable_transformProfile=hermes-stable:9244:68)
+    at reconcileChildFibersImpl (https://178b986f-1f82-493e-b0fc-cefe06655894-00-3jprd2dclv1p0.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&transform.reactCompiler=true&unstable_transformProfile=hermes-stable:9351:111)
+    at https://178b986f-1f82-493e-b0fc-cefe06655894-00-3jprd2dclv1p0.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&transform.reactCompiler=true&unstable_transformProfile=hermes-stable:9378:33
+    at reconcileChildren (https://178b986f-1f82-493e-b0fc-cefe06655894-00-3jprd2dclv1p0.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&transform.reactCompiler=true&unstable_transformProfile=hermes-stable:9640:49)
+    at beginWork (https://178b986f-1f82-493e-b0fc-cefe06655894-00-3jprd2dclv1p0.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&transform.reactCompiler=true&unstable_transformProfile=hermes-stable:10395:1567)
+    at runWithFiberInDEV (https://178b986f-1f82-493e-b0fc-cefe06655894-00-3jprd2dclv1p0.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&transform.reactCompiler=true&unstable_transformProfile=hermes-stable:5822:70)
+    at performUnitOfWork (https://178b986f-1f82-493e-b0fc-cefe06655894-00-3jprd2dclv1p0.kirk.replit.dev/index.bundle?platform=web&dev=true&hot=false&lazy=true&transform.engine=hermes&transform.routerRoot=app&transform.reactCompiler=true&unstable_transformProfile=hermes-stable:12402:95)

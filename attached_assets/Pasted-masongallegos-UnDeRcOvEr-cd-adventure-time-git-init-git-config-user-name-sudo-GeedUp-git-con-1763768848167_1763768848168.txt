@@ -1,0 +1,180 @@
+masongallegos@UnDeRcOvEr ~ % cd ~/adventure-time
+git init
+git config user.name "sudo-GeedUp"
+git config user.email "sinjin.gallegos@aol.com"
+git remote add origin https://github.com/sudo-GeedUp/adventure-time.git
+git add .
+git commit -m "Initial commit: Adventure Time offroad recovery app"
+git branch -M main
+git push -u origin main
+cd: no such file or directory: /Users/masongallegos/adventure-time
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: is subject to change. To configure the initial branch name to use in all
+hint: of your new repositories, which will suppress this warning, call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+Initialized empty Git repository in /Users/masongallegos/.git/
+warning: could not open directory 'Library/Application Support/MobileSync/': Operation not permitted
+warning: could not open directory 'Library/Application Support/com.apple.LaunchServicesTemplateApp.dv/': Operation not permitted
+warning: could not open directory 'Library/Application Support/CallHistoryTransactions/': Operation not permitted
+warning: could not open directory 'Library/Application Support/CloudDocs/': Operation not permitted
+warning: could not open directory 'Library/Application Support/com.apple.sharedfilelist/': Operation not permitted
+warning: could not open directory 'Library/Application Support/Knowledge/': Operation not permitted
+warning: could not open directory 'Library/Application Support/com.apple.TCC/': Operation not permitted
+warning: could not open directory 'Library/Application Support/FileProvider/': Operation not permitted
+warning: could not open directory 'Library/Application Support/AddressBook/': Operation not permitted
+warning: could not open directory 'Library/Application Support/FaceTime/': Operation not permitted
+warning: could not open directory 'Library/Application Support/DifferentialPrivacy/': Operation not permitted
+warning: could not open directory 'Library/Application Support/com.apple.avfoundation/Frecents/': Operation not permitted
+warning: could not open directory 'Library/Application Support/CallHistoryDB/': Operation not permitted
+warning: could not open directory 'Library/Assistant/SiriVocabulary/': Operation not permitted
+warning: could not open directory 'Library/Daemon Containers/': Operation not permitted
+warning: could not open directory 'Library/Autosave Information/': Operation not permitted
+warning: could not open directory 'Library/IdentityServices/': Operation not permitted
+warning: could not open directory 'Library/Calendars/': Operation not permitted
+warning: could not open directory 'Library/Messages/': Operation not permitted
+warning: could not open directory 'Library/HomeKit/': Operation not permitted
+warning: could not open directory 'Library/Sharing/': Operation not permitted
+warning: could not open directory 'Library/com.apple.aiml.instrumentation/': Operation not permitted
+warning: could not open directory 'Library/Mail/': Operation not permitted
+warning: could not open directory 'Library/Trial/': Operation not permitted
+warning: could not open directory 'Library/AppleMediaServices/': Operation not permitted
+warning: could not open directory 'Library/DuetExpertCenter/': Operation not permitted
+warning: could not open directory 'Library/Accounts/': Operation not permitted
+warning: could not open directory 'Library/Safari/': Operation not permitted
+warning: could not open directory 'Library/Biome/': Operation not permitted
+warning: could not open directory 'Library/IntelligencePlatform/': Operation not permitted
+warning: could not open directory 'Library/Shortcuts/': Operation not permitted
+warning: could not open directory 'Library/Suggestions/': Operation not permitted
+warning: could not open directory 'Library/Weather/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.stocks-news/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.photolibraryd.private/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.feedback/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.siri.inference/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.telephonyutilities.callservicesd/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.intelligenceflow/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.swtransparency/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.coreservices.useractivityd/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.ArchiveUtility.PKSignedContainer/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.accessibility.voicebanking/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.icloud.searchpartyuseragent/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.siri.referenceResolution/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.stocks/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.usernoted/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.VoiceMemos.shared/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.contacts/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.secure-control-center-preferences/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.chronod/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/com.apple.MailPersonaStorage/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.private.translation/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.appstoreagent/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.portrait.BackgroundReplacement/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.icloud.fmfcore/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.liveactivitiesd/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.amsondevicestoraged/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.SiriTTS/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.iBooks/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.notes.import/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.calendar/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.newsd/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.ip.redirects/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.siri.userfeedbacklearning/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.gamecenter/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.tips/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.tv.sharedcontainer/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.loginwindow.persistent-apps/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.spotlight/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.studentd/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.ManagedSettings/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.sharingd/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.printtool/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.corerepair/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.news/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.mobileslideshow.PhotosFileProvider/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.scopedbookmarkagent/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.dt.Xcode.SecureSettingsContainer/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.weather/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/com.apple.systempreferences.cache/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.feedbacklogger/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.icloud.findmydevice.shared-configuration/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.controlcenter/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.siri.remembers/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.notes/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/com.apple.stickersd.group/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.screencapture/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.UserNotifications/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.tipsnext/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/com.apple.messages/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.moments/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.Safari.SandboxBroker/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.transparency/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.webkit.webpushd/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.reminders/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.VoiceOver/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.findmy.findmylocateagent/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.mail/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/com.apple.bird/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.DeviceActivity/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.replayd/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.iokit.IOServiceAuthorizeAgent/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.Journal/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/com.apple.Home.group/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.iCloudDrive/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.FaceTime/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.energykit/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/com.apple.PreviewLegacySignaturesConversion/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.rapportd/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.notesdebug/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.replicatord/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.Photos.PhotosFileProvider/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.icloud.fmipcore/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.AppleSpell/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.mlhost/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.FamilyControls/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.Maps/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.callintelligence/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.icloudMCCKit/BlackPearl/mlmodelc/BlackPearlMCat_2.8.0.mlmodelc/': Permission denied
+warning: could not open directory 'Library/Group Containers/group.com.apple.icloudMCCKit/BlackPearl/mlmodelc/BlackPearlMHI_2.7.0.mlmodelc/': Permission denied
+warning: could not open directory 'Library/Group Containers/group.com.apple.icloudMCCKit/BlackPearl/mlmodelc/BlackPearlMHI_2.8.0.mlmodelc/': Permission denied
+warning: could not open directory 'Library/Group Containers/group.com.apple.PegasusConfiguration/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/group.com.apple.shortcuts/': Operation not permitted
+warning: could not open directory 'Library/Group Containers/com.apple.MessagesLegacyTransferArchive/': Operation not permitted
+warning: could not open directory 'Library/Containers/com.apple.VoiceMemos/': Operation not permitted
+warning: could not open directory 'Library/Containers/com.apple.Maps/Data/Maps/': Operation not permitted
+warning: could not open directory 'Library/Containers/com.apple.Home/': Operation not permitted
+warning: could not open directory 'Library/Containers/com.apple.Safari/': Operation not permitted
+warning: could not open directory 'Library/Containers/com.apple.mail/': Operation not permitted
+warning: could not open directory 'Library/Containers/com.apple.MobileSMS/': Operation not permitted
+warning: could not open directory 'Library/Containers/com.apple.Notes/': Operation not permitted
+warning: could not open directory 'Library/Containers/com.apple.news/': Operation not permitted
+warning: could not open directory 'Library/Containers/com.apple.corerecents.recentsd/Data/Library/Recents/': Operation not permitted
+warning: could not open directory 'Library/Containers/com.apple.stocks/': Operation not permitted
+warning: could not open directory 'Library/Containers/com.apple.Safari.WebApp/': Operation not permitted
+warning: could not open directory 'Library/ContainerManager/': Operation not permitted
+warning: could not open directory 'Library/PersonalizationPortrait/': Operation not permitted
+warning: could not open directory 'Library/Metadata/CoreSpotlight/': Operation not permitted
+warning: could not open directory 'Library/Metadata/com.apple.IntelligentSuggestions/': Operation not permitted
+warning: could not open directory 'Library/Reminders/': Operation not permitted
+warning: could not open directory 'Library/Cookies/': Operation not permitted
+warning: could not open directory 'Library/CoreFollowUp/': Operation not permitted
+warning: could not open directory 'Library/StatusKit/': Operation not permitted
+warning: could not open directory 'Library/DoNotDisturb/': Operation not permitted
+warning: could not open directory 'Library/Caches/com.apple.HomeKit/': Operation not permitted
+warning: could not open directory 'Library/Caches/CloudKit/': Operation not permitted
+warning: could not open directory 'Library/Caches/com.apple.Safari/': Operation not permitted
+warning: could not open directory 'Library/Caches/com.apple.findmy.imagecache/': Operation not permitted
+warning: could not open directory 'Library/Caches/com.apple.findmy.fmfcore/': Operation not permitted
+warning: could not open directory 'Library/Caches/com.apple.containermanagerd/': Operation not permitted
+warning: could not open directory 'Library/Caches/FamilyCircle/': Operation not permitted
+warning: could not open directory 'Library/Caches/com.apple.homed/': Operation not permitted
+warning: could not open directory 'Library/Caches/com.apple.findmy.fmipcore/': Operation not permitted
+warning: could not open directory 'Library/Caches/com.apple.ap.adprivacyd/': Operation not permitted
+warning: could not open directory '.Trash/': Operation not permitted
+
