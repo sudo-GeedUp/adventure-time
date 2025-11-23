@@ -24,6 +24,7 @@ export interface GuideCategory {
 export const categories: GuideCategory[] = [
   { id: "mud", title: "Stuck in Mud", icon: "droplet", guideCount: 4 },
   { id: "sand", title: "Sand Recovery", icon: "sun", guideCount: 3 },
+  { id: "snow", title: "Stuck in Snow", icon: "cloud", guideCount: 4 },
   { id: "rocks", title: "Rock Crawling", icon: "triangle", guideCount: 3 },
   { id: "mechanical", title: "Mechanical Issues", icon: "tool", guideCount: 5 },
   { id: "winching", title: "Winching", icon: "anchor", guideCount: 3 },
@@ -194,6 +195,158 @@ export const guides: Guide[] = [
         number: 4,
         title: "Winch slowly",
         description: "Operate winch slowly and steadily. Keep vehicle in neutral with parking brake off.",
+      },
+    ],
+  },
+  {
+    id: "snow-1",
+    title: "Basic Snow Extraction",
+    category: "snow",
+    difficulty: "Easy",
+    equipment: ["Shovel", "Traction boards", "Sand or kitty litter", "Gloves"],
+    safetyWarnings: [
+      "Never spin tires excessively in snow - it creates ice under the tires",
+      "Watch for hypothermia if working outdoors for extended periods in cold weather",
+      "Keep the exhaust pipe clear of snow to prevent carbon monoxide buildup",
+    ],
+    steps: [
+      {
+        number: 1,
+        title: "Clear around the tires",
+        description: "Shovel out snow from around all four wheels, especially under the chassis. Remove snow that's built up under the vehicle.",
+      },
+      {
+        number: 2,
+        title: "Create a path",
+        description: "Shovel or remove snow in front and behind the vehicle to create a clear escape route.",
+      },
+      {
+        number: 3,
+        title: "Add traction material",
+        description: "Place traction boards, sand, gravel, or kitty litter under the drive wheels for improved grip.",
+      },
+      {
+        number: 4,
+        title: "Attempt gentle recovery",
+        description: "Gently apply throttle without spinning tires. Rock the vehicle slowly forward and backward using low gear.",
+      },
+    ],
+  },
+  {
+    id: "snow-2",
+    title: "Snow and Ice Recovery",
+    category: "snow",
+    difficulty: "Moderate",
+    equipment: ["Shovel", "Ice scraper", "Traction pads", "Tire chains", "Air compressor"],
+    safetyWarnings: [
+      "Tire chains require practice to install - don't wait until you're stuck to learn",
+      "Check local laws regarding tire chain usage on winter roads",
+      "Deflating tires slightly helps with ice traction but may cause damage - use with caution",
+    ],
+    steps: [
+      {
+        number: 1,
+        title: "Break ice pack",
+        description: "Use an ice scraper or shovel to break up ice formed under and around the vehicle, especially under the chassis.",
+      },
+      {
+        number: 2,
+        title: "Install tire chains",
+        description: "If available, install tire chains on drive wheels before attempting recovery. Chains dramatically improve traction.",
+      },
+      {
+        number: 3,
+        title: "Lower tire pressure slightly",
+        description: "Reduce tire pressure by 2-3 PSI to increase tire surface contact with ice, but not so much that you damage the tires.",
+      },
+      {
+        number: 4,
+        title: "Use controlled throttle",
+        description: "Apply very gentle, steady throttle. Excessive wheel spin will polish the ice underneath and make it worse.",
+      },
+      {
+        number: 5,
+        title: "Rock if necessary",
+        description: "If stuck after chains, slowly rock between forward and reverse to build momentum for escape.",
+      },
+    ],
+  },
+  {
+    id: "snow-3",
+    title: "Deep Snow Recovery",
+    category: "snow",
+    difficulty: "Advanced",
+    equipment: ["Shovel", "High-lift jack", "Traction boards", "Full-size spare", "Winch (recommended)"],
+    safetyWarnings: [
+      "Deep snow recovery is dangerous - never attempt alone",
+      "High-lift jacks can cause vehicle rollover - use extreme caution",
+      "Watch for hidden obstacles under deep snow like rocks or stumps",
+      "Hypothermia risk increases significantly in deep snow conditions",
+    ],
+    steps: [
+      {
+        number: 1,
+        title: "Clear a large area",
+        description: "Shovel a wide path around the entire vehicle to locate hidden obstacles and create working space.",
+      },
+      {
+        number: 2,
+        title: "Dig out all wheels",
+        description: "Completely expose all four wheels by digging out the snow. Remove snow from the bottom of the vehicle.",
+      },
+      {
+        number: 3,
+        title: "Use high-lift jack carefully",
+        description: "If the vehicle is high-centered, use a high-lift jack to lift one wheel at a time and place traction boards underneath.",
+      },
+      {
+        number: 4,
+        title: "Build a packed road",
+        description: "Compress snow into a packed surface using traction boards, spare tires, or by repeatedly driving over the same path.",
+      },
+      {
+        number: 5,
+        title: "Attempt escape with full momentum",
+        description: "Once traction materials are in place, attempt recovery with steady throttle. Consider using a winch as backup.",
+      },
+    ],
+  },
+  {
+    id: "snow-4",
+    title: "Winter Preparation and Prevention",
+    category: "snow",
+    difficulty: "Easy",
+    equipment: ["Winter tires", "Tire chains", "Emergency kit", "Shovel", "Blankets"],
+    safetyWarnings: [
+      "Winter driving requires significant skill and preparation - avoid if possible",
+      "All-terrain tires perform poorly in snow compared to proper winter tires",
+      "Keep extra fuel to run engine for heat if stranded",
+    ],
+    steps: [
+      {
+        number: 1,
+        title: "Switch to winter tires",
+        description: "Winter tires provide significantly better traction than all-season or all-terrain tires. This is the single best prevention step.",
+      },
+      {
+        number: 2,
+        title: "Carry tire chains",
+        description: "Keep chains in your vehicle during winter. Practice installing them at home before you need them on the trail.",
+      },
+      {
+        number: 3,
+        title: "Pack emergency supplies",
+        description: "Bring blankets, food, water, first aid kit, and jumper cables. A stranded vehicle in winter can be life-threatening.",
+      },
+      {
+        number: 4,
+        title: "Reduce tire pressure",
+        description: "In snow, reduce tire pressure to 20-25 PSI for better flotation, but be prepared to air back up on hard roads.",
+      },
+      {
+        number: 5,
+        title: "Drive slowly and carefully",
+        description: "Use low gear, avoid sudden acceleration or braking, and maintain a slow, steady pace. Prevention is better than recovery.",
       },
     ],
   },
