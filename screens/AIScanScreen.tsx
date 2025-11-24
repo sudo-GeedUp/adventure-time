@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, Image, Alert } from "react-native";
+import { View, StyleSheet, Pressable, Alert, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as ImagePicker from "expo-image-picker";
@@ -73,11 +73,7 @@ export default function AIScanScreen() {
   return (
     <ScreenScrollView>
       <View style={styles.emptyState}>
-        <Image
-          source={require("../assets/images/empty-states/camera.png")}
-          style={styles.emptyImage}
-          resizeMode="contain"
-        />
+        <Feather name="camera" size={64} color={theme.primary} style={styles.emptyIcon} />
         <ThemedText style={[Typography.h3, styles.emptyTitle]}>
           AI Recovery Analysis
         </ThemedText>
@@ -142,9 +138,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: Spacing["3xl"],
   },
-  emptyImage: {
-    width: 200,
-    height: 200,
+  emptyIcon: {
     marginBottom: Spacing["2xl"],
   },
   emptyTitle: {
