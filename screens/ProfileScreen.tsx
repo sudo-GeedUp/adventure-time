@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, Image, TextInput, Switch } from "react-native";
+import { View, StyleSheet, Pressable, TextInput, Switch } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
@@ -26,11 +26,11 @@ type ProfileScreenNavigationProp = NativeStackNavigationProp<
   "Profile"
 >;
 
-const avatars = [
-  require("../assets/images/avatars/jeep.png"),
-  require("../assets/images/avatars/topo.png"),
-  require("../assets/images/avatars/tire.png"),
-  require("../assets/images/avatars/compass.png"),
+const AVATAR_ICONS = [
+  { icon: "truck", label: "Jeep" },
+  { icon: "map", label: "Topo" },
+  { icon: "circle", label: "Tire" },
+  { icon: "navigation", label: "Compass" },
 ];
 
 export default function ProfileScreen() {
@@ -103,7 +103,7 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <ThemedText style={[Typography.h4, styles.sectionTitle]}>Avatar</ThemedText>
         <View style={styles.avatarGrid}>
-          {avatars.map((avatar, index) => (
+          {AVATAR_ICONS.map((avatar, index) => (
             <Pressable
               key={index}
               style={[
@@ -112,12 +112,13 @@ export default function ProfileScreen() {
                   borderColor:
                     profile.avatarIndex === index ? theme.primary : theme.border,
                   borderWidth: profile.avatarIndex === index ? 3 : 1,
+                  backgroundColor: theme.backgroundDefault,
                 },
               ]}
               onPress={() => handleAvatarChange(index)}
               android_ripple={{ color: theme.backgroundSecondary }}
             >
-              <Image source={avatar} style={styles.avatarImage} resizeMode="cover" />
+              <Feather name={avatar.icon as any} size={40} color={theme.primary} />
             </Pressable>
           ))}
         </View>
