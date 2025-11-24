@@ -13,7 +13,6 @@ import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { storage, StatusUpdate } from "@/utils/storage";
 import { Spacing, Typography, BorderRadius } from "@/constants/theme";
-import { getFirebaseServices } from "@/utils/firebaseHelpers";
 import { subscribeToFriends, saveFriendToFirebase } from "@/utils/firebaseHelpers";
 
 let MapView: any = null;
@@ -76,18 +75,9 @@ export default function FriendsScreen() {
   }, []);
 
   const loadFriendsData = async () => {
-    const { db } = getFirebaseServices();
-    if (db) {
-      const userId = "demo_user_" + Date.now();
-      const unsub = subscribeToFriends(db, userId, (friendsData) => {
-        setFriends(friendsData);
-      });
-      setUnsubscribe(() => unsub);
-      setUseFirebase(true);
-    } else {
-      const friendsData = await storage.getFriendsData();
-      setFriends(friendsData);
-    }
+    // Firebase service not configured, using local storage
+    const friendsData = await storage.getFriendsData();
+    setFriends(friendsData);
   };
 
   const loadStatusUpdates = async () => {
@@ -161,18 +151,9 @@ export default function FriendsScreen() {
       },
     ];
 
-    if (useFirebase) {
-      const { db } = getFirebaseServices();
-      const userId = "demo_user_" + Date.now();
-      if (db) {
-        for (const friend of sampleFriends) {
-          await saveFriendToFirebase(db, userId, friend);
-        }
-      }
-    } else {
-      await storage.saveFriendsData(sampleFriends);
-      setFriends(sampleFriends);
-    }
+    // Using local storage for friends data
+    await storage.saveFriendsData(sampleFriends);
+    setFriends(sampleFriends);
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -360,7 +341,6 @@ export default function FriendsScreen() {
 
   return (
     <ScreenScrollView
-      backgroundColor={theme.backgroundRoot}
       contentContainerStyle={{ paddingBottom: Spacing.xl }}
     >
       <View style={styles.header}>
