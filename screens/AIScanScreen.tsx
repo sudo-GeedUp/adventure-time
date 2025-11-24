@@ -73,7 +73,9 @@ export default function AIScanScreen() {
   return (
     <ScreenScrollView>
       <View style={styles.emptyState}>
-        <Feather name="camera" size={64} color={theme.primary} style={styles.emptyIcon} />
+        <View style={styles.emptyIcon}>
+          <Feather name="camera" size={64} color={theme.primary} />
+        </View>
         <ThemedText style={[Typography.h3, styles.emptyTitle]}>
           AI Recovery Analysis
         </ThemedText>
