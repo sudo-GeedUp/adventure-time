@@ -319,6 +319,17 @@ export default function ProfileScreen() {
           <Feather name="chevron-right" size={24} color={theme.tabIconDefault} />
         </Pressable>
       </View>
+
+      <View style={styles.section}>
+        <ThemedText style={[Typography.h4, styles.sectionTitle]}>Special Thanks</ThemedText>
+        <View style={[styles.thanksCard, { backgroundColor: theme.backgroundDefault }]}>
+          <Feather name="heart" size={24} color={theme.primary} />
+          <ThemedText style={styles.thanksText}>ChloeAnn</ThemedText>
+          <ThemedText style={[styles.thanksSubtext, { color: theme.tabIconDefault }]}>
+            For inspiring Adventure Time
+          </ThemedText>
+        </View>
+      </View>
     </ScreenScrollView>
   );
 }
@@ -345,6 +356,8 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: BorderRadius.md,
     overflow: "hidden",
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatarImage: {
     width: "100%",
@@ -439,5 +452,22 @@ const styles = StyleSheet.create({
   equipmentLabel: {
     marginLeft: Spacing.md,
     fontSize: 16,
+  },
+  thanksCard: {
+    padding: Spacing["2xl"],
+    borderRadius: BorderRadius.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  thanksText: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginTop: Spacing.md,
+    textAlign: "center",
+  },
+  thanksSubtext: {
+    fontSize: 14,
+    marginTop: Spacing.xs,
+    textAlign: "center",
   },
 });
