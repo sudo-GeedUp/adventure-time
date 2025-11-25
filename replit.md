@@ -10,6 +10,18 @@ Adventure Time is a mobile application built with Expo and React Native that hel
 ✅ All core screens implemented and working
 
 ## Recent Changes (November 25, 2025)
+- **ADDED OFF-HIGHWAY GPS NAVIGATION**: New Navigate tab with trail discovery and route planning
+  - 6 popular off-highway trails with detailed info (Moab Rim, Hell's Revenge, Sand Hollow, etc.)
+  - Filter trails by difficulty (Easy/Moderate/Hard/Expert)
+  - Filter by land type (Public/Private/Mixed) with clear ownership indicators
+  - Shows distance from user location, duration, safety rating
+  - Displays trail features, vehicle requirements, and elevation gain
+  - Full trail descriptions for each route
+  - 2 pre-planned routes (Moab Adventure Loop, Scenic Beginner Route)
+  - Offline trail database with all info cached locally
+  - Compass icon in tab bar for easy access
+  - Real-time location permission with fallback handling
+
 - **ADDED REPORTING FEATURE**: Users can now report trail conditions and alert others
   - New "Report Condition" button in Nearby tab header (warning icon)
   - Modal with quick-report options:
@@ -96,7 +108,27 @@ Adventure Time is a mobile application built with Expo and React Native that hel
 - **Contact Nearby Users**: Request help from the community
 - Uses expo-location for real-time location tracking with permission handling
 
-### 4. User Profile (Profile Tab)
+### 4. Off-Highway GPS Navigation (Navigate Tab)
+- **Trail Discovery**: Browse off-highway trails near your location
+  - Pre-loaded database of popular trails in offroad hot spots
+  - Filter by difficulty level for your skill level
+  - Filter by land type (Public/Private) - important for legal access
+  - Distance calculations from your current location
+  - Safety ratings and popularity scores
+- **Trail Details**: Complete information for each trail
+  - Trail length, estimated duration, elevation gain
+  - Vehicle type requirements and features
+  - Terrain descriptions and hazard information
+  - Land ownership and access restrictions
+- **Route Planning**: Pre-planned multi-trail routes
+  - Adventure loops combining multiple trails
+  - Beginner-friendly scenic routes
+  - Route duration and difficulty overview
+- **Offline Capability**: All trail data cached locally for remote areas
+  - No internet required to view trail information
+  - Perfect for planning before heading out
+
+### 5. User Profile (Profile Tab)
 - **Customizable Profile**: Name, vehicle info, experience level
 - **Contact Information**: Email and phone for rescue coordination
 - **Bio/Notes**: Additional details about your vehicle or preferences
@@ -124,17 +156,22 @@ Adventure Time is a mobile application built with Expo and React Native that hel
 ├── app.json                     # Expo configuration
 ├── navigation/
 │   ├── RootNavigator.tsx        # Root stack navigator
-│   ├── MainTabNavigator.tsx     # Bottom tab navigation (4 tabs)
-│   └── GuidesStackNavigator.tsx # Guides screen stack
+│   ├── MainTabNavigator.tsx     # Bottom tab navigation (6 tabs)
+│   ├── GuidesStackNavigator.tsx # Guides screen stack
+│   ├── NavigateStackNavigator.tsx # Navigate/GPS trails stack
+│   └── [other stack navigators]
 ├── screens/
 │   ├── GuidesScreen.tsx         # Category browser & guide listing
 │   ├── GuideDetailScreen.tsx    # Individual guide details
 │   ├── AIScanScreen.tsx         # AI photo analysis
 │   ├── NearbyScreen.tsx         # Map of nearby offroaders
-│   └── ProfileScreen.tsx        # User profile management
+│   ├── NavigateScreen.tsx       # Off-highway GPS & trail discovery
+│   ├── ProfileScreen.tsx        # User profile management
+│   └── WelcomeScreen.tsx        # First-launch onboarding
 ├── components/
 │   ├── CategoryCard.tsx         # Guide category cards
 │   ├── GuideListItem.tsx        # Individual guide item
+│   ├── ReportConditionModal.tsx # Trail condition report modal
 │   ├── ScreenScrollView.tsx     # Safe area scroll wrapper
 │   ├── ScreenKeyboardAwareScrollView.tsx
 │   ├── ThemedText.tsx           # Themed text component
@@ -146,7 +183,8 @@ Adventure Time is a mobile application built with Expo and React Native that hel
 │   ├── storage.ts               # AsyncStorage utilities
 │   ├── weather.ts               # National Weather Service API integration
 │   ├── conditions.ts            # Trail condition analysis & impact assessment
-│   └── location.ts              # Location utilities and helpers
+│   ├── location.ts              # Location utilities and helpers
+│   └── trails.ts                # Off-highway trail data & filtering
 ├── constants/
 │   └── theme.ts                 # Design system (colors, spacing, typography)
 ├── hooks/

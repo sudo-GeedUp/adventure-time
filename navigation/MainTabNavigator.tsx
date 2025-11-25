@@ -6,6 +6,7 @@ import { Platform, StyleSheet } from "react-native";
 import GuidesStackNavigator from "@/navigation/GuidesStackNavigator";
 import AIScanStackNavigator from "@/navigation/AIScanStackNavigator";
 import NearbyStackNavigator from "@/navigation/NearbyStackNavigator";
+import NavigateStackNavigator from "@/navigation/NavigateStackNavigator";
 import FriendsStackNavigator from "@/navigation/FriendsStackNavigator";
 import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
 import { useTheme } from "@/hooks/useTheme";
@@ -14,6 +15,7 @@ export type MainTabParamList = {
   GuidesTab: undefined;
   AIScanTab: undefined;
   NearbyTab: undefined;
+  NavigateTab: undefined;
   FriendsTab: undefined;
   ProfileTab: undefined;
 };
@@ -76,6 +78,16 @@ export default function MainTabNavigator() {
           title: "Nearby",
           tabBarIcon: ({ color, size }) => (
             <Feather name="map" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="NavigateTab"
+        component={NavigateStackNavigator}
+        options={{
+          title: "Navigate",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="compass" size={size} color={color} />
           ),
         }}
       />
