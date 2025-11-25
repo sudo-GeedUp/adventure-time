@@ -11,6 +11,7 @@ const KEYS = {
   CHAT_CONVERSATIONS: "@trailguard/chat_conversations",
   FRIENDS_DATA: "@trailguard/friends_data",
   STATUS_UPDATES: "@trailguard/status_updates",
+  FIRST_LAUNCH: "@trailguard/first_launch",
 };
 
 export interface UserProfile {
@@ -18,6 +19,7 @@ export interface UserProfile {
   name: string;
   vehicleType: string;
   avatarIndex: number;
+  customPhotoUri?: string;
   vehicleSpecs?: {
     make: string;
     model: string;
@@ -567,6 +569,24 @@ export const storage = {
       await AsyncStorage.multiRemove(Object.values(KEYS));
     } catch (error) {
       console.error("Error clearing storage:", error);
+    }
+  },
+
+  async getFirstLaunchDone(): Promise<boolean> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.FIRST_LAUNCH);
+      return data === "true";
+    } catch (error) {
+      console.error("Error getting first launch status:", error);
+      return false;
+    }
+  },
+
+  async setFirstLaunchDone(): Promise<void> {
+    try {
+      await AsyncStorage.setItem(KEYS.FIRST_LAUNCH, "true");
+    } catch (error) {
+      console.error("Error setting first launch done:", error);
     }
   },
 };

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, TextInput, Switch } from "react-native";
+import { View, StyleSheet, Pressable, TextInput, Switch, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -82,7 +83,31 @@ export default function ProfileScreen() {
   };
 
   const handleAvatarChange = async (index: number) => {
-    const updatedProfile = { ...profile, avatarIndex: index };
+    const updatedProfile = { ...profile, avatarIndex: index, customPhotoUri: undefined };
+    setProfile(updatedProfile);
+    await storage.saveUserProfile(updatedProfile);
+  };
+
+  const handlePhotoUpload = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      const updatedProfile = {
+        ...profile,
+        customPhotoUri: result.assets[0].uri,
+      };
+      setProfile(updatedProfile);
+      await storage.saveUserProfile(updatedProfile);
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    const updatedProfile = { ...profile, customPhotoUri: undefined };
     setProfile(updatedProfile);
     await storage.saveUserProfile(updatedProfile);
   };
@@ -102,26 +127,65 @@ export default function ProfileScreen() {
     <ScreenScrollView>
       <View style={styles.section}>
         <ThemedText style={[Typography.h4, styles.sectionTitle]}>Avatar</ThemedText>
-        <View style={styles.avatarGrid}>
-          {AVATAR_ICONS.map((avatar, index) => (
+        
+        {profile.customPhotoUri ? (
+          <View>
+            <View style={[styles.photoPreview, { backgroundColor: theme.backgroundDefault }]}>
+              <Image
+                source={{ uri: profile.customPhotoUri }}
+                style={styles.photoImage}
+              />
+            </View>
+            <View style={styles.photoActions}>
+              <Pressable
+                style={[styles.actionButton, { backgroundColor: theme.primary + "20" }]}
+                onPress={handlePhotoUpload}
+              >
+                <Feather name="edit-2" size={20} color={theme.primary} />
+                <ThemedText style={styles.actionButtonText}>Change Photo</ThemedText>
+              </Pressable>
+              <Pressable
+                style={[styles.actionButton, { backgroundColor: theme.error + "20" }]}
+                onPress={handleRemovePhoto}
+              >
+                <Feather name="trash-2" size={20} color={theme.error} />
+                <ThemedText style={[styles.actionButtonText, { color: theme.error }]}>Remove</ThemedText>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <View>
+            <View style={styles.avatarGrid}>
+              {AVATAR_ICONS.map((avatar, index) => (
+                <Pressable
+                  key={index}
+                  style={[
+                    styles.avatarOption,
+                    {
+                      borderColor:
+                        profile.avatarIndex === index ? theme.primary : theme.border,
+                      borderWidth: profile.avatarIndex === index ? 3 : 1,
+                      backgroundColor: theme.backgroundDefault,
+                    },
+                  ]}
+                  onPress={() => handleAvatarChange(index)}
+                  android_ripple={{ color: theme.backgroundSecondary }}
+                >
+                  <Feather name={avatar.icon as any} size={40} color={theme.primary} />
+                </Pressable>
+              ))}
+            </View>
             <Pressable
-              key={index}
-              style={[
-                styles.avatarOption,
-                {
-                  borderColor:
-                    profile.avatarIndex === index ? theme.primary : theme.border,
-                  borderWidth: profile.avatarIndex === index ? 3 : 1,
-                  backgroundColor: theme.backgroundDefault,
-                },
-              ]}
-              onPress={() => handleAvatarChange(index)}
-              android_ripple={{ color: theme.backgroundSecondary }}
+              style={[styles.uploadButton, { backgroundColor: theme.primary + "20" }]}
+              onPress={handlePhotoUpload}
             >
-              <Feather name={avatar.icon as any} size={40} color={theme.primary} />
+              <Feather name="upload" size={24} color={theme.primary} />
+              <ThemedText style={[styles.uploadButtonText, { color: theme.primary }]}>
+                Upload Custom Photo
+              </ThemedText>
             </Pressable>
-          ))}
-        </View>
+          </View>
+        )}
       </View>
 
       <View style={styles.section}>
@@ -469,5 +533,48 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: Spacing.xs,
     textAlign: "center",
+  },
+  photoPreview: {
+    width: 150,
+    height: 150,
+    borderRadius: BorderRadius.lg,
+    overflow: "hidden",
+    alignSelf: "center",
+    marginBottom: Spacing.lg,
+  },
+  photoImage: {
+    width: "100%",
+    height: "100%",
+  },
+  photoActions: {
+    flexDirection: "row",
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.sm,
+  },
+  actionButtonText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  uploadButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    marginTop: Spacing.md,
+    gap: Spacing.md,
+  },
+  uploadButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
