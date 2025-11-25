@@ -1,0 +1,28 @@
+› Opening exp://192.168.1.135:8081 on iPhone 17 Pro
+› Opening the iOS simulator, this might take a moment.
+Error: xcrun simctl openurl A6C2D96E-5D41-4BDA-BB5F-9F3562CF0235 exp://192.168.1.135:8081 exited with non-zero code: 60
+An error was encountered processing the command (domain=NSPOSIXErrorDomain, code=60):
+Simulator device failed to open exp://192.168.1.135:8081.
+Operation timed out
+Underlying error (domain=NSPOSIXErrorDomain, code=60):
+	The operation couldn’t be completed. Operation timed out
+	Operation timed out
+Error: xcrun simctl openurl A6C2D96E-5D41-4BDA-BB5F-9F3562CF0235 exp://192.168.1.135:8081 exited with non-zero code: 60
+    at ChildProcess.completionListener (/Users/masongallegos/adventure-time/node_modules/@expo/spawn-async/src/spawnAsync.ts:67:13)
+    at Object.onceWrapper (node:events:623:26)
+    at ChildProcess.emit (node:events:508:28)
+    at maybeClose (node:internal/child_process:1085:16)
+    at Socket.<anonymous> (node:internal/child_process:456:11)
+    at Socket.emit (node:events:508:28)
+    at Pipe.<anonymous> (node:net:346:12)
+    ...
+    at spawnAsync (/Users/masongallegos/adventure-time/node_modules/@expo/spawn-async/src/spawnAsync.ts:28:21)
+    at xcrunAsync (/Users/masongallegos/adventure-time/node_modules/expo/node_modules/@expo/cli/src/start/platforms/ios/xcrun.ts:21:28)
+    at simctlAsync (/Users/masongallegos/adventure-time/node_modules/expo/node_modules/@expo/cli/src/start/platforms/ios/simctl.ts:355:28)
+    at Object.openUrlAsync (/Users/masongallegos/adventure-time/node_modules/expo/node_modules/@expo/cli/src/start/platforms/ios/simctl.ts:198:11)
+    at AppleDeviceManager.openUrlAsync (/Users/masongallegos/adventure-time/node_modules/expo/node_modules/@expo/cli/src/start/platforms/ios/AppleDeviceManager.ts:194:7)
+    at ApplePlatformManager.openProjectInExpoGoAsync (/Users/masongallegos/adventure-time/node_modules/expo/node_modules/@expo/cli/src/start/platforms/PlatformManager.ts:121:5)
+    at async Promise.allSettled (index 1)
+    at openPlatformsAsync (/Users/masongallegos/adventure-time/node_modules/expo/node_modules/@expo/cli/src/start/server/openPlatforms.ts:10:19)
+    at startAsync (/Users/masongallegos/adventure-time/node_modules/expo/node_modules/@expo/cli/src/start/startAsync.ts:114:3)
+masongallegos@UnDeRcOvEr adventure-time % 
