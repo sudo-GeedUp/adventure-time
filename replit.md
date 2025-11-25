@@ -9,7 +9,25 @@ Adventure Time is a mobile application built with Expo and React Native that hel
 ✅ Offline-capable guide library for areas without cell service
 ✅ All core screens implemented and working
 
-## Recent Changes (November 21, 2025)
+## Recent Changes (November 25, 2025)
+- **ADDED REPORTING FEATURE**: Users can now report trail conditions and alert others
+  - New "Report Condition" button in Nearby tab header (warning icon)
+  - Modal with quick-report options:
+    - Police/Law enforcement
+    - Probation/Parole officers
+    - Deep mud conditions
+    - Water/flooding hazards
+    - Rocky terrain
+    - Snow/ice conditions
+    - Blocked trails
+    - Trail damage
+  - Reports are geo-tagged and timestamped
+  - Automatically saved to community tips
+  - Contributes to trail condition analysis for other users
+  - Successful submission shows confirmation alert
+  - User profile used to attribute reports
+
+## Previous Changes (November 21, 2025)
 - **RENAMED APP**: Changed app name from TrailGuard to Adventure Time
   - Updated app.json display name
   - Updated navigation header
@@ -68,6 +86,12 @@ Adventure Time is a mobile application built with Expo and React Native that hel
   - Safety recommendations based on conditions
   - Loading and error states
   - Empty state message when no data available
+- **Trail Condition Reporting**: Alert other offroaders about hazards
+  - Report button in header for quick access
+  - 8 warning categories (police, probation, mud, water, rocks, snow, blocked, damage)
+  - Automatic location tagging
+  - Geo-tagged and timestamped reports
+  - Integrated with trail condition analysis
 - **Location Sharing**: Share your location for rescue coordination  
 - **Contact Nearby Users**: Request help from the community
 - Uses expo-location for real-time location tracking with permission handling

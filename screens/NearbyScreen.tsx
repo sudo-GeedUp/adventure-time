@@ -9,11 +9,12 @@ import { useTheme } from "@/hooks/useTheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
-import { storage, NearbyOffroader as StoredOffroader } from "@/utils/storage";
+import { storage, NearbyOffroader as StoredOffroader, UserProfile } from "@/utils/storage";
 import { calculateDistance, generateNearbyCoordinate } from "@/utils/location";
 import { getWeather } from "@/utils/weather";
 import { analyzeTrailConditions, calculateImpactAssessment } from "@/utils/conditions";
 import type { WeatherCondition, ImpactAssessment, TrailConditionSummary } from "@/utils/conditions";
+import ReportConditionModal from "@/components/ReportConditionModal";
 
 interface NearbyOffroader extends StoredOffroader {
   distance: number;
@@ -67,9 +68,12 @@ export default function NearbyScreen() {
   const [trailConditions, setTrailConditions] = useState<TrailConditionSummary | null>(null);
   const [isLoadingWeather, setIsLoadingWeather] = useState(false);
   const [weatherError, setWeatherError] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     requestLocationPermission();
+    loadUserProfile();
   }, []);
 
   const requestLocationPermission = async () => {
@@ -172,8 +176,23 @@ export default function NearbyScreen() {
     return offroaders;
   };
 
+  const loadUserProfile = async () => {
+    try {
+      const profile = await storage.getUserProfile();
+      setUserProfile(profile);
+    } catch (error) {
+      console.error("Error loading user profile:", error);
+    }
+  };
+
   const handleRefresh = () => {
     requestLocationPermission();
+  };
+
+  const handleReportSubmitted = async () => {
+    if (location) {
+      await loadConditions(location);
+    }
   };
 
   const handleOffroaderPress = (offroader: NearbyOffroader) => {
@@ -227,9 +246,14 @@ export default function NearbyScreen() {
               {location ? "Location Active" : "Getting Location..."}
             </ThemedText>
           </View>
-          <Pressable onPress={handleRefresh} style={styles.refreshButton}>
-            <Feather name="refresh-cw" size={24} color={theme.primary} />
-          </Pressable>
+          <View style={styles.headerButtons}>
+            <Pressable onPress={() => setShowReportModal(true)} style={styles.reportButton}>
+              <Feather name="alert-triangle" size={24} color={theme.warning} />
+            </Pressable>
+            <Pressable onPress={handleRefresh} style={styles.refreshButton}>
+              <Feather name="refresh-cw" size={24} color={theme.primary} />
+            </Pressable>
+          </View>
         </View>
 
         <View style={[styles.mapPlaceholder, { backgroundColor: theme.backgroundSecondary }]}>
@@ -360,6 +384,14 @@ export default function NearbyScreen() {
             </ThemedText>
           </View>
         )}
+
+        <ReportConditionModal
+          visible={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          userLocation={location}
+          userProfile={userProfile}
+          onReportSubmitted={handleReportSubmitted}
+        />
       </ThemedView>
     </>
   );
@@ -382,6 +414,14 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     marginLeft: Spacing.sm,
+  },
+  headerButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  reportButton: {
+    padding: Spacing.sm,
   },
   refreshButton: {
     padding: Spacing.sm,
