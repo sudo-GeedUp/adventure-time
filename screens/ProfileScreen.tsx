@@ -444,7 +444,11 @@ export default function ProfileScreen() {
         <ThemedText style={[Typography.h4, styles.sectionTitle]}>Special Thanks</ThemedText>
         <View style={[styles.thanksCard, { backgroundColor: theme.backgroundDefault }]}>
           <Feather name="heart" size={24} color={theme.primary} />
-          <ThemedText style={styles.thanksText}>ChloeAnn</ThemedText>
+          <ThemedText style={styles.thanksText}>ChloeAnn and Grandma</ThemedText>
+                    <ThemedText style={styles.thanksText}>Tayt and Ranger</ThemedText>
+                              <ThemedText style={styles.thanksText}>Dillion and Z</ThemedText>
+                                        <ThemedText style={styles.thanksText}>Trent and Tiffany</ThemedText>
+                                                  <ThemedText style={styles.thanksText}>Brenda and Rex</ThemedText>
           <ThemedText style={[styles.thanksSubtext, { color: theme.tabIconDefault }]}>
             For inspiring Adventure Time
           </ThemedText>
