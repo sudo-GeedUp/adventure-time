@@ -27,12 +27,6 @@ type ProfileScreenNavigationProp = NativeStackNavigationProp<
   "Profile"
 >;
 
-const AVATAR_ICONS = [
-  { icon: "truck", label: "Jeep" },
-  { icon: "map", label: "Topo" },
-  { icon: "circle", label: "Tire" },
-  { icon: "navigation", label: "Compass" },
-];
 
 export default function ProfileScreen() {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
@@ -80,12 +74,6 @@ export default function ProfileScreen() {
 
   const handleSaveProfile = async () => {
     await storage.saveUserProfile(profile);
-  };
-
-  const handleAvatarChange = async (index: number) => {
-    const updatedProfile = { ...profile, avatarIndex: index, customPhotoUri: undefined };
-    setProfile(updatedProfile);
-    await storage.saveUserProfile(updatedProfile);
   };
 
   const handlePhotoUpload = async () => {
@@ -154,34 +142,17 @@ export default function ProfileScreen() {
             </View>
           </View>
         ) : (
-          <View>
-            <View style={styles.avatarGrid}>
-              {AVATAR_ICONS.map((avatar, index) => (
-                <Pressable
-                  key={index}
-                  style={[
-                    styles.avatarOption,
-                    {
-                      borderColor:
-                        profile.avatarIndex === index ? theme.primary : theme.border,
-                      borderWidth: profile.avatarIndex === index ? 3 : 1,
-                      backgroundColor: theme.backgroundDefault,
-                    },
-                  ]}
-                  onPress={() => handleAvatarChange(index)}
-                  android_ripple={{ color: theme.backgroundSecondary }}
-                >
-                  <Feather name={avatar.icon as any} size={40} color={theme.primary} />
-                </Pressable>
-              ))}
+          <View style={styles.noPhotoContainer}>
+            <View style={[styles.placeholderAvatar, { backgroundColor: theme.backgroundDefault, borderColor: theme.border }]}>
+              <Feather name="user" size={48} color={theme.tabIconDefault} />
             </View>
             <Pressable
               style={[styles.uploadButton, { backgroundColor: theme.primary + "20" }]}
               onPress={handlePhotoUpload}
             >
-              <Feather name="upload" size={24} color={theme.primary} />
+              <Feather name="camera" size={24} color={theme.primary} />
               <ThemedText style={[styles.uploadButtonText, { color: theme.primary }]}>
-                Upload Custom Photo
+                Add Profile Photo
               </ThemedText>
             </Pressable>
           </View>
@@ -411,21 +382,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     marginBottom: Spacing.lg,
   },
-  avatarGrid: {
-    flexDirection: "row",
-    gap: Spacing.md,
+  noPhotoContainer: {
+    alignItems: "center",
+    gap: Spacing.lg,
   },
-  avatarOption: {
-    flex: 1,
-    aspectRatio: 1,
-    borderRadius: BorderRadius.md,
-    overflow: "hidden",
+  placeholderAvatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     justifyContent: "center",
     alignItems: "center",
-  },
-  avatarImage: {
-    width: "100%",
-    height: "100%",
+    borderWidth: 2,
   },
   input: {
     flexDirection: "row",
