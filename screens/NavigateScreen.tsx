@@ -116,6 +116,7 @@ export default function NavigateScreen() {
       filtered = filterTrailsByLandType(filtered, "private");
     }
 
+    console.log("Apply filters debug:", { trails: trails.length, filtered: filtered.length, difficultyFilter, landTypeFilter, searchQuery });
     setFilteredTrails(filtered);
   };
 
@@ -360,6 +361,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     paddingVertical: Spacing.xs,
+    height: 40,
   },
   headerTitle: {
     marginLeft: Spacing.md,
