@@ -239,8 +239,12 @@ export default function NavigateScreen() {
         <ThemedText style={[Typography.h5, styles.filterLabel]}>Difficulty:</ThemedText>
         <View style={styles.filterRow}>
           {(["All", "Easy", "Moderate", "Hard", "Expert"] as DifficultyFilter[]).map(
-            (difficulty) => renderFilterButton(difficulty, difficultyFilter === difficulty, () =>
-              setDifficultyFilter(difficulty)
+            (difficulty) => (
+              <View key={difficulty}>
+                {renderFilterButton(difficulty, difficultyFilter === difficulty, () =>
+                  setDifficultyFilter(difficulty)
+                )}
+              </View>
             )
           )}
         </View>
@@ -249,11 +253,13 @@ export default function NavigateScreen() {
       <View style={styles.filterSection}>
         <ThemedText style={[Typography.h5, styles.filterLabel]}>Land Type:</ThemedText>
         <View style={styles.filterRow}>
-          {(["All", "Public", "Private"] as LandTypeFilter[]).map((landType) =>
-            renderFilterButton(landType, landTypeFilter === landType, () =>
-              setLandTypeFilter(landType)
-            )
-          )}
+          {(["All", "Public", "Private"] as LandTypeFilter[]).map((landType) => (
+            <View key={landType}>
+              {renderFilterButton(landType, landTypeFilter === landType, () =>
+                setLandTypeFilter(landType)
+              )}
+            </View>
+          ))}
         </View>
       </View>
 
