@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, FlatList, Alert } from "react-native";
+import { View, StyleSheet, Pressable, FlatList, Alert, TextInput, ScrollView } from "react-native";
 import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
 import ThemedText from "@/components/ThemedText";
@@ -14,6 +14,7 @@ import {
   filterTrailsByLandType,
   sortTrailsByRating,
   Trail,
+  SAMPLE_TRAILS,
 } from "@/utils/trails";
 import { calculateDistance } from "@/utils/location";
 
@@ -29,15 +30,30 @@ export default function NavigateScreen() {
   const [filteredTrails, setFilteredTrails] = useState<Trail[]>([]);
   const [difficultyFilter, setDifficultyFilter] = useState<DifficultyFilter>("All");
   const [landTypeFilter, setLandTypeFilter] = useState<LandTypeFilter>("All");
-  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    requestLocationPermission();
+    // Load trails immediately with default location
+    const defaultLocation = {
+      coords: {
+        latitude: 38.5729,
+        longitude: -109.5898,
+        altitude: 0,
+        accuracy: 0,
+        altitudeAccuracy: 0,
+        heading: 0,
+        speed: 0,
+      },
+      timestamp: Date.now(),
+    };
+    setLocation(defaultLocation);
+    setTrails(sortTrailsByRating(SAMPLE_TRAILS));
   }, []);
 
   useEffect(() => {
     applyFilters();
-  }, [trails, difficultyFilter, landTypeFilter]);
+  }, [trails, difficultyFilter, landTypeFilter, searchQuery]);
 
   const requestLocationPermission = async () => {
     try {
@@ -79,10 +95,21 @@ export default function NavigateScreen() {
   const applyFilters = () => {
     let filtered = [...trails];
 
+    // Search filter
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(
+        (trail) =>
+          trail.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          trail.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Difficulty filter
     if (difficultyFilter !== "All") {
       filtered = filterTrailsByDifficulty(filtered, difficultyFilter as "Easy" | "Moderate" | "Hard" | "Expert");
     }
 
+    // Land type filter
     if (landTypeFilter === "Public") {
       filtered = filterTrailsByLandType(filtered, "public");
     } else if (landTypeFilter === "Private") {
@@ -228,20 +255,38 @@ export default function NavigateScreen() {
   );
 
   return (
-    <ThemedView
+    <ScrollView
       style={[
         styles.container,
-        {
-          paddingTop: insets.top + Spacing.xl,
-          paddingBottom: tabBarHeight + Spacing.xl,
-        },
+        { backgroundColor: theme.backgroundRoot }
       ]}
+      contentContainerStyle={{
+        paddingTop: insets.top + Spacing.xl,
+        paddingBottom: tabBarHeight + Spacing.xl + Spacing.xl,
+      }}
+      showsVerticalScrollIndicator={false}
     >
       <View style={styles.header}>
         <Feather name="compass" size={28} color={theme.primary} />
         <ThemedText style={[Typography.h3, styles.headerTitle]}>
           Navigate Trails
         </ThemedText>
+      </View>
+
+      <View style={[styles.searchBar, { backgroundColor: theme.backgroundDefault, borderColor: theme.primary }]}>
+        <Feather name="search" size={18} color={theme.tabIconDefault} />
+        <TextInput
+          style={[styles.searchInput, { color: theme.tabIconDefault }]}
+          placeholder="Search trails by name..."
+          placeholderTextColor={theme.tabIconDefault}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery ? (
+          <Pressable onPress={() => setSearchQuery("")}>
+            <Feather name="x" size={18} color={theme.tabIconDefault} />
+          </Pressable>
+        ) : null}
       </View>
 
       <View style={styles.filterSection}>
@@ -272,47 +317,48 @@ export default function NavigateScreen() {
         </View>
       </View>
 
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <Feather name="loader" size={32} color={theme.tabIconDefault} />
-          <ThemedText style={[styles.loadingText, { color: theme.tabIconDefault }]}>
-            Finding trails near you...
-          </ThemedText>
-        </View>
-      ) : filteredTrails.length > 0 ? (
+      {filteredTrails.length > 0 ? (
         <>
           <ThemedText style={[Typography.h5, styles.resultCount]}>
-            {filteredTrails.length} trails found
+            {filteredTrails.length} trail{filteredTrails.length !== 1 ? "s" : ""} found
           </ThemedText>
-          <FlatList
-            data={filteredTrails}
-            renderItem={renderTrailCard}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-            showsVerticalScrollIndicator={false}
-          />
+          {filteredTrails.map((trail) => renderTrailCard({ item: trail }))}
         </>
       ) : (
         <View style={styles.emptyState}>
           <Feather name="search" size={48} color={theme.tabIconDefault} />
           <ThemedText style={[styles.emptyText, { color: theme.tabIconDefault }]}>
-            No trails match your filters. Try adjusting your search.
+            {trails.length === 0 ? "Loading trails..." : "No trails match your filters or search."}
           </ThemedText>
         </View>
       )}
-    </ThemedView>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     paddingHorizontal: Spacing.xl,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
+  },
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.lg,
+    borderWidth: 1,
+    gap: Spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    paddingVertical: Spacing.xs,
   },
   headerTitle: {
     marginLeft: Spacing.md,
