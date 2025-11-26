@@ -443,26 +443,26 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <ThemedText style={[Typography.h4, styles.sectionTitle]}>Special Thanks</ThemedText>
         <View style={[styles.thanksCard, { backgroundColor: theme.backgroundDefault }]}>
-          <Feather name="heart" size={24} color={theme.primary} />
+          <Feather name="heart" size={18} color={theme.primary} />
           <ThemedText style={styles.thanksText}>ChloeAnn</ThemedText>
           <ThemedText style={[styles.thanksSubtext, { color: theme.tabIconDefault }]}>
             For inspiring Adventure Time
           </ThemedText>
         </View>
         <View style={[styles.thanksCard, { backgroundColor: theme.backgroundDefault }]}>
-          <Feather name="heart" size={24} color={theme.primary} />
+          <Feather name="heart" size={18} color={theme.primary} />
           <ThemedText style={styles.thanksText}>Tayt and Ranger</ThemedText>
         </View>
         <View style={[styles.thanksCard, { backgroundColor: theme.backgroundDefault }]}>
-          <Feather name="heart" size={24} color={theme.primary} />
+          <Feather name="heart" size={18} color={theme.primary} />
           <ThemedText style={styles.thanksText}>Dillion and Z</ThemedText>
         </View>
         <View style={[styles.thanksCard, { backgroundColor: theme.backgroundDefault }]}>
-          <Feather name="heart" size={24} color={theme.primary} />
+          <Feather name="heart" size={18} color={theme.primary} />
           <ThemedText style={styles.thanksText}>Trent and Tiffany</ThemedText>
         </View>
         <View style={[styles.thanksCard, { backgroundColor: theme.backgroundDefault }]}>
-          <Feather name="heart" size={24} color={theme.primary} />
+          <Feather name="heart" size={18} color={theme.primary} />
           <ThemedText style={styles.thanksText}>Rex and Brenda</ThemedText>
         </View>
       </View>
@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   thanksText: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: "600",
     marginTop: Spacing.md,
     textAlign: "center",
