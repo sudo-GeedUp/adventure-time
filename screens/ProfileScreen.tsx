@@ -449,6 +449,22 @@ export default function ProfileScreen() {
             For inspiring Adventure Time
           </ThemedText>
         </View>
+        <View style={[styles.thanksCard, { backgroundColor: theme.backgroundDefault }]}>
+          <Feather name="heart" size={24} color={theme.primary} />
+          <ThemedText style={styles.thanksText}>Tayt and Ranger</ThemedText>
+        </View>
+        <View style={[styles.thanksCard, { backgroundColor: theme.backgroundDefault }]}>
+          <Feather name="heart" size={24} color={theme.primary} />
+          <ThemedText style={styles.thanksText}>Dillion and Z</ThemedText>
+        </View>
+        <View style={[styles.thanksCard, { backgroundColor: theme.backgroundDefault }]}>
+          <Feather name="heart" size={24} color={theme.primary} />
+          <ThemedText style={styles.thanksText}>Trent and Tiffany</ThemedText>
+        </View>
+        <View style={[styles.thanksCard, { backgroundColor: theme.backgroundDefault }]}>
+          <Feather name="heart" size={24} color={theme.primary} />
+          <ThemedText style={styles.thanksText}>Rex and Brenda</ThemedText>
+        </View>
       </View>
     </ScreenScrollView>
   );
