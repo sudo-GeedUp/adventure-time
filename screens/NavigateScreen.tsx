@@ -40,24 +40,33 @@ export default function NavigateScreen() {
   }, [trails, difficultyFilter, landTypeFilter]);
 
   const requestLocationPermission = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Location Permission Required",
-        "Location access is needed to find trails near you."
-      );
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const currentLocation = await Location.getCurrentPositionAsync({});
-      setLocation(currentLocation);
-      loadNearbyTrails(currentLocation);
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === "granted") {
+        const currentLocation = await Location.getCurrentPositionAsync({});
+        setLocation(currentLocation);
+        loadNearbyTrails(currentLocation);
+        return;
+      }
     } catch (error) {
       console.error("Error getting location:", error);
-      setIsLoading(false);
     }
+
+    // Fallback: Use default location (Moab, Utah area where all trails are)
+    const defaultLocation = {
+      coords: {
+        latitude: 38.5729,
+        longitude: -109.5898,
+        altitude: 0,
+        accuracy: 0,
+        altitudeAccuracy: 0,
+        heading: 0,
+        speed: 0,
+      },
+      timestamp: Date.now(),
+    };
+    setLocation(defaultLocation);
+    loadNearbyTrails(defaultLocation);
   };
 
   const loadNearbyTrails = (currentLocation: any) => {
