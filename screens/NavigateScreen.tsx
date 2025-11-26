@@ -323,7 +323,9 @@ export default function NavigateScreen() {
           <ThemedText style={[Typography.label, styles.resultCount]}>
             {filteredTrails.length} trail{filteredTrails.length !== 1 ? "s" : ""} found
           </ThemedText>
-          {filteredTrails.map((trail) => renderTrailCard({ item: trail }))}
+          {filteredTrails.map((trail) => (
+            <View key={trail.id}>{renderTrailCard({ item: trail })}</View>
+          ))}
         </>
       ) : (
         <View style={styles.emptyState}>
