@@ -291,7 +291,7 @@ export default function NavigateScreen() {
       </View>
 
       <View style={styles.filterSection}>
-        <ThemedText style={[Typography.h5, styles.filterLabel]}>Difficulty:</ThemedText>
+        <ThemedText style={[Typography.label, styles.filterLabel]}>Difficulty:</ThemedText>
         <View style={styles.filterRow}>
           {(["All", "Easy", "Moderate", "Hard", "Expert"] as DifficultyFilter[]).map(
             (difficulty) => (
@@ -306,7 +306,7 @@ export default function NavigateScreen() {
       </View>
 
       <View style={styles.filterSection}>
-        <ThemedText style={[Typography.h5, styles.filterLabel]}>Land Type:</ThemedText>
+        <ThemedText style={[Typography.label, styles.filterLabel]}>Land Type:</ThemedText>
         <View style={styles.filterRow}>
           {(["All", "Public", "Private"] as LandTypeFilter[]).map((landType) => (
             <View key={landType}>
@@ -320,7 +320,7 @@ export default function NavigateScreen() {
 
       {filteredTrails.length > 0 ? (
         <>
-          <ThemedText style={[Typography.h5, styles.resultCount]}>
+          <ThemedText style={[Typography.label, styles.resultCount]}>
             {filteredTrails.length} trail{filteredTrails.length !== 1 ? "s" : ""} found
           </ThemedText>
           {filteredTrails.map((trail) => renderTrailCard({ item: trail }))}
