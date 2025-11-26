@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   thanksText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "600",
     marginTop: Spacing.md,
     textAlign: "center",
