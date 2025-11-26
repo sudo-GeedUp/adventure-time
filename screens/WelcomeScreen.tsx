@@ -63,16 +63,6 @@ export default function WelcomeScreen() {
           />
         </View>
 
-        <View style={styles.thanks}>
-          <Feather name="heart" size={28} color={theme.primary} />
-          <ThemedText style={[styles.thanksTitle, { marginTop: Spacing.md }]}>
-            Special Thanks
-          </ThemedText>
-          <ThemedText style={[styles.thanksText, { color: theme.tabIconDefault }]}>
-            ChloeAnn for inspiring Adventure Time
-          </ThemedText>
-        </View>
-
         <Pressable
           style={[styles.button, { backgroundColor: theme.primary }]}
           onPress={handleGetStarted}
