@@ -32,12 +32,15 @@ export interface Badge {
 export const MILESTONE_BADGES: Badge[] = [
   { id: "rookie", name: "Trail Rookie", description: "Complete your first 10 off-highway miles", icon: "flag", milesRequired: 10 },
   { id: "explorer", name: "Trail Explorer", description: "Travel 50 off-highway miles", icon: "compass", milesRequired: 50 },
-  { id: "adventurer", name: "Adventurer", description: "Travel 100 off-highway miles", icon: "map", milesRequired: 100 },
+  { id: "trooper", name: "Trail Trooper", description: "Travel 100 off-highway miles", icon: "shield", milesRequired: 100 },
   { id: "trailblazer", name: "Trailblazer", description: "Travel 250 off-highway miles", icon: "trending-up", milesRequired: 250 },
   { id: "pathfinder", name: "Pathfinder", description: "Travel 500 off-highway miles", icon: "navigation", milesRequired: 500 },
+  { id: "adventurer", name: "Adventurer", description: "Travel 750 off-highway miles", icon: "map", milesRequired: 750 },
   { id: "expedition", name: "Expedition Master", description: "Travel 1,000 off-highway miles", icon: "award", milesRequired: 1000 },
   { id: "legend", name: "Trail Legend", description: "Travel 2,500 off-highway miles", icon: "star", milesRequired: 2500 },
   { id: "pioneer", name: "Pioneer Elite", description: "Travel 5,000 off-highway miles", icon: "zap", milesRequired: 5000 },
+  { id: "boss", name: "Trail Boss", description: "Travel 7,500 off-highway miles", icon: "crown", milesRequired: 7500 },
+  { id: "ranger", name: "Trail Ranger", description: "Travel 10,000 off-highway miles", icon: "compass", milesRequired: 10000 },
 ];
 
 export interface UserProfile {
