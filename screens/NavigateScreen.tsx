@@ -211,9 +211,9 @@ export default function NavigateScreen() {
         </View>
 
         <View style={styles.featuresRow}>
-          {item.features.slice(0, 2).map((feature) => (
+          {item.features.slice(0, 2).map((feature, idx) => (
             <View
-              key={feature}
+              key={`${item.id}-feature-${idx}`}
               style={[
                 styles.featureTag,
                 { backgroundColor: theme.backgroundSecondary },
