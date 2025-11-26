@@ -13,3 +13,6 @@ externalPort = 80
 [deployment]
 run = ["node", "build-and-serve.js"]
 deploymentTarget = "gce"
+
+[nix]
+packages = ["nano"]
