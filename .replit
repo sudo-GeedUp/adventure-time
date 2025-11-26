@@ -12,4 +12,4 @@ externalPort = 80
 
 [deployment]
 run = ["node", "build-and-serve.js"]
-deploymentTarget = "cloudrun"
+deploymentTarget = "gce"
