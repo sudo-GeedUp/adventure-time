@@ -10,6 +10,10 @@ externalPort = 8081
 localPort = 8082
 externalPort = 80
 
+[[ports]]
+localPort = 8083
+externalPort = 3000
+
 [deployment]
 run = ["node", "build-and-serve.js"]
 deploymentTarget = "gce"
