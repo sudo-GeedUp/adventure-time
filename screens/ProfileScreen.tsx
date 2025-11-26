@@ -9,7 +9,7 @@ import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 import type { ProfileStackParamList } from "@/navigation/ProfileStackNavigator";
-import { storage, UserProfile, EmergencyContact } from "@/utils/storage";
+import { storage, UserProfile, EmergencyContact, MILESTONE_BADGES, Badge } from "@/utils/storage";
 
 const COMMON_EQUIPMENT = [
   { id: "winch", label: "Winch", icon: "anchor" },
@@ -157,6 +157,91 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
         )}
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText style={[Typography.h4, styles.sectionTitle]}>Trail Milestones</ThemedText>
+        
+        <View style={[styles.statsCard, { backgroundColor: theme.backgroundDefault }]}>
+          <View style={styles.statItem}>
+            <ThemedText style={[styles.statValue, { color: theme.primary }]}>
+              {profile.trailStats?.totalMiles?.toFixed(1) || "0"}
+            </ThemedText>
+            <ThemedText style={[styles.statLabel, { color: theme.tabIconDefault }]}>
+              Off-Highway Miles
+            </ThemedText>
+          </View>
+          <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
+          <View style={styles.statItem}>
+            <ThemedText style={[styles.statValue, { color: theme.primary }]}>
+              {profile.trailStats?.trailsCompleted || 0}
+            </ThemedText>
+            <ThemedText style={[styles.statLabel, { color: theme.tabIconDefault }]}>
+              Trails Completed
+            </ThemedText>
+          </View>
+        </View>
+
+        {(() => {
+          const nextBadge = storage.getNextBadge(profile.trailStats?.totalMiles || 0);
+          if (nextBadge) {
+            const currentMiles = profile.trailStats?.totalMiles || 0;
+            const progress = (currentMiles / nextBadge.milesRequired) * 100;
+            return (
+              <View style={[styles.progressCard, { backgroundColor: theme.backgroundDefault }]}>
+                <View style={styles.progressHeader}>
+                  <Feather name={nextBadge.icon as any} size={20} color={theme.primary} />
+                  <ThemedText style={styles.progressTitle}>Next: {nextBadge.name}</ThemedText>
+                </View>
+                <View style={[styles.progressBar, { backgroundColor: theme.border }]}>
+                  <View style={[styles.progressFill, { width: `${Math.min(progress, 100)}%`, backgroundColor: theme.primary }]} />
+                </View>
+                <ThemedText style={[styles.progressText, { color: theme.tabIconDefault }]}>
+                  {currentMiles.toFixed(1)} / {nextBadge.milesRequired} miles
+                </ThemedText>
+              </View>
+            );
+          }
+          return null;
+        })()}
+
+        <ThemedText style={[styles.badgesLabel, { color: theme.tabIconDefault }]}>Earned Badges</ThemedText>
+        <View style={styles.badgesGrid}>
+          {MILESTONE_BADGES.map((badge) => {
+            const isEarned = (profile.earnedBadges || []).includes(badge.id);
+            return (
+              <View
+                key={badge.id}
+                style={[
+                  styles.badgeItem,
+                  {
+                    backgroundColor: isEarned ? theme.primary + "20" : theme.backgroundDefault,
+                    borderColor: isEarned ? theme.primary : theme.border,
+                    opacity: isEarned ? 1 : 0.5,
+                  },
+                ]}
+              >
+                <Feather
+                  name={badge.icon as any}
+                  size={24}
+                  color={isEarned ? theme.primary : theme.tabIconDefault}
+                />
+                <ThemedText
+                  style={[
+                    styles.badgeName,
+                    { color: isEarned ? theme.text : theme.tabIconDefault },
+                  ]}
+                  numberOfLines={2}
+                >
+                  {badge.name}
+                </ThemedText>
+                <ThemedText style={[styles.badgeMiles, { color: theme.tabIconDefault }]}>
+                  {badge.milesRequired} mi
+                </ThemedText>
+              </View>
+            );
+          })}
+        </View>
       </View>
 
       <View style={styles.section}>
@@ -543,5 +628,86 @@ const styles = StyleSheet.create({
   uploadButtonText: {
     fontSize: 16,
     fontWeight: "600",
+  },
+  statsCard: {
+    flexDirection: "row",
+    borderRadius: BorderRadius.md,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+  statValue: {
+    fontSize: 28,
+    fontWeight: "700",
+  },
+  statLabel: {
+    fontSize: 12,
+    marginTop: Spacing.xs,
+    textAlign: "center",
+  },
+  statDivider: {
+    width: 1,
+    marginHorizontal: Spacing.md,
+  },
+  progressCard: {
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  progressHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  progressTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  progressBar: {
+    height: 8,
+    borderRadius: 4,
+    overflow: "hidden",
+    marginBottom: Spacing.xs,
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 12,
+    textAlign: "right",
+  },
+  badgesLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: Spacing.md,
+  },
+  badgesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.sm,
+  },
+  badgeItem: {
+    width: "23%",
+    aspectRatio: 0.85,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    padding: Spacing.sm,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  badgeName: {
+    fontSize: 10,
+    fontWeight: "600",
+    textAlign: "center",
+    marginTop: Spacing.xs,
+  },
+  badgeMiles: {
+    fontSize: 9,
+    marginTop: 2,
   },
 });

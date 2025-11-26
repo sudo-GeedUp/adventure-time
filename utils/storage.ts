@@ -14,6 +14,32 @@ const KEYS = {
   FIRST_LAUNCH: "@trailguard/first_launch",
 };
 
+export interface TrailStats {
+  totalMiles: number;
+  trailsCompleted: number;
+  lastTrailDate?: number;
+}
+
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  milesRequired: number;
+  earnedAt?: number;
+}
+
+export const MILESTONE_BADGES: Badge[] = [
+  { id: "rookie", name: "Trail Rookie", description: "Complete your first 10 off-highway miles", icon: "flag", milesRequired: 10 },
+  { id: "explorer", name: "Trail Explorer", description: "Travel 50 off-highway miles", icon: "compass", milesRequired: 50 },
+  { id: "adventurer", name: "Adventurer", description: "Travel 100 off-highway miles", icon: "map", milesRequired: 100 },
+  { id: "trailblazer", name: "Trailblazer", description: "Travel 250 off-highway miles", icon: "trending-up", milesRequired: 250 },
+  { id: "pathfinder", name: "Pathfinder", description: "Travel 500 off-highway miles", icon: "navigation", milesRequired: 500 },
+  { id: "expedition", name: "Expedition Master", description: "Travel 1,000 off-highway miles", icon: "award", milesRequired: 1000 },
+  { id: "legend", name: "Trail Legend", description: "Travel 2,500 off-highway miles", icon: "star", milesRequired: 2500 },
+  { id: "pioneer", name: "Pioneer Elite", description: "Travel 5,000 off-highway miles", icon: "zap", milesRequired: 5000 },
+];
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -27,6 +53,8 @@ export interface UserProfile {
     modifications: string;
   };
   equipment?: string[];
+  trailStats?: TrailStats;
+  earnedBadges?: string[];
 }
 
 export interface EmergencyContact {
@@ -171,6 +199,58 @@ export const storage = {
     } catch (error) {
       console.error("Error saving user profile:", error);
     }
+  },
+
+  async addTrailMiles(miles: number): Promise<{ newBadges: Badge[], profile: UserProfile }> {
+    const profile = await this.getUserProfile();
+    if (!profile) {
+      return { newBadges: [], profile: { id: "1", name: "", vehicleType: "", avatarIndex: 0 } };
+    }
+
+    const currentStats = profile.trailStats || { totalMiles: 0, trailsCompleted: 0 };
+    const previousMiles = currentStats.totalMiles;
+    const newTotalMiles = previousMiles + miles;
+
+    const updatedStats: TrailStats = {
+      ...currentStats,
+      totalMiles: newTotalMiles,
+      trailsCompleted: currentStats.trailsCompleted + 1,
+      lastTrailDate: Date.now(),
+    };
+
+    const earnedBadges = profile.earnedBadges || [];
+    const newBadges: Badge[] = [];
+
+    for (const badge of MILESTONE_BADGES) {
+      if (previousMiles < badge.milesRequired && newTotalMiles >= badge.milesRequired) {
+        if (!earnedBadges.includes(badge.id)) {
+          earnedBadges.push(badge.id);
+          newBadges.push({ ...badge, earnedAt: Date.now() });
+        }
+      }
+    }
+
+    const updatedProfile: UserProfile = {
+      ...profile,
+      trailStats: updatedStats,
+      earnedBadges,
+    };
+
+    await this.saveUserProfile(updatedProfile);
+    return { newBadges, profile: updatedProfile };
+  },
+
+  getEarnedBadges(earnedBadgeIds: string[]): Badge[] {
+    return MILESTONE_BADGES.filter(badge => earnedBadgeIds.includes(badge.id));
+  },
+
+  getNextBadge(totalMiles: number): Badge | null {
+    for (const badge of MILESTONE_BADGES) {
+      if (totalMiles < badge.milesRequired) {
+        return badge;
+      }
+    }
+    return null;
   },
 
   async getSavedGuides(): Promise<string[]> {
