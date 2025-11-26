@@ -19,14 +19,16 @@ let MapView: any = null;
 let Marker: any = null;
 let Circle: any = null;
 
-// Try to load maps, but gracefully fail if not available
-try {
-  const maps = require("react-native-maps");
-  MapView = maps.default;
-  Marker = maps.Marker;
-  Circle = maps.Circle;
-} catch (e) {
-  // Maps not available in this environment
+// Only load maps on native platforms (iOS/Android)
+if (Platform.OS !== "web") {
+  try {
+    const maps = require("react-native-maps");
+    MapView = maps.default;
+    Marker = maps.Marker;
+    Circle = maps.Circle;
+  } catch (e) {
+    // Maps not available in this environment
+  }
 }
 
 const INITIAL_REGION = {
