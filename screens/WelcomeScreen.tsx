@@ -149,23 +149,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
     lineHeight: 20,
   },
-  thanks: {
-    alignItems: "center",
-    paddingVertical: Spacing["2xl"],
-    paddingHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing["2xl"],
-  },
-  thanksTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  thanksText: {
-    fontSize: 14,
-    marginTop: Spacing.xs,
-    textAlign: "center",
-  },
   button: {
     flexDirection: "row",
     alignItems: "center",
