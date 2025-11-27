@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Pressable, FlatList, Alert, TextInput, ScrollView } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
 import ThemedText from "@/components/ThemedText";
@@ -23,6 +24,7 @@ type LandTypeFilter = "All" | "Public" | "Private";
 
 export default function NavigateScreen() {
   const { theme } = useTheme();
+  const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const [location, setLocation] = useState<any>(null);
@@ -230,6 +232,17 @@ export default function NavigateScreen() {
             </ThemedText>
           )}
         </View>
+
+        <Pressable
+          style={[styles.startButton, { backgroundColor: theme.primary }]}
+          onPress={() => navigation.navigate("ActiveAdventure", { trail: item })}
+          android_ripple={{ color: theme.secondary }}
+        >
+          <Feather name="play" size={20} color={theme.backgroundDefault} />
+          <ThemedText style={[styles.startButtonText, { color: theme.backgroundDefault }]}>
+            Start Adventure
+          </ThemedText>
+        </Pressable>
       </Pressable>
     );
   };

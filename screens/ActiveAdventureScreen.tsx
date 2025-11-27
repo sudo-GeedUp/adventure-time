@@ -26,7 +26,7 @@ export default function ActiveAdventureScreen() {
   const navigation = useNavigation();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
-  const trail: Trail = route.params.trail;
+  const trail: Trail = (route.params as any)?.trail || { name: "Unknown Trail" } as Trail;
 
   const [session, setSession] = useState<AdventureSession | null>(null);
   const [isTracking, setIsTracking] = useState(true);
@@ -144,16 +144,10 @@ export default function ActiveAdventureScreen() {
       "Adventure Complete!",
       `You traveled ${session.currentDistance.toFixed(1)} miles on ${trail.name}${
         earnedBadges.length > 0
-          ? `\n\n🎉 New Badge(s) Unlocked:\n${earnedBadges.map((b) => b.name).join("\n")}`
+          ? `\n\nNew Badge(s) Unlocked:\n${earnedBadges.map((b) => b.name).join("\n")}`
           : ""
       }`,
       [
-        {
-          text: "View Profile",
-          onPress: () => {
-            navigation.navigate("Main", { screen: "Profile" });
-          },
-        },
         {
           text: "Back",
           onPress: () => navigation.goBack(),
