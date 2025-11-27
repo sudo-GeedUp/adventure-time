@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { WeatherCondition } from "./conditions";
 
 const CACHE_DURATION_MS = 30 * 60 * 1000;
-const CACHE_KEY_PREFIX = "@trailguard/weather_cache";
+const CACHE_KEY_PREFIX = "@adventure-time/weather_cache";
 
 interface CachedWeather {
   data: WeatherCondition;

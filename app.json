@@ -1,19 +1,19 @@
 {
   "expo": {
     "name": "Adventure Time",
-    "slug": "trailguard",
+    "slug": "adventure-time",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "trailguard",
+    "scheme": "adventure-time",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.trailguard.app"
+      "bundleIdentifier": "com.adventuretime.app"
     },
     "android": {
-      "package": "com.trailguard.app",
+      "package": "com.adventuretime.app",
       "adaptiveIcon": {
         "backgroundColor": "#FF6B35",
         "foregroundImage": "./assets/images/icon.png"

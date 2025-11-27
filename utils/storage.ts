@@ -1,17 +1,17 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const KEYS = {
-  USER_PROFILE: "@trailguard/user_profile",
-  SAVED_GUIDES: "@trailguard/saved_guides",
-  EMERGENCY_CONTACTS: "@trailguard/emergency_contacts",
-  SCAN_HISTORY: "@trailguard/scan_history",
-  HELP_REQUESTS: "@trailguard/help_requests",
-  NEARBY_OFFROADERS: "@trailguard/nearby_offroaders",
-  COMMUNITY_TIPS: "@trailguard/community_tips",
-  CHAT_CONVERSATIONS: "@trailguard/chat_conversations",
-  FRIENDS_DATA: "@trailguard/friends_data",
-  STATUS_UPDATES: "@trailguard/status_updates",
-  FIRST_LAUNCH: "@trailguard/first_launch",
+  USER_PROFILE: "@adventure-time/user_profile",
+  SAVED_GUIDES: "@adventure-time/saved_guides",
+  EMERGENCY_CONTACTS: "@adventure-time/emergency_contacts",
+  SCAN_HISTORY: "@adventure-time/scan_history",
+  HELP_REQUESTS: "@adventure-time/help_requests",
+  NEARBY_OFFROADERS: "@adventure-time/nearby_offroaders",
+  COMMUNITY_TIPS: "@adventure-time/community_tips",
+  CHAT_CONVERSATIONS: "@adventure-time/chat_conversations",
+  FRIENDS_DATA: "@adventure-time/friends_data",
+  STATUS_UPDATES: "@adventure-time/status_updates",
+  FIRST_LAUNCH: "@adventure-time/first_launch",
 };
 
 export interface TrailStats {
