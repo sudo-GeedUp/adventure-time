@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, ScrollView, Linking } from "react-native";
+import { View, StyleSheet, Pressable, Linking } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import ScreenScrollView from "@/components/ScreenScrollView";
+import { ScreenScrollView } from "@/components/ScreenScrollView";
 import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { Typography, Spacing, BorderRadius, Colors } from "@/constants/theme";
+import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 
 const DONATION_TIERS = [
   {
