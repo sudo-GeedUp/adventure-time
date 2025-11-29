@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable } from "react-native";
+import { View, StyleSheet, Pressable, TextInput } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import ThemedText from "@/components/ThemedText";
@@ -30,21 +30,21 @@ const DONATION_TIERS = [
   },
   {
     id: "lunch",
-    amount: 25,
+    amount: 20,
     emoji: "🍔",
     label: "Trail Lunch",
     description: "Support trail maintenance",
   },
   {
     id: "adventure",
-    amount: 50,
+    amount: 40,
     emoji: "🗻",
     label: "Adventure",
     description: "Help build new features",
   },
   {
     id: "expedition",
-    amount: 100,
+    amount: 80,
     emoji: "🚀",
     label: "Expedition",
     description: "Major feature sponsor",
@@ -54,10 +54,9 @@ const DONATION_TIERS = [
 export default function DonateScreen() {
   const { theme } = useTheme();
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
+  const [customAmount, setCustomAmount] = useState("");
 
   const handleDonate = async (amount: number) => {
-    // For now, show a message. In production, integrate Stripe payment
-    // Open donation link or show payment option
     alert(
       `Thank you for supporting Adventure Time!\n\nDonation: $${amount}\n\nPayment processing coming soon!`
     );
@@ -133,14 +132,46 @@ export default function DonateScreen() {
           </View>
         </View>
 
+        {/* Custom Amount */}
+        <View style={styles.customContainer}>
+          <ThemedText style={[Typography.h3, styles.customTitle]}>
+            Or Enter Custom Amount
+          </ThemedText>
+          <View
+            style={[
+              styles.customInputWrapper,
+              { borderColor: theme.primary, backgroundColor: theme.backgroundSecondary },
+            ]}
+          >
+            <ThemedText style={styles.currencySymbol}>$</ThemedText>
+            <TextInput
+              style={[styles.customInput, { color: theme.text }]}
+              placeholder="0.00"
+              placeholderTextColor={theme.tabIconDefault}
+              keyboardType="decimal-pad"
+              value={customAmount}
+              onChangeText={setCustomAmount}
+            />
+          </View>
+        </View>
+
         {/* CTA Button */}
-        {selectedTier && (
+        {(selectedTier || customAmount) && (
           <Pressable
             style={[styles.donateButton, { backgroundColor: theme.primary }]}
             onPress={() => {
-              const tier = DONATION_TIERS.find((t) => t.id === selectedTier);
-              if (tier) {
-                handleDonate(tier.amount);
+              if (customAmount) {
+                const amount = parseFloat(customAmount);
+                if (!isNaN(amount) && amount > 0) {
+                  handleDonate(amount);
+                } else {
+                  alert("Please enter a valid amount");
+                }
+              } else if (selectedTier) {
+                const tier = DONATION_TIERS.find((t) => t.id === selectedTier);
+                if (tier) {
+                  handleDonate(tier.amount);
+                }
               }
             }}
           >
@@ -329,6 +360,31 @@ const styles = StyleSheet.create({
   benefitDescription: {
     fontSize: 13,
     marginTop: Spacing.xs,
+  },
+  customContainer: {
+    marginBottom: Spacing["2xl"],
+  },
+  customTitle: {
+    marginBottom: Spacing.md,
+    textAlign: "center",
+  },
+  customInputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: BorderRadius.lg,
+    borderWidth: 2,
+    paddingHorizontal: Spacing.md,
+    gap: Spacing.xs,
+  },
+  currencySymbol: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  customInput: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    fontSize: 16,
+    fontWeight: "600",
   },
   footer: {
     height: Spacing.xl,
