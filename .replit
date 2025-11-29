@@ -24,3 +24,9 @@ deploymentTarget = "gce"
 
 [nix]
 packages = ["nano"]
+channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY = "${STRIPE_PUBLISHABLE_KEY}"

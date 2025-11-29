@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { View, StyleSheet, Pressable, TextInput } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, Pressable, TextInput, Alert, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { initStripe, useConfirmPayment } from "@stripe/stripe-react-native";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -55,11 +56,37 @@ export default function DonateScreen() {
   const { theme } = useTheme();
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [customAmount, setCustomAmount] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { confirmPayment } = useConfirmPayment();
+
+  useEffect(() => {
+    const publishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+    if (publishableKey) {
+      initStripe({
+        publishableKey,
+        merchantIdentifier: "merchant.com.adventure-time",
+      });
+    }
+  }, []);
 
   const handleDonate = async (amount: number) => {
-    alert(
-      `Thank you for supporting Adventure Time!\n\nDonation: $${amount}\n\nPayment processing coming soon!`
-    );
+    if (isProcessing) return;
+    setIsProcessing(true);
+
+    try {
+      // Create payment intent on your backend
+      // For now, we'll use a test donation flow
+      Alert.alert(
+        "Thank You!",
+        `Your donation of $${amount.toFixed(2)} will help us build better trail recovery tools.\n\nPayment processing: Coming soon with full Stripe integration`,
+        [{ text: "OK" }]
+      );
+    } catch (error) {
+      Alert.alert("Error", "Failed to process donation. Please try again.");
+      console.error(error);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -155,14 +182,20 @@ export default function DonateScreen() {
         {/* CTA Button */}
         {(selectedTier || customAmount) && (
           <Pressable
-            style={[styles.donateButton, { backgroundColor: theme.primary }]}
+            style={[
+              styles.donateButton,
+              {
+                backgroundColor: isProcessing ? theme.tabIconDefault : theme.primary,
+                opacity: isProcessing ? 0.6 : 1,
+              },
+            ]}
             onPress={() => {
               if (customAmount) {
                 const amount = parseFloat(customAmount);
                 if (!isNaN(amount) && amount > 0) {
                   handleDonate(amount);
                 } else {
-                  alert("Please enter a valid amount");
+                  Alert.alert("Invalid Amount", "Please enter a valid donation amount");
                 }
               } else if (selectedTier) {
                 const tier = DONATION_TIERS.find((t) => t.id === selectedTier);
@@ -171,16 +204,23 @@ export default function DonateScreen() {
                 }
               }
             }}
+            disabled={isProcessing}
           >
-            <Feather name="heart" size={20} color={theme.backgroundDefault} />
-            <ThemedText
-              style={[
-                styles.donateButtonText,
-                { color: theme.backgroundDefault },
-              ]}
-            >
-              Donate Now
-            </ThemedText>
+            {isProcessing ? (
+              <ActivityIndicator color={theme.backgroundDefault} />
+            ) : (
+              <>
+                <Feather name="heart" size={20} color={theme.backgroundDefault} />
+                <ThemedText
+                  style={[
+                    styles.donateButtonText,
+                    { color: theme.backgroundDefault },
+                  ]}
+                >
+                  Donate Now
+                </ThemedText>
+              </>
+            )}
           </Pressable>
         )}
 
