@@ -439,6 +439,21 @@ export default function ProfileScreen() {
           <Feather name="chevron-right" size={24} color={theme.tabIconDefault} />
         </Pressable>
       </View>
+
+      <View style={styles.section}>
+        <ThemedText style={[Typography.h4, styles.sectionTitle]}>Support</ThemedText>
+        <Pressable
+          style={[styles.menuItem, { backgroundColor: theme.primary + "15" }]}
+          onPress={() => navigation.navigate("Donate")}
+          android_ripple={{ color: theme.primary + "30" }}
+        >
+          <View style={styles.menuItemContent}>
+            <Feather name="heart" size={24} color={theme.primary} />
+            <ThemedText style={styles.menuItemText}>Support Adventure Time</ThemedText>
+          </View>
+          <Feather name="chevron-right" size={24} color={theme.primary} />
+        </Pressable>
+      </View>
     </ScreenScrollView>
   );
 }

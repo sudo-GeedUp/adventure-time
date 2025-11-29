@@ -9,7 +9,6 @@ import NearbyStackNavigator from "@/navigation/NearbyStackNavigator";
 import NavigateStackNavigator from "@/navigation/NavigateStackNavigator";
 import FriendsStackNavigator from "@/navigation/FriendsStackNavigator";
 import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
-import DonateStackNavigator from "@/navigation/DonateStackNavigator";
 import { useTheme } from "@/hooks/useTheme";
 
 export type MainTabParamList = {
@@ -19,7 +18,6 @@ export type MainTabParamList = {
   NavigateTab: undefined;
   FriendsTab: undefined;
   ProfileTab: undefined;
-  DonateTab: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -110,16 +108,6 @@ export default function MainTabNavigator() {
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
             <Feather name="user" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="DonateTab"
-        component={DonateStackNavigator}
-        options={{
-          title: "Donate",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="heart" size={size} color={color} />
           ),
         }}
       />
