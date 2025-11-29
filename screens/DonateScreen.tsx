@@ -63,10 +63,7 @@ export default function DonateScreen() {
   };
 
   return (
-    <ScreenScrollView
-      style={{ backgroundColor: theme.backgroundDefault }}
-      scrollViewProps={{ showsVerticalScrollIndicator: false }}
-    >
+    <ScreenScrollView style={{ backgroundColor: theme.backgroundDefault }}>
       <View style={[styles.container, { backgroundColor: theme.backgroundDefault }]}>
         {/* Header */}
         <View style={styles.header}>
