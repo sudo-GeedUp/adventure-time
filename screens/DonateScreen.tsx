@@ -10,42 +10,42 @@ const DONATION_TIERS = [
   {
     id: "dollar",
     amount: 1,
-    emoji: "💵",
+    icon: "dollar-sign" as const,
     label: "Just a Dollar",
     description: "Every bit helps",
   },
   {
     id: "coffee",
     amount: 5,
-    emoji: "☕",
+    icon: "coffee" as const,
     label: "Coffee",
     description: "Buy the team a coffee",
   },
   {
     id: "snack",
     amount: 10,
-    emoji: "🥤",
+    icon: "droplet" as const,
     label: "Trail Snack",
     description: "Help with small improvements",
   },
   {
     id: "lunch",
     amount: 20,
-    emoji: "🍔",
+    icon: "utensils" as const,
     label: "Trail Lunch",
     description: "Support trail maintenance",
   },
   {
     id: "adventure",
     amount: 40,
-    emoji: "🗻",
+    icon: "mountain" as const,
     label: "Adventure",
     description: "Help build new features",
   },
   {
     id: "expedition",
     amount: 80,
-    emoji: "🚀",
+    icon: "rocket" as const,
     label: "Expedition",
     description: "Major feature sponsor",
   },
@@ -114,7 +114,7 @@ export default function DonateScreen() {
                 ]}
                 onPress={() => setSelectedTier(tier.id)}
               >
-                <ThemedText style={styles.tierEmoji}>{tier.emoji}</ThemedText>
+                <Feather name={tier.icon} size={32} color={theme.primary} />
                 <ThemedText style={[Typography.label, styles.tierAmount]}>
                   ${tier.amount}
                 </ThemedText>
@@ -299,10 +299,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: "center",
     gap: Spacing.xs,
-  },
-  tierEmoji: {
-    fontSize: 32,
-    marginBottom: Spacing.xs,
   },
   tierAmount: {
     fontSize: 24,
