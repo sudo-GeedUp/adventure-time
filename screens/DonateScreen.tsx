@@ -1,11 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { View, StyleSheet, Pressable, TextInput, Alert, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { initStripe, useConfirmPayment } from "@stripe/stripe-react-native";
+import * as WebBrowser from "expo-web-browser";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
+
+// Stripe Payment Links - Create these in your Stripe Dashboard
+// Go to: Stripe Dashboard → Products → Payment Links → Create payment link
+// Set each link to accept the specific donation amount
+// Replace these placeholder URLs with your actual Stripe Payment Link URLs
+const STRIPE_PAYMENT_LINKS: Record<string, string> = {
+  dollar: "", // $1 payment link
+  coffee: "", // $5 payment link  
+  snack: "", // $10 payment link
+  lunch: "", // $20 payment link
+  adventure: "", // $40 payment link
+  expedition: "", // $80 payment link
+  custom: "", // Custom amount payment link (uses Stripe's "customer chooses price" option)
+};
 
 const DONATION_TIERS = [
   {
@@ -57,36 +71,47 @@ export default function DonateScreen() {
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [customAmount, setCustomAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const { confirmPayment } = useConfirmPayment();
 
-  useEffect(() => {
-    const publishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-    if (publishableKey) {
-      initStripe({
-        publishableKey,
-        merchantIdentifier: "merchant.com.adventure-time",
-      });
-    }
-  }, []);
-
-  const handleDonate = async (amount: number) => {
-    if (isProcessing) return;
-    setIsProcessing(true);
-
-    try {
-      // Create payment intent on your backend
-      // For now, we'll use a test donation flow
+  const openStripePaymentLink = async (tierId: string, amount: number) => {
+    const paymentLink = STRIPE_PAYMENT_LINKS[tierId];
+    
+    if (!paymentLink) {
+      // Payment links not configured yet - show setup instructions
       Alert.alert(
-        "Thank You!",
-        `Your donation of $${amount.toFixed(2)} will help us build better trail recovery tools.\n\nPayment processing: Coming soon with full Stripe integration`,
+        "Setup Required",
+        `To enable $${amount} donations, create a Payment Link in your Stripe Dashboard:\n\n` +
+        "1. Go to stripe.com/dashboard\n" +
+        "2. Navigate to Products → Payment Links\n" +
+        "3. Create a link for $" + amount + "\n" +
+        "4. Copy the URL and add it to DonateScreen.tsx",
         [{ text: "OK" }]
       );
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      // Open Stripe's hosted checkout page in a browser
+      const result = await WebBrowser.openBrowserAsync(paymentLink, {
+        dismissButtonStyle: "close",
+        presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+      });
+      
+      if (result.type === "cancel") {
+        // User closed the browser without completing payment
+        console.log("Payment cancelled by user");
+      }
     } catch (error) {
-      Alert.alert("Error", "Failed to process donation. Please try again.");
+      Alert.alert("Error", "Failed to open payment page. Please try again.");
       console.error(error);
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleDonate = async (tierId: string, amount: number) => {
+    if (isProcessing) return;
+    await openStripePaymentLink(tierId, amount);
   };
 
   return (
@@ -193,14 +218,14 @@ export default function DonateScreen() {
               if (customAmount) {
                 const amount = parseFloat(customAmount);
                 if (!isNaN(amount) && amount > 0) {
-                  handleDonate(amount);
+                  handleDonate("custom", amount);
                 } else {
                   Alert.alert("Invalid Amount", "Please enter a valid donation amount");
                 }
               } else if (selectedTier) {
                 const tier = DONATION_TIERS.find((t) => t.id === selectedTier);
                 if (tier) {
-                  handleDonate(tier.amount);
+                  handleDonate(tier.id, tier.amount);
                 }
               }
             }}
