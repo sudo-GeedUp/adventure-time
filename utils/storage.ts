@@ -12,6 +12,7 @@ const KEYS = {
   FRIENDS_DATA: "@adventure-time/friends_data",
   STATUS_UPDATES: "@adventure-time/status_updates",
   FIRST_LAUNCH: "@adventure-time/first_launch",
+  SPECIAL_THANKS_SHOWN: "@adventure-time/special_thanks_shown",
 };
 
 export interface TrailStats {
@@ -669,6 +670,24 @@ export const storage = {
       await AsyncStorage.setItem(KEYS.FIRST_LAUNCH, "true");
     } catch (error) {
       console.error("Error setting first launch done:", error);
+    }
+  },
+
+  async getSpecialThanksShown(): Promise<boolean> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.SPECIAL_THANKS_SHOWN);
+      return data === "true";
+    } catch (error) {
+      console.error("Error getting special thanks status:", error);
+      return false;
+    }
+  },
+
+  async setSpecialThanksShown(): Promise<void> {
+    try {
+      await AsyncStorage.setItem(KEYS.SPECIAL_THANKS_SHOWN, "true");
+    } catch (error) {
+      console.error("Error setting special thanks shown:", error);
     }
   },
 };

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -8,19 +8,35 @@ import { StatusBar } from "expo-status-bar";
 
 import RootNavigator from "@/navigation/RootNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import SpecialThanksModal from "@/components/SpecialThanksModal";
 import { initializeFirebase } from "@/config/firebase";
 import { initializeAuth } from "@/utils/firebaseHelpers";
+import { storage } from "@/utils/storage";
 
 export default function App() {
+  const [showSpecialThanks, setShowSpecialThanks] = useState(false);
+
   useEffect(() => {
-    const initFirebase = async () => {
+    const init = async () => {
+      // Initialize Firebase
       const firebaseServices = await initializeFirebase();
       if (firebaseServices && firebaseServices.auth) {
         await initializeAuth(firebaseServices.auth);
       }
+
+      // Check if special thanks has been shown
+      const hasSeenThanks = await storage.getSpecialThanksShown();
+      if (!hasSeenThanks) {
+        setShowSpecialThanks(true);
+      }
     };
-    initFirebase();
+    init();
   }, []);
+
+  const handleCloseThanks = async () => {
+    await storage.setSpecialThanksShown();
+    setShowSpecialThanks(false);
+  };
 
   return (
   <ErrorBoundary>
@@ -34,6 +50,7 @@ export default function App() {
           </KeyboardProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>
+      <SpecialThanksModal visible={showSpecialThanks} onClose={handleCloseThanks} />
   </ErrorBoundary>
   );
 }
