@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Linking } from "react-native";
+import { View, StyleSheet, Pressable } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import ThemedText from "@/components/ThemedText";
@@ -8,11 +8,25 @@ import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 
 const DONATION_TIERS = [
   {
+    id: "dollar",
+    amount: 1,
+    emoji: "💵",
+    label: "Just a Dollar",
+    description: "Every bit helps",
+  },
+  {
     id: "coffee",
     amount: 5,
     emoji: "☕",
     label: "Coffee",
     description: "Buy the team a coffee",
+  },
+  {
+    id: "snack",
+    amount: 10,
+    emoji: "🥤",
+    label: "Trail Snack",
+    description: "Help with small improvements",
   },
   {
     id: "lunch",
@@ -174,24 +188,6 @@ export default function DonateScreen() {
           />
         </View>
 
-        {/* FAQ */}
-        <View style={styles.faqContainer}>
-          <ThemedText style={[Typography.h3, styles.faqTitle]}>
-            Questions?
-          </ThemedText>
-          <Pressable
-            style={styles.faqItem}
-            onPress={() =>
-              Linking.openURL("mailto:contact@adventure-time.app")
-            }
-          >
-            <Feather name="mail" size={18} color={theme.primary} />
-            <ThemedText style={[styles.faqText, { color: theme.primary }]}>
-              Email us: contact@adventure-time.app
-            </ThemedText>
-          </Pressable>
-        </View>
-
         <View style={styles.footer} />
       </View>
     </ScreenScrollView>
@@ -333,21 +329,6 @@ const styles = StyleSheet.create({
   benefitDescription: {
     fontSize: 13,
     marginTop: Spacing.xs,
-  },
-  faqContainer: {
-    marginBottom: Spacing["2xl"],
-  },
-  faqTitle: {
-    marginBottom: Spacing.lg,
-  },
-  faqItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-    paddingVertical: Spacing.md,
-  },
-  faqText: {
-    fontSize: 14,
   },
   footer: {
     height: Spacing.xl,
