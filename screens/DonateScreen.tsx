@@ -7,18 +7,25 @@ import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 
-// Stripe Payment Links - Create these in your Stripe Dashboard
-// Go to: Stripe Dashboard → Products → Payment Links → Create payment link
-// Set each link to accept the specific donation amount
-// Replace these placeholder URLs with your actual Stripe Payment Link URLs
+// ============================================================================
+// STRIPE PAYMENT LINKS CONFIGURATION
+// ============================================================================
+// Create Payment Links in Stripe Dashboard: stripe.com/dashboard → Products → Payment Links
+//
+// For fixed tiers: Create a one-time payment product for each amount
+// For custom: Create a link with "Let customer choose price" enabled
+//
+// Replace empty strings with your actual Stripe Payment Link URLs
+// Example: "https://buy.stripe.com/test_abc123"
+// ============================================================================
 const STRIPE_PAYMENT_LINKS: Record<string, string> = {
-  dollar: "", // $1 payment link
-  coffee: "", // $5 payment link  
-  snack: "", // $10 payment link
-  lunch: "", // $20 payment link
-  adventure: "", // $40 payment link
-  expedition: "", // $80 payment link
-  custom: "", // Custom amount payment link (uses Stripe's "customer chooses price" option)
+  dollar: "",     // $1 - "Just a Dollar" tier
+  coffee: "",     // $5 - "Coffee" tier  
+  snack: "",      // $10 - "Trail Snack" tier
+  lunch: "",      // $20 - "Trail Lunch" tier
+  adventure: "",  // $40 - "Adventure" tier
+  expedition: "", // $80 - "Expedition" tier
+  custom: "",     // Variable amount - Enable "Let customer choose price" in Stripe
 };
 
 const DONATION_TIERS = [
@@ -77,13 +84,18 @@ export default function DonateScreen() {
     
     if (!paymentLink) {
       // Payment links not configured yet - show setup instructions
+      const isCustom = tierId === "custom";
       Alert.alert(
-        "Setup Required",
-        `To enable $${amount} donations, create a Payment Link in your Stripe Dashboard:\n\n` +
-        "1. Go to stripe.com/dashboard\n" +
-        "2. Navigate to Products → Payment Links\n" +
-        "3. Create a link for $" + amount + "\n" +
-        "4. Copy the URL and add it to DonateScreen.tsx",
+        "Stripe Setup Required",
+        isCustom 
+          ? "To enable custom amount donations:\n\n" +
+            "1. Go to stripe.com/dashboard\n" +
+            "2. Create a Payment Link with 'Let customer choose price' enabled\n" +
+            "3. Add the URL to STRIPE_PAYMENT_LINKS.custom in DonateScreen.tsx"
+          : `To enable $${amount} donations:\n\n` +
+            "1. Go to stripe.com/dashboard\n" +
+            "2. Create a Payment Link for this tier\n" +
+            "3. Add the URL to STRIPE_PAYMENT_LINKS." + tierId + " in DonateScreen.tsx",
         [{ text: "OK" }]
       );
       return;
