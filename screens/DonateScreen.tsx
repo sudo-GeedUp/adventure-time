@@ -25,7 +25,7 @@ const STRIPE_PAYMENT_LINKS: Record<string, string> = {
   lunch: "",      // $20 - "Trail Lunch" tier
   adventure: "",  // $40 - "Adventure" tier
   expedition: "", // $80 - "Expedition" tier
-  custom: "",     // Variable amount - Enable "Let customer choose price" in Stripe
+  custom: "https://buy.stripe.com/bJeaEX4Gfe5Z8Ah4fbfMA00", // Variable amount - Enable "Let customer choose price" in Stripe
 };
 
 const DONATION_TIERS = [
