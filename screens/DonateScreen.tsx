@@ -23,8 +23,6 @@ const STRIPE_PAYMENT_LINKS: Record<string, string> = {
   coffee: "",     // $5 - "Coffee" tier  
   snack: "",      // $10 - "Trail Snack" tier
   lunch: "",      // $20 - "Trail Lunch" tier
-  adventure: "",  // $40 - "Adventure" tier
-  expedition: "", // $80 - "Expedition" tier
   custom: "https://buy.stripe.com/bJeaEX4Gfe5Z8Ah4fbfMA00", // Variable amount - Enable "Let customer choose price" in Stripe
 };
 
@@ -56,20 +54,6 @@ const DONATION_TIERS = [
     icon: "sun" as const,
     label: "Trail Lunch",
     description: "Support trail maintenance",
-  },
-  {
-    id: "adventure",
-    amount: 40,
-    icon: "compass" as const,
-    label: "Adventure",
-    description: "Help build new features",
-  },
-  {
-    id: "expedition",
-    amount: 80,
-    icon: "award" as const,
-    label: "Expedition",
-    description: "Major feature sponsor",
   },
 ];
 
