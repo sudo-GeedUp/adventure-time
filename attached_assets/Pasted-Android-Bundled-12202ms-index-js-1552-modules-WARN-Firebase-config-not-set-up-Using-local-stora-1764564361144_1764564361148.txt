@@ -1,0 +1,38 @@
+Android Bundled 12202ms index.js (1552 modules)
+ WARN  Firebase config not set up. Using local storage mode.
+ LOG  Apply filters debug: {"difficultyFilter": "All", "filtered": 0, "landTypeFilter": "All", "searchQuery": "", "trails": 0}
+ LOG  Apply filters debug: {"difficultyFilter": "All", "filtered": 6, "landTypeFilter": "All", "searchQuery": "", "trails": 6}
+ LOG  Weather data cached successfully
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  "crown" is not a valid icon name for family "feather"
+ WARN  [expo-image-picker] `ImagePicker.MediaTypeOptions` have been deprecated. Use `ImagePicker.MediaType` or an array of `ImagePicker.MediaType` instead.
+Android Bundled 118ms index.js (1 module)
+Android Bundled 115ms index.js (1 module)
+ WARN  Firebase config not set up. Using local storage mode.
+ WARN  [expo-image-picker] `ImagePicker.MediaTypeOptions` have been deprecated. Use `ImagePicker.MediaType` or an array of `ImagePicker.MediaType` instead.
+Android Bundled 117ms index.js (1 module)
+ WARN  Firebase config not set up. Using local storage mode.
+ WARN  [expo-image-picker] `ImagePicker.MediaTypeOptions` have been deprecated. Use `ImagePicker.MediaType` or an array of `ImagePicker.MediaType` instead.
+

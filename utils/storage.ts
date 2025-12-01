@@ -40,7 +40,7 @@ export const MILESTONE_BADGES: Badge[] = [
   { id: "expedition", name: "Expedition Master", description: "Travel 1,000 off-highway miles", icon: "award", milesRequired: 1000 },
   { id: "legend", name: "Trail Legend", description: "Travel 2,500 off-highway miles", icon: "star", milesRequired: 2500 },
   { id: "pioneer", name: "Pioneer Elite", description: "Travel 5,000 off-highway miles", icon: "zap", milesRequired: 5000 },
-  { id: "boss", name: "Trail Boss", description: "Travel 7,500 off-highway miles", icon: "crown", milesRequired: 7500 },
+  { id: "boss", name: "Trail Boss", description: "Travel 7,500 off-highway miles", icon: "target", milesRequired: 7500 },
 ];
 
 export interface UserProfile {
