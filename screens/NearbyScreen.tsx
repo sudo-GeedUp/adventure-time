@@ -1,42 +1,35 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, FlatList, Alert } from "react-native";
+import { View, StyleSheet, Pressable, FlatList, Alert, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
 import ThemedText from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
+import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { useTheme } from "@/hooks/useTheme";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage, NearbyOffroader as StoredOffroader, UserProfile } from "@/utils/storage";
-import { calculateDistance, generateNearbyCoordinate } from "@/utils/location";
+import { calculateDistance } from "@/utils/location";
 import { getWeather } from "@/utils/weather";
 import { analyzeTrailConditions, calculateImpactAssessment } from "@/utils/conditions";
 import type { WeatherCondition, ImpactAssessment, TrailConditionSummary } from "@/utils/conditions";
 import ReportConditionModal from "@/components/ReportConditionModal";
 
+let MapView: any = null;
+let Marker: any = null;
+
+if (Platform.OS !== "web") {
+  try {
+    const maps = require("react-native-maps");
+    MapView = maps.default;
+    Marker = maps.Marker;
+  } catch (e) {
+    // Maps not available
+  }
+}
+
 interface NearbyOffroader extends StoredOffroader {
   distance: number;
 }
-
-const mockNames = [
-  "Alex Rodriguez",
-  "Jamie Chen",
-  "Morgan Taylor",
-  "Jordan Smith",
-  "Casey Johnson",
-  "Riley Martinez",
-];
-
-const mockVehicles = [
-  "Jeep Wrangler",
-  "Toyota 4Runner",
-  "Ford Bronco",
-  "Land Rover Defender",
-  "Chevrolet Colorado ZR2",
-  "Ram 1500 TRX",
-];
 
 const MAP_RADIUS = 10;
 
@@ -56,11 +49,11 @@ function getTimeAgo(timestamp: number): string {
   }
 }
 
+const mapsAvailable = MapView !== null;
+
 export default function NearbyScreen() {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
-  const insets = useSafeAreaInsets();
-  const tabBarHeight = useBottomTabBarHeight();
   const [location, setLocation] = useState<any>(null);
   const [offroaders, setOffroaders] = useState<NearbyOffroader[]>([]);
   const [weather, setWeather] = useState<WeatherCondition | null>(null);
@@ -94,18 +87,9 @@ export default function NearbyScreen() {
 
   const loadNearbyOffroaders = async (currentLocation: any) => {
     try {
-      let stored = await storage.getNearbyOffroaders();
-      
-      if (stored.length === 0) {
-        stored = generateMockOffroaders(currentLocation.coords);
-        for (const offroader of stored) {
-          await storage.addNearbyOffroader(offroader);
-        }
-      }
-
       await storage.removeOldOffroaders(30);
       
-      stored = await storage.getNearbyOffroaders();
+      let stored = await storage.getNearbyOffroaders();
 
       const withDistances: NearbyOffroader[] = stored.map((offroader) => ({
         ...offroader,
@@ -151,29 +135,6 @@ export default function NearbyScreen() {
     } finally {
       setIsLoadingWeather(false);
     }
-  };
-
-  const generateMockOffroaders = (userLocation: {
-    latitude: number;
-    longitude: number;
-  }): StoredOffroader[] => {
-    const count = Math.floor(Math.random() * 3) + 2;
-    const offroaders: StoredOffroader[] = [];
-
-    for (let i = 0; i < count; i++) {
-      const location = generateNearbyCoordinate(userLocation, 10);
-      
-      offroaders.push({
-        id: `offroader_${Date.now()}_${i}`,
-        name: mockNames[Math.floor(Math.random() * mockNames.length)],
-        vehicleType: mockVehicles[Math.floor(Math.random() * mockVehicles.length)],
-        location,
-        equipment: ["Winch", "Tow Straps", "Recovery Boards"],
-        lastSeen: Date.now(),
-      });
-    }
-
-    return offroaders;
   };
 
   const loadUserProfile = async () => {
@@ -230,15 +191,7 @@ export default function NearbyScreen() {
 
   return (
     <>
-      <ThemedView
-        style={[
-          styles.container,
-          {
-            paddingTop: insets.top + Spacing.xl,
-            paddingBottom: tabBarHeight + Spacing.xl,
-          },
-        ]}
-      >
+      <ScreenScrollView>
         <View style={styles.header}>
           <View style={styles.headerContent}>
             <Feather name="map-pin" size={24} color={theme.success} />
@@ -256,12 +209,39 @@ export default function NearbyScreen() {
           </View>
         </View>
 
-        <View style={[styles.mapPlaceholder, { backgroundColor: theme.backgroundSecondary }]}>
-          <Feather name="map" size={64} color={theme.tabIconDefault} style={styles.mapIcon} />
-          <ThemedText style={[styles.mapText, { color: theme.tabIconDefault }]}>
-            Map view showing your location and nearby offroaders
-          </ThemedText>
-        </View>
+        {mapsAvailable && location ? (
+          <View style={styles.mapContainer}>
+            <MapView
+              style={styles.map}
+              initialRegion={{
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+                latitudeDelta: 0.1,
+                longitudeDelta: 0.1,
+              }}
+              showsUserLocation
+              showsMyLocationButton
+            >
+              {offroaders.map((offroader) => (
+                <Marker
+                  key={offroader.id}
+                  coordinate={offroader.location}
+                  title={offroader.name}
+                  description={offroader.vehicleType}
+                />
+              ))}
+            </MapView>
+          </View>
+        ) : (
+          <View style={[styles.mapPlaceholder, { backgroundColor: theme.backgroundSecondary }]}>
+            <Feather name="map" size={64} color={theme.tabIconDefault} style={styles.mapIcon} />
+            <ThemedText style={[styles.mapText, { color: theme.tabIconDefault }]}>
+              {Platform.OS === "web" 
+                ? "Map available in Expo Go app" 
+                : location ? "Loading map..." : "Getting location..."}
+            </ThemedText>
+          </View>
+        )}
 
         {isLoadingWeather ? (
           <View style={[
@@ -392,7 +372,7 @@ export default function NearbyScreen() {
           userProfile={userProfile}
           onReportSubmitted={handleReportSubmitted}
         />
-      </ThemedView>
+      </ScreenScrollView>
     </>
   );
 }
@@ -425,6 +405,16 @@ const styles = StyleSheet.create({
   },
   refreshButton: {
     padding: Spacing.sm,
+  },
+  mapContainer: {
+    height: 200,
+    borderRadius: BorderRadius.md,
+    overflow: "hidden",
+    marginBottom: Spacing.xl,
+  },
+  map: {
+    width: "100%",
+    height: "100%",
   },
   mapPlaceholder: {
     height: 200,

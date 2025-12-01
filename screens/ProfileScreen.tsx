@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, StyleSheet, Pressable, TextInput, Switch, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -45,11 +45,31 @@ export default function ProfileScreen() {
     equipment: [],
   });
   const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([]);
+  const isInitialLoad = useRef(true);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     loadProfile();
     loadEmergencyContacts();
   }, []);
+
+  useEffect(() => {
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      return;
+    }
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      storage.saveUserProfile(profile);
+    }, 500);
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [profile]);
 
   const loadProfile = async () => {
     const savedProfile = await storage.getUserProfile();
@@ -64,6 +84,7 @@ export default function ProfileScreen() {
         },
         equipment: savedProfile.equipment || [],
       });
+      isInitialLoad.current = true;
     }
   };
 
