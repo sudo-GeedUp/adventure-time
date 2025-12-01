@@ -77,7 +77,27 @@ export default function FriendsScreen() {
   }, []);
 
   const loadFriendsData = async () => {
-    // Firebase service not configured, using local storage
+    // Try Firebase first, fallback to local storage
+    try {
+      const { getFirebaseServices } = require("@/config/firebase");
+      const { db } = getFirebaseServices();
+      if (db) {
+        const { getCurrentUser } = require("@/utils/firebaseHelpers");
+        const user = getCurrentUser();
+        if (user) {
+          const { subscribeToFriends } = require("@/utils/firebaseHelpers");
+          const unsubscribeFn = subscribeToFriends(db, user.uid, (friendsData) => {
+            setFriends(friendsData);
+            setUseFirebase(true);
+          });
+          setUnsubscribe(() => unsubscribeFn);
+          return;
+        }
+      }
+    } catch (e) {
+      // Firebase not available
+    }
+    // Fallback to local storage
     const friendsData = await storage.getFriendsData();
     setFriends(friendsData);
   };
@@ -395,19 +415,23 @@ export default function FriendsScreen() {
               { textAlign: "center", color: theme.text },
             ]}
           >
-            Add friends to see their adventures and locations
+            {useFirebase
+              ? "Waiting for friends to connect..."
+              : "Add friends to see their adventures and locations"}
           </ThemedText>
-          <Pressable
-            onPress={addSampleFriends}
-            style={[
-              styles.addFriendsButton,
-              { backgroundColor: theme.primary },
-            ]}
-          >
-            <ThemedText style={[Typography.button, { color: "#fff" }]}>
-              Add Sample Friends
-            </ThemedText>
-          </Pressable>
+          {!useFirebase && (
+            <Pressable
+              onPress={addSampleFriends}
+              style={[
+                styles.addFriendsButton,
+                { backgroundColor: theme.primary },
+              ]}
+            >
+              <ThemedText style={[Typography.button, { color: "#fff" }]}>
+                Add Sample Friends
+              </ThemedText>
+            </Pressable>
+          )}
         </View>
       ) : (
         <FlatList

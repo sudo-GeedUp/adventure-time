@@ -38,7 +38,18 @@
           }
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "react-native-maps",
+        {
+          "ios": {
+            "googleMapsApiKey": "AIzaSyDhv0WphFWD9MLC7T9EKOVV6Seg6WVhLXQ"
+          },
+          "android": {
+            "googleMapsApiKey": "AIzaSyDhv0WphFWD9MLC7T9EKOVV6Seg6WVhLXQ"
+          }
+        }
+      ]
     ],
     "experiments": {
       "reactCompiler": true
