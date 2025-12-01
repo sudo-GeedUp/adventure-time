@@ -7,79 +7,18 @@ import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 
-// ============================================================================
-// STRIPE PAYMENT LINKS CONFIGURATION
-// ============================================================================
-// Create Payment Links in Stripe Dashboard: stripe.com/dashboard → Products → Payment Links
-//
-// For fixed tiers: Create a one-time payment product for each amount
-// For custom: Create a link with "Let customer choose price" enabled
-//
-// Replace empty strings with your actual Stripe Payment Link URLs
-// Example: "https://buy.stripe.com/test_abc123"
-// ============================================================================
-const STRIPE_PAYMENT_LINKS: Record<string, string> = {
-  dollar: "",     // $1 - "Just a Dollar" tier
-  coffee: "",     // $5 - "Coffee" tier  
-  snack: "",      // $10 - "Trail Snack" tier
-  lunch: "",      // $20 - "Trail Lunch" tier
-  custom: "https://buy.stripe.com/bJeaEX4Gfe5Z8Ah4fbfMA00", // Variable amount - Enable "Let customer choose price" in Stripe
-};
-
-const DONATION_TIERS = [
-  {
-    id: "dollar",
-    amount: 1,
-    icon: "dollar-sign" as const,
-    label: "Just a Dollar",
-    description: "Every bit helps",
-  },
-  {
-    id: "coffee",
-    amount: 5,
-    icon: "coffee" as const,
-    label: "Coffee",
-    description: "Buy the team a coffee",
-  },
-  {
-    id: "snack",
-    amount: 10,
-    icon: "droplet" as const,
-    label: "Trail Snack",
-    description: "Help with small improvements",
-  },
-  {
-    id: "lunch",
-    amount: 20,
-    icon: "sun" as const,
-    label: "Trail Lunch",
-    description: "Support trail maintenance",
-  },
-];
+const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/bJeaEX4Gfe5Z8Ah4fbfMA00";
 
 export default function DonateScreen() {
   const { theme } = useTheme();
-  const [selectedTier, setSelectedTier] = useState<string | null>(null);
   const [customAmount, setCustomAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const openStripePaymentLink = async (tierId: string, amount: number) => {
-    const paymentLink = STRIPE_PAYMENT_LINKS[tierId];
-    
-    if (!paymentLink) {
-      // Payment links not configured yet - show setup instructions
-      const isCustom = tierId === "custom";
+  const openStripePaymentLink = async () => {
+    if (!STRIPE_PAYMENT_LINK) {
       Alert.alert(
         "Stripe Setup Required",
-        isCustom 
-          ? "To enable custom amount donations:\n\n" +
-            "1. Go to stripe.com/dashboard\n" +
-            "2. Create a Payment Link with 'Let customer choose price' enabled\n" +
-            "3. Add the URL to STRIPE_PAYMENT_LINKS.custom in DonateScreen.tsx"
-          : `To enable $${amount} donations:\n\n` +
-            "1. Go to stripe.com/dashboard\n" +
-            "2. Create a Payment Link for this tier\n" +
-            "3. Add the URL to STRIPE_PAYMENT_LINKS." + tierId + " in DonateScreen.tsx",
+        "To enable donations:\n\n1. Go to stripe.com/dashboard\n2. Create a Payment Link with 'Let customer choose price' enabled\n3. Add the URL to STRIPE_PAYMENT_LINK in DonateScreen.tsx",
         [{ text: "OK" }]
       );
       return;
@@ -87,16 +26,10 @@ export default function DonateScreen() {
 
     try {
       setIsProcessing(true);
-      // Open Stripe's hosted checkout page in a browser
-      const result = await WebBrowser.openBrowserAsync(paymentLink, {
+      await WebBrowser.openBrowserAsync(STRIPE_PAYMENT_LINK, {
         dismissButtonStyle: "close",
         presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
       });
-      
-      if (result.type === "cancel") {
-        // User closed the browser without completing payment
-        console.log("Payment cancelled by user");
-      }
     } catch (error) {
       Alert.alert("Error", "Failed to open payment page. Please try again.");
       console.error(error);
@@ -105,15 +38,21 @@ export default function DonateScreen() {
     }
   };
 
-  const handleDonate = async (tierId: string, amount: number) => {
+  const handleDonate = async () => {
     if (isProcessing) return;
-    await openStripePaymentLink(tierId, amount);
+    
+    const amount = parseFloat(customAmount);
+    if (isNaN(amount) || amount <= 0) {
+      Alert.alert("Invalid Amount", "Please enter a valid donation amount");
+      return;
+    }
+    
+    await openStripePaymentLink();
   };
 
   return (
     <ScreenScrollView style={{ backgroundColor: theme.backgroundDefault }}>
       <View style={[styles.container, { backgroundColor: theme.backgroundDefault }]}>
-        {/* Header */}
         <View style={styles.header}>
           <Feather name="heart" size={48} color={theme.primary} />
           <ThemedText style={[Typography.h1, styles.title]}>
@@ -124,7 +63,6 @@ export default function DonateScreen() {
           </ThemedText>
         </View>
 
-        {/* Mission */}
         <View
           style={[
             styles.missionCard,
@@ -139,58 +77,23 @@ export default function DonateScreen() {
           </ThemedText>
         </View>
 
-        {/* Donation Tiers */}
-        <View style={styles.tiersContainer}>
-          <ThemedText style={[Typography.h2, styles.tiersTitle]}>
-            Choose Your Support Level
+        <View style={styles.donationContainer}>
+          <ThemedText style={[Typography.h2, styles.donationTitle]}>
+            Enter Your Donation
           </ThemedText>
-
-          <View style={styles.tiers}>
-            {DONATION_TIERS.map((tier) => (
-              <Pressable
-                key={tier.id}
-                style={[
-                  styles.tierCard,
-                  {
-                    backgroundColor:
-                      selectedTier === tier.id
-                        ? theme.primary + "20"
-                        : theme.backgroundSecondary,
-                    borderColor:
-                      selectedTier === tier.id ? theme.primary : theme.border,
-                  },
-                ]}
-                onPress={() => setSelectedTier(tier.id)}
-              >
-                <Feather name={tier.icon} size={32} color={theme.primary} />
-                <ThemedText style={[Typography.label, styles.tierAmount]}>
-                  ${tier.amount}
-                </ThemedText>
-                <ThemedText style={styles.tierLabel}>{tier.label}</ThemedText>
-                <ThemedText
-                  style={[styles.tierDescription, { color: theme.tabIconDefault }]}
-                >
-                  {tier.description}
-                </ThemedText>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        {/* Custom Amount */}
-        <View style={styles.customContainer}>
-          <ThemedText style={[Typography.h3, styles.customTitle]}>
-            Or Enter Custom Amount
+          <ThemedText style={[styles.donationSubtitle, { color: theme.tabIconDefault }]}>
+            Every contribution helps keep Adventure Time running
           </ThemedText>
+          
           <View
             style={[
-              styles.customInputWrapper,
+              styles.amountInputWrapper,
               { borderColor: theme.primary, backgroundColor: theme.backgroundSecondary },
             ]}
           >
-            <ThemedText style={styles.currencySymbol}>$</ThemedText>
+            <ThemedText style={[styles.currencySymbol, { color: theme.primary }]}>$</ThemedText>
             <TextInput
-              style={[styles.customInput, { color: theme.text }]}
+              style={[styles.amountInput, { color: theme.text }]}
               placeholder="0.00"
               placeholderTextColor={theme.tabIconDefault}
               keyboardType="decimal-pad"
@@ -198,34 +101,17 @@ export default function DonateScreen() {
               onChangeText={setCustomAmount}
             />
           </View>
-        </View>
 
-        {/* CTA Button */}
-        {(selectedTier || customAmount) && (
           <Pressable
             style={[
               styles.donateButton,
               {
-                backgroundColor: isProcessing ? theme.tabIconDefault : theme.primary,
+                backgroundColor: isProcessing || !customAmount ? theme.tabIconDefault : theme.primary,
                 opacity: isProcessing ? 0.6 : 1,
               },
             ]}
-            onPress={() => {
-              if (customAmount) {
-                const amount = parseFloat(customAmount);
-                if (!isNaN(amount) && amount > 0) {
-                  handleDonate("custom", amount);
-                } else {
-                  Alert.alert("Invalid Amount", "Please enter a valid donation amount");
-                }
-              } else if (selectedTier) {
-                const tier = DONATION_TIERS.find((t) => t.id === selectedTier);
-                if (tier) {
-                  handleDonate(tier.id, tier.amount);
-                }
-              }
-            }}
-            disabled={isProcessing}
+            onPress={handleDonate}
+            disabled={isProcessing || !customAmount}
           >
             {isProcessing ? (
               <ActivityIndicator color={theme.backgroundDefault} />
@@ -243,9 +129,8 @@ export default function DonateScreen() {
               </>
             )}
           </Pressable>
-        )}
+        </View>
 
-        {/* Benefits */}
         <View style={styles.benefitsContainer}>
           <ThemedText style={[Typography.h3, styles.benefitsTitle]}>
             What Your Support Enables
@@ -344,48 +229,54 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  tiersContainer: {
+  donationContainer: {
     marginBottom: Spacing["2xl"],
+    alignItems: "center",
   },
-  tiersTitle: {
-    marginBottom: Spacing.lg,
+  donationTitle: {
+    marginBottom: Spacing.sm,
     textAlign: "center",
   },
-  tiers: {
-    gap: Spacing.md,
+  donationSubtitle: {
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: Spacing.xl,
   },
-  tierCard: {
-    padding: Spacing.lg,
+  amountInputWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
     borderRadius: BorderRadius.lg,
     borderWidth: 2,
-    alignItems: "center",
-    gap: Spacing.xs,
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.sm,
+    width: "100%",
+    maxWidth: 280,
   },
-  tierAmount: {
-    fontSize: 24,
+  currencySymbol: {
+    fontSize: 28,
     fontWeight: "700",
   },
-  tierLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  tierDescription: {
-    fontSize: 12,
+  amountInput: {
+    flex: 1,
+    paddingVertical: Spacing.lg,
+    fontSize: 28,
+    fontWeight: "700",
     textAlign: "center",
-    marginTop: Spacing.xs,
   },
   donateButton: {
     flexDirection: "row",
     paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing["2xl"],
     borderRadius: BorderRadius.lg,
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.md,
-    marginBottom: Spacing["2xl"],
+    marginTop: Spacing.xl,
+    width: "100%",
+    maxWidth: 280,
   },
   donateButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "600",
   },
   benefitsContainer: {
@@ -414,31 +305,6 @@ const styles = StyleSheet.create({
   benefitDescription: {
     fontSize: 13,
     marginTop: Spacing.xs,
-  },
-  customContainer: {
-    marginBottom: Spacing["2xl"],
-  },
-  customTitle: {
-    marginBottom: Spacing.md,
-    textAlign: "center",
-  },
-  customInputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: BorderRadius.lg,
-    borderWidth: 2,
-    paddingHorizontal: Spacing.md,
-    gap: Spacing.xs,
-  },
-  currencySymbol: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  customInput: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    fontSize: 16,
-    fontWeight: "600",
   },
   footer: {
     height: Spacing.xl,
