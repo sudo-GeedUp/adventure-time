@@ -7,7 +7,7 @@ import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 
-const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/bJeaEX4Gfe5Z8Ah4fbfMA00";
+const STRIPE_PAYMENT_LINK = "https://donate.stripe.com/bJe5kDb4Dd1V8Ah273fMA01";
 
 export default function DonateScreen() {
   const { theme } = useTheme();
