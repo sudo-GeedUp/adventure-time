@@ -189,190 +189,198 @@ export default function NearbyScreen() {
     </Pressable>
   );
 
-  return (
-    <>
-      <ScreenScrollView>
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <Feather name="map-pin" size={24} color={theme.success} />
-            <ThemedText style={[Typography.h3, styles.headerTitle]}>
-              {location ? "Location Active" : "Getting Location..."}
+  const renderMapHeader = () => (
+    <View>
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <Feather name="map-pin" size={24} color={theme.success} />
+          <ThemedText style={[Typography.h3, styles.headerTitle]}>
+            {location ? "Location Active" : "Getting Location..."}
+          </ThemedText>
+        </View>
+        <View style={styles.headerButtons}>
+          <Pressable onPress={() => setShowReportModal(true)} style={styles.reportButton}>
+            <Feather name="alert-triangle" size={24} color={theme.warning} />
+          </Pressable>
+          <Pressable onPress={handleRefresh} style={styles.refreshButton}>
+            <Feather name="refresh-cw" size={24} color={theme.primary} />
+          </Pressable>
+        </View>
+      </View>
+
+      {mapsAvailable && location ? (
+        <View style={styles.mapContainer}>
+          <MapView
+            style={styles.map}
+            initialRegion={{
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+              latitudeDelta: 0.1,
+              longitudeDelta: 0.1,
+            }}
+            showsUserLocation
+            showsMyLocationButton
+          >
+            {offroaders.map((offroader) => (
+              <Marker
+                key={offroader.id}
+                coordinate={offroader.location}
+                title={offroader.name}
+                description={offroader.vehicleType}
+              />
+            ))}
+          </MapView>
+        </View>
+      ) : (
+        <View style={[styles.mapPlaceholder, { backgroundColor: theme.backgroundSecondary }]}>
+          <Feather name="map" size={64} color={theme.tabIconDefault} style={styles.mapIcon} />
+          <ThemedText style={[styles.mapText, { color: theme.tabIconDefault }]}>
+            {Platform.OS === "web" 
+              ? "Map available in Expo Go app" 
+              : location ? "Loading map..." : "Getting location..."}
+          </ThemedText>
+        </View>
+      )}
+
+      {isLoadingWeather ? (
+        <View style={[
+          styles.conditionsCard,
+          { backgroundColor: theme.backgroundDefault, borderLeftColor: theme.tabIconDefault }
+        ]}>
+          <View style={styles.loadingContainer}>
+            <Feather name="loader" size={24} color={theme.tabIconDefault} />
+            <ThemedText style={[styles.loadingText, { color: theme.tabIconDefault }]}>
+              Loading trail conditions and weather...
             </ThemedText>
-          </View>
-          <View style={styles.headerButtons}>
-            <Pressable onPress={() => setShowReportModal(true)} style={styles.reportButton}>
-              <Feather name="alert-triangle" size={24} color={theme.warning} />
-            </Pressable>
-            <Pressable onPress={handleRefresh} style={styles.refreshButton}>
-              <Feather name="refresh-cw" size={24} color={theme.primary} />
-            </Pressable>
           </View>
         </View>
-
-        {mapsAvailable && location ? (
-          <View style={styles.mapContainer}>
-            <MapView
-              style={styles.map}
-              initialRegion={{
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-                latitudeDelta: 0.1,
-                longitudeDelta: 0.1,
-              }}
-              showsUserLocation
-              showsMyLocationButton
-            >
-              {offroaders.map((offroader) => (
-                <Marker
-                  key={offroader.id}
-                  coordinate={offroader.location}
-                  title={offroader.name}
-                  description={offroader.vehicleType}
-                />
-              ))}
-            </MapView>
-          </View>
-        ) : (
-          <View style={[styles.mapPlaceholder, { backgroundColor: theme.backgroundSecondary }]}>
-            <Feather name="map" size={64} color={theme.tabIconDefault} style={styles.mapIcon} />
-            <ThemedText style={[styles.mapText, { color: theme.tabIconDefault }]}>
-              {Platform.OS === "web" 
-                ? "Map available in Expo Go app" 
-                : location ? "Loading map..." : "Getting location..."}
-            </ThemedText>
-          </View>
-        )}
-
-        {isLoadingWeather ? (
-          <View style={[
-            styles.conditionsCard,
-            { backgroundColor: theme.backgroundDefault, borderLeftColor: theme.tabIconDefault }
-          ]}>
-            <View style={styles.loadingContainer}>
-              <Feather name="loader" size={24} color={theme.tabIconDefault} />
-              <ThemedText style={[styles.loadingText, { color: theme.tabIconDefault }]}>
-                Loading trail conditions and weather...
-              </ThemedText>
-            </View>
-          </View>
-        ) : (weather || (trailConditions && trailConditions.recentTips.length > 0)) && impact ? (
-          <View style={[
-            styles.conditionsCard,
-            { backgroundColor: theme.backgroundDefault, borderLeftColor: impact.color }
-          ]}>
-            <View style={styles.conditionsHeader}>
-              <Feather 
-                name="alert-circle" 
-                size={24} 
-                color={impact.color}
-              />
-              <ThemedText style={[Typography.h4, { marginLeft: Spacing.sm }]}>
-                Current Conditions
-              </ThemedText>
-            </View>
-
-            {weather ? (
-              <View style={styles.weatherRow}>
-                <Feather name="cloud" size={18} color={theme.tabIconDefault} />
-                <ThemedText style={styles.weatherText}>
-                  {weather.condition} • {Math.round(weather.temperature)}°F • Wind {weather.windSpeed} mph
-                </ThemedText>
-              </View>
-            ) : weatherError ? (
-              <View style={styles.weatherRow}>
-                <Feather name="cloud-off" size={18} color={theme.warning} />
-                <ThemedText style={[styles.weatherText, { color: theme.warning }]}>
-                  Weather data unavailable
-                </ThemedText>
-              </View>
-            ) : null}
-
-            <View style={styles.severityBadge}>
-              <ThemedText style={[styles.severityText, { color: impact.color }]}>
-                {impact.overallSeverity.toUpperCase()} RISK
-              </ThemedText>
-            </View>
-
-            {trailConditions && trailConditions.recentTips.length > 0 ? (
-              <View style={styles.trailTipsSection}>
-                <ThemedText style={styles.sectionTitle}>
-                  Recent Trail Reports ({trailConditions.recentTips.length}):
-                </ThemedText>
-                {trailConditions.recentTips.slice(0, 3).map((tip, index) => (
-                  <View key={index} style={styles.tipItem}>
-                    <Feather name="message-circle" size={14} color={theme.primary} />
-                    <ThemedText style={styles.tipText} numberOfLines={2}>
-                      {tip.title} - {getTimeAgo(tip.timestamp)}
-                    </ThemedText>
-                  </View>
-                ))}
-              </View>
-            ) : null}
-
-            {impact.riskFactors.length > 0 ? (
-              <View style={styles.riskSection}>
-                <ThemedText style={styles.sectionTitle}>Risk Factors:</ThemedText>
-                {impact.riskFactors.map((factor, index) => (
-                  <View key={index} style={styles.riskItem}>
-                    <Feather name="alert-triangle" size={14} color={theme.warning} />
-                    <ThemedText style={styles.riskText}>{factor}</ThemedText>
-                  </View>
-                ))}
-              </View>
-            ) : null}
-
-            {impact.recommendations.length > 0 ? (
-              <View style={styles.recommendSection}>
-                <ThemedText style={styles.sectionTitle}>Recommendations:</ThemedText>
-                {impact.recommendations.slice(0, 2).map((rec, index) => (
-                  <View key={index} style={styles.recItem}>
-                    <Feather name="check-circle" size={14} color={theme.success} />
-                    <ThemedText style={styles.recText}>{rec}</ThemedText>
-                  </View>
-                ))}
-              </View>
-            ) : null}
-          </View>
-        ) : !isLoadingWeather && !weather && (!trailConditions || trailConditions.recentTips.length === 0) ? (
-          <View style={[
-            styles.conditionsCard,
-            { backgroundColor: theme.backgroundDefault, borderLeftColor: theme.tabIconDefault }
-          ]}>
-            <ThemedText style={styles.noDataText}>
-              No recent trail conditions or weather data available. Share a tip to help others!
-            </ThemedText>
-          </View>
-        ) : null}
-
-        {offroaders.length > 0 ? (
-          <View style={styles.listSection}>
-            <ThemedText style={[Typography.h4, styles.listTitle]}>
-              Nearby Offroaders ({offroaders.length})
-            </ThemedText>
-            <FlatList
-              data={offroaders}
-              renderItem={renderOffroader}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
+      ) : (weather || (trailConditions && trailConditions.recentTips.length > 0)) && impact ? (
+        <View style={[
+          styles.conditionsCard,
+          { backgroundColor: theme.backgroundDefault, borderLeftColor: impact.color }
+        ]}>
+          <View style={styles.conditionsHeader}>
+            <Feather 
+              name="alert-circle" 
+              size={24} 
+              color={impact.color}
             />
+            <ThemedText style={[Typography.h4, { marginLeft: Spacing.sm }]}>
+              Current Conditions
+            </ThemedText>
           </View>
-        ) : (
+
+          {weather ? (
+            <View style={styles.weatherRow}>
+              <Feather name="cloud" size={18} color={theme.tabIconDefault} />
+              <ThemedText style={styles.weatherText}>
+                {weather.condition} • {Math.round(weather.temperature)}°F • Wind {weather.windSpeed} mph
+              </ThemedText>
+            </View>
+          ) : weatherError ? (
+            <View style={styles.weatherRow}>
+              <Feather name="cloud-off" size={18} color={theme.warning} />
+              <ThemedText style={[styles.weatherText, { color: theme.warning }]}>
+                Weather data unavailable
+              </ThemedText>
+            </View>
+          ) : null}
+
+          <View style={styles.severityBadge}>
+            <ThemedText style={[styles.severityText, { color: impact.color }]}>
+              {impact.overallSeverity.toUpperCase()} RISK
+            </ThemedText>
+          </View>
+
+          {trailConditions && trailConditions.recentTips.length > 0 ? (
+            <View style={styles.trailTipsSection}>
+              <ThemedText style={styles.sectionTitle}>
+                Recent Trail Reports ({trailConditions.recentTips.length}):
+              </ThemedText>
+              {trailConditions.recentTips.slice(0, 3).map((tip, index) => (
+                <View key={index} style={styles.tipItem}>
+                  <Feather name="message-circle" size={14} color={theme.primary} />
+                  <ThemedText style={styles.tipText} numberOfLines={2}>
+                    {tip.title} - {getTimeAgo(tip.timestamp)}
+                  </ThemedText>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          {impact.riskFactors.length > 0 ? (
+            <View style={styles.riskSection}>
+              <ThemedText style={styles.sectionTitle}>Risk Factors:</ThemedText>
+              {impact.riskFactors.map((factor, index) => (
+                <View key={index} style={styles.riskItem}>
+                  <Feather name="alert-triangle" size={14} color={theme.warning} />
+                  <ThemedText style={styles.riskText}>{factor}</ThemedText>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          {impact.recommendations.length > 0 ? (
+            <View style={styles.recommendSection}>
+              <ThemedText style={styles.sectionTitle}>Recommendations:</ThemedText>
+              {impact.recommendations.slice(0, 2).map((rec, index) => (
+                <View key={index} style={styles.recItem}>
+                  <Feather name="check-circle" size={14} color={theme.success} />
+                  <ThemedText style={styles.recText}>{rec}</ThemedText>
+                </View>
+              ))}
+            </View>
+          ) : null}
+        </View>
+      ) : !isLoadingWeather && !weather && (!trailConditions || trailConditions.recentTips.length === 0) ? (
+        <View style={[
+          styles.conditionsCard,
+          { backgroundColor: theme.backgroundDefault, borderLeftColor: theme.tabIconDefault }
+        ]}>
+          <ThemedText style={styles.noDataText}>
+            No recent trail conditions or weather data available. Share a tip to help others!
+          </ThemedText>
+        </View>
+      ) : null}
+
+      <View style={styles.listTitle}>
+        <ThemedText style={[Typography.h4, styles.listTitleText]}>
+          Nearby Offroaders ({offroaders.length})
+        </ThemedText>
+      </View>
+    </View>
+  );
+
+  return (
+    <>
+      {offroaders.length > 0 ? (
+        <FlatList
+          ListHeaderComponent={renderMapHeader}
+          data={offroaders}
+          renderItem={renderOffroader}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={[styles.container, { paddingBottom: Spacing.xxxl }]}
+          scrollIndicatorInsets={{ bottom: Spacing.xxl }}
+        />
+      ) : (
+        <ScreenScrollView>
+          {renderMapHeader()}
           <View style={styles.emptyState}>
             <Feather name="users" size={48} color={theme.tabIconDefault} />
             <ThemedText style={[styles.emptyText, { color: theme.tabIconDefault }]}>
               No offroaders nearby at the moment. Recovery guides are available offline.
             </ThemedText>
           </View>
-        )}
+        </ScreenScrollView>
+      )}
 
-        <ReportConditionModal
-          visible={showReportModal}
-          onClose={() => setShowReportModal(false)}
-          userLocation={location}
-          userProfile={userProfile}
-          onReportSubmitted={handleReportSubmitted}
-        />
-      </ScreenScrollView>
+      <ReportConditionModal
+        visible={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        userLocation={location}
+        userProfile={userProfile}
+        onReportSubmitted={handleReportSubmitted}
+      />
     </>
   );
 }
