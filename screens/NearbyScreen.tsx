@@ -6,6 +6,7 @@ import { Feather } from "@expo/vector-icons";
 import ThemedText from "@/components/ThemedText";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { useTheme } from "@/hooks/useTheme";
+import { useScreenInsets } from "@/hooks/useScreenInsets";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage, NearbyOffroader as StoredOffroader, UserProfile } from "@/utils/storage";
 import { calculateDistance } from "@/utils/location";
@@ -16,15 +17,20 @@ import ReportConditionModal from "@/components/ReportConditionModal";
 
 let MapView: any = null;
 let Marker: any = null;
+let mapsLoadError: string | null = null;
 
 if (Platform.OS !== "web") {
   try {
     const maps = require("react-native-maps");
     MapView = maps.default;
     Marker = maps.Marker;
-  } catch (e) {
-    // Maps not available
+    console.log("Maps loaded successfully:", !!MapView);
+  } catch (e: any) {
+    mapsLoadError = e?.message || "Unknown error loading maps";
+    console.log("Maps load error:", mapsLoadError);
   }
+} else {
+  console.log("Maps not available on web platform");
 }
 
 interface NearbyOffroader extends StoredOffroader {
@@ -54,6 +60,7 @@ const mapsAvailable = MapView !== null;
 export default function NearbyScreen() {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
+  const { paddingTop, paddingBottom } = useScreenInsets();
   const [location, setLocation] = useState<any>(null);
   const [offroaders, setOffroaders] = useState<NearbyOffroader[]>([]);
   const [weather, setWeather] = useState<WeatherCondition | null>(null);
@@ -237,7 +244,13 @@ export default function NearbyScreen() {
           <ThemedText style={[styles.mapText, { color: theme.tabIconDefault }]}>
             {Platform.OS === "web" 
               ? "Map available in Expo Go app" 
-              : location ? "Loading map..." : "Getting location..."}
+              : mapsLoadError 
+                ? `Map error: ${mapsLoadError}`
+                : !mapsAvailable
+                  ? "Map requires Expo Go on device"
+                  : location 
+                    ? "Loading map..." 
+                    : "Getting location..."}
           </ThemedText>
         </View>
       )}
@@ -343,8 +356,8 @@ export default function NearbyScreen() {
         </View>
       ) : null}
 
-      <View style={styles.listTitle}>
-        <ThemedText style={[Typography.h4, styles.listTitleText]}>
+      <View style={styles.listTitleContainer}>
+        <ThemedText style={[Typography.h4, styles.listTitle]}>
           Nearby Offroaders ({offroaders.length})
         </ThemedText>
       </View>
@@ -359,8 +372,12 @@ export default function NearbyScreen() {
           data={offroaders}
           renderItem={renderOffroader}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={[styles.container, { paddingBottom: Spacing.xxxl }]}
-          scrollIndicatorInsets={{ bottom: Spacing.xxl }}
+          style={{ flex: 1, backgroundColor: theme.backgroundRoot }}
+          contentContainerStyle={[
+            styles.container,
+            { paddingTop, paddingBottom: paddingBottom + Spacing.xl }
+          ]}
+          scrollIndicatorInsets={{ bottom: paddingBottom }}
         />
       ) : (
         <ScreenScrollView>
@@ -441,6 +458,10 @@ const styles = StyleSheet.create({
   },
   listSection: {
     flex: 1,
+  },
+  listTitleContainer: {
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   listTitle: {
     marginBottom: Spacing.lg,
