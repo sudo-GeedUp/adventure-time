@@ -230,6 +230,7 @@ export default function ProfileScreen() {
         <View style={styles.badgesGrid}>
           {MILESTONE_BADGES.map((badge) => {
             const isEarned = (profile.earnedBadges || []).includes(badge.id);
+            const isValidIcon = badge.icon && typeof badge.icon === 'string';
             return (
               <View
                 key={badge.id}
@@ -242,11 +243,19 @@ export default function ProfileScreen() {
                   },
                 ]}
               >
-                <Feather
-                  name={badge.icon as any}
-                  size={24}
-                  color={isEarned ? theme.primary : theme.tabIconDefault}
-                />
+                {isValidIcon ? (
+                  <Feather
+                    name={badge.icon as any}
+                    size={24}
+                    color={isEarned ? theme.primary : theme.tabIconDefault}
+                  />
+                ) : (
+                  <Feather
+                    name="award"
+                    size={24}
+                    color={isEarned ? theme.primary : theme.tabIconDefault}
+                  />
+                )}
                 <ThemedText
                   style={[
                     styles.badgeName,

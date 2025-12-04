@@ -86,7 +86,7 @@ export default function FriendsScreen() {
         const user = getCurrentUser();
         if (user) {
           const { subscribeToFriends } = require("@/utils/firebaseHelpers");
-          const unsubscribeFn = subscribeToFriends(db, user.uid, (friendsData) => {
+          const unsubscribeFn = subscribeToFriends(db, user.uid, (friendsData: Friend[]) => {
             setFriends(friendsData);
             setUseFirebase(true);
           });
