@@ -117,6 +117,7 @@ export interface CommunityTip {
     vehicleType: string;
   };
   helpful: number;
+  suggestedSpeed?: number;
 }
 
 export interface ChatMessage {

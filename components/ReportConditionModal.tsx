@@ -7,6 +7,7 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import ThemedText from "@/components/ThemedText";
@@ -89,6 +90,7 @@ export default function ReportConditionModal({
 }: ReportConditionModalProps) {
   const { theme } = useTheme();
   const [selectedWarning, setSelectedWarning] = useState<string | null>(null);
+  const [suggestedSpeed, setSuggestedSpeed] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -102,6 +104,8 @@ export default function ReportConditionModal({
     const warningType = WARNING_TYPES.find((w) => w.id === selectedWarning);
     if (!warningType) return;
 
+    const speedValue = suggestedSpeed ? parseFloat(suggestedSpeed) : undefined;
+    
     const tip: CommunityTip = {
       id: `tip_${Date.now()}`,
       title: warningType.label,
@@ -117,12 +121,14 @@ export default function ReportConditionModal({
         vehicleType: userProfile?.vehicleType || "Unknown",
       },
       helpful: 0,
+      suggestedSpeed: speedValue && speedValue > 0 ? speedValue : undefined,
     };
 
     try {
       await storage.saveCommunityTip(tip);
       Alert.alert("Success", "Thank you! Your report helps other offroaders stay safe.");
       setSelectedWarning(null);
+      setSuggestedSpeed("");
       onReportSubmitted();
       onClose();
     } catch (error) {
@@ -213,6 +219,37 @@ export default function ReportConditionModal({
               </Pressable>
             ))}
           </ScrollView>
+
+          <View style={styles.speedSection}>
+            <ThemedText style={[styles.speedLabel, { color: theme.text }]}>
+              Suggested Trail Speed (mph)
+            </ThemedText>
+            <ThemedText style={[styles.speedHint, { color: theme.tabIconDefault }]}>
+              Optional - help others know a safe speed for this area
+            </ThemedText>
+            <View style={styles.speedInputRow}>
+              <Feather name="navigation" size={20} color={theme.primary} />
+              <TextInput
+                style={[
+                  styles.speedInput,
+                  {
+                    backgroundColor: theme.backgroundSecondary,
+                    color: theme.text,
+                    borderColor: theme.border,
+                  },
+                ]}
+                placeholder="e.g. 15"
+                placeholderTextColor={theme.tabIconDefault}
+                keyboardType="numeric"
+                value={suggestedSpeed}
+                onChangeText={setSuggestedSpeed}
+                maxLength={3}
+              />
+              <ThemedText style={[styles.speedUnit, { color: theme.tabIconDefault }]}>
+                mph
+              </ThemedText>
+            </View>
+          </View>
 
           <View style={styles.buttonContainer}>
             <Pressable
@@ -321,5 +358,40 @@ const styles = StyleSheet.create({
   buttonText: {
     fontWeight: "600",
     fontSize: 16,
+  },
+  speedSection: {
+    marginBottom: Spacing.lg,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0,0,0,0.1)",
+  },
+  speedLabel: {
+    fontWeight: "600",
+    fontSize: 15,
+    marginBottom: Spacing.xs,
+  },
+  speedHint: {
+    fontSize: 13,
+    marginBottom: Spacing.md,
+  },
+  speedInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+  speedInput: {
+    flex: 1,
+    maxWidth: 100,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    fontSize: 18,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  speedUnit: {
+    fontSize: 16,
+    fontWeight: "500",
   },
 });

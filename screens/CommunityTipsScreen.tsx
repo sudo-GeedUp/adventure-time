@@ -28,6 +28,7 @@ export default function CommunityTipsScreen() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [includeLocation, setIncludeLocation] = useState(false);
+  const [suggestedSpeed, setSuggestedSpeed] = useState("");
 
   useEffect(() => {
     loadTips();
@@ -62,6 +63,8 @@ export default function CommunityTipsScreen() {
       }
     }
 
+    const speedValue = suggestedSpeed ? parseFloat(suggestedSpeed) : undefined;
+    
     const newTip: CommunityTip = {
       id: Date.now().toString(),
       title: title.trim(),
@@ -74,12 +77,14 @@ export default function CommunityTipsScreen() {
         vehicleType: profile?.vehicleType || "Offroader",
       },
       helpful: 0,
+      suggestedSpeed: speedValue && speedValue > 0 ? speedValue : undefined,
     };
 
     await storage.saveCommunityTip(newTip);
     setTitle("");
     setDescription("");
     setIncludeLocation(false);
+    setSuggestedSpeed("");
     setShowAddForm(false);
     loadTips();
     Alert.alert("Success", "Your tip has been shared with the community!");
@@ -114,6 +119,14 @@ export default function CommunityTipsScreen() {
               {item.author.name} ({item.author.vehicleType})
             </ThemedText>
           </View>
+          {item.suggestedSpeed ? (
+            <View style={[styles.speedBadge, { backgroundColor: theme.primary + "20" }]}>
+              <Feather name="navigation" size={14} color={theme.primary} />
+              <ThemedText style={[styles.speedText, { color: theme.primary }]}>
+                {item.suggestedSpeed} mph
+              </ThemedText>
+            </View>
+          ) : null}
           {item.location ? (
             <View style={styles.locationBadge}>
               <Feather name="map-pin" size={14} color={theme.tabIconDefault} />
@@ -232,6 +245,35 @@ export default function CommunityTipsScreen() {
             />
           </View>
 
+          <View style={styles.section}>
+            <ThemedText style={styles.label}>Suggested Trail Speed (Optional)</ThemedText>
+            <ThemedText style={[styles.speedHintText, { color: theme.tabIconDefault }]}>
+              Help others know a safe speed for this area
+            </ThemedText>
+            <View style={styles.speedInputRow}>
+              <Feather name="navigation" size={20} color={theme.primary} />
+              <TextInput
+                style={[
+                  styles.speedFormInput,
+                  {
+                    backgroundColor: theme.backgroundDefault,
+                    color: theme.text,
+                    borderColor: theme.border,
+                  },
+                ]}
+                placeholder="e.g. 15"
+                placeholderTextColor={theme.tabIconDefault}
+                keyboardType="numeric"
+                value={suggestedSpeed}
+                onChangeText={setSuggestedSpeed}
+                maxLength={3}
+              />
+              <ThemedText style={[styles.speedUnitText, { color: theme.tabIconDefault }]}>
+                mph
+              </ThemedText>
+            </View>
+          </View>
+
           <Pressable
             style={styles.locationToggle}
             onPress={() => setIncludeLocation(!includeLocation)}
@@ -261,6 +303,7 @@ export default function CommunityTipsScreen() {
                 setTitle("");
                 setDescription("");
                 setIncludeLocation(false);
+                setSuggestedSpeed("");
               }}
             >
               <ThemedText style={styles.cancelButtonText}>Cancel</ThemedText>
@@ -395,6 +438,41 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 12,
     opacity: 0.7,
+  },
+  speedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.sm,
+  },
+  speedText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  speedHintText: {
+    fontSize: 13,
+    marginBottom: Spacing.md,
+  },
+  speedInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+  speedFormInput: {
+    width: 80,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    fontSize: 18,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  speedUnitText: {
+    fontSize: 16,
+    fontWeight: "500",
   },
   helpfulButton: {
     flexDirection: "row",
