@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = 8082;
-const DIST_DIR = path.join(__dirname, 'dist');
+const DIST_DIR = path.resolve(__dirname, 'dist');
 
 const mimeTypes = {
   '.html': 'text/html',
@@ -22,12 +22,21 @@ const mimeTypes = {
 };
 
 const server = http.createServer((req, res) => {
-  let filePath = path.join(DIST_DIR, req.url === '/' ? 'index.html' : req.url);
-  
-  if (!filePath.includes('.')) {
+  // Compute intended target
+  let requestedPath = req.url === '/' ? 'index.html' : req.url;
+  // Remove querystring/fragments just in case
+  requestedPath = requestedPath.split('?')[0].split('#')[0];
+  // Normalize and resolve path to prevent path traversal
+  let filePath = path.resolve(DIST_DIR, '.' + requestedPath);
+  // Ensure the final path is within DIST_DIR
+  if (!filePath.startsWith(DIST_DIR)) {
+    res.writeHead(403);
+    res.end('Forbidden');
+    return;
+  }
+  if (!path.extname(filePath)) {
     filePath = path.join(DIST_DIR, 'index.html');
   }
-
   const extname = path.extname(filePath).toLowerCase();
   const contentType = mimeTypes[extname] || 'application/octet-stream';
 
