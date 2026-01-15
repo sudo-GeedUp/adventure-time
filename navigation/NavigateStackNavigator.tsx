@@ -1,11 +1,13 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import NavigateScreen from "@/screens/NavigateScreen";
+import LiveMapScreen from "@/screens/LiveMapScreen";
 import ActiveAdventureScreen from "@/screens/ActiveAdventureScreen";
 import { useTheme } from "@/hooks/useTheme";
 import { Trail } from "@/utils/trails";
 
 export type NavigateStackParamList = {
+  LiveMap: undefined;
   NavigateMain: undefined;
   ActiveAdventure: { trail: Trail };
 };
@@ -24,6 +26,13 @@ export default function NavigateStackNavigator() {
         },
       }}
     >
+      <Stack.Screen
+        name="LiveMap"
+        component={LiveMapScreen}
+        options={{
+          title: "Live Map",
+        }}
+      />
       <Stack.Screen
         name="NavigateMain"
         component={NavigateScreen}

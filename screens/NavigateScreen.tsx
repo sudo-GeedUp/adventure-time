@@ -18,6 +18,7 @@ import {
   SAMPLE_TRAILS,
 } from "@/utils/trails";
 import { calculateDistance } from "@/utils/location";
+import { OfflineMapsManager } from "@/utils/offlineMaps";
 
 type DifficultyFilter = "All" | "Easy" | "Moderate" | "Hard" | "Expert";
 type LandTypeFilter = "All" | "Public" | "Private";
@@ -34,6 +35,8 @@ export default function NavigateScreen() {
   const [landTypeFilter, setLandTypeFilter] = useState<LandTypeFilter>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [downloadingTrails, setDownloadingTrails] = useState<Set<string>>(new Set());
+  const [cachedTrails, setCachedTrails] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     // Load trails immediately with default location
@@ -41,9 +44,9 @@ export default function NavigateScreen() {
       coords: {
         latitude: 38.5729,
         longitude: -109.5898,
-        altitude: 0,
+        altitude: null,
         accuracy: 0,
-        altitudeAccuracy: 0,
+        altitudeAccuracy: null,
         heading: 0,
         speed: 0,
       },
@@ -56,6 +59,10 @@ export default function NavigateScreen() {
   useEffect(() => {
     applyFilters();
   }, [trails, difficultyFilter, landTypeFilter, searchQuery]);
+
+  useEffect(() => {
+    loadCachedTrailsStatus();
+  }, [filteredTrails]);
 
   const requestLocationPermission = async () => {
     try {
@@ -75,9 +82,9 @@ export default function NavigateScreen() {
       coords: {
         latitude: 38.5729,
         longitude: -109.5898,
-        altitude: 0,
+        altitude: null,
         accuracy: 0,
-        altitudeAccuracy: 0,
+        altitudeAccuracy: null,
         heading: 0,
         speed: 0,
       },
@@ -120,6 +127,34 @@ export default function NavigateScreen() {
 
     console.log("Apply filters debug:", { trails: trails.length, filtered: filtered.length, difficultyFilter, landTypeFilter, searchQuery });
     setFilteredTrails(filtered);
+  };
+
+  const loadCachedTrailsStatus = async () => {
+    const cachedStatus = new Set<string>();
+    for (const trail of filteredTrails) {
+      const isCached = await OfflineMapsManager.isTrailCached(trail.id);
+      if (isCached) {
+        cachedStatus.add(trail.id);
+      }
+    }
+    setCachedTrails(cachedStatus);
+  };
+
+  const downloadTrailForOffline = async (trail: Trail) => {
+    setDownloadingTrails(prev => new Set(prev).add(trail.id));
+    try {
+      await OfflineMapsManager.cacheTrail(trail);
+      setCachedTrails(prev => new Set(prev).add(trail.id));
+      Alert.alert("Success", `"${trail.name}" downloaded for offline use!`);
+    } catch (error) {
+      Alert.alert("Error", "Failed to download trail for offline use");
+    } finally {
+      setDownloadingTrails(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(trail.id);
+        return newSet;
+      });
+    }
   };
 
   const renderTrailCard = ({ item }: { item: Trail }) => {
@@ -243,6 +278,40 @@ export default function NavigateScreen() {
             Start Adventure
           </ThemedText>
         </Pressable>
+
+        {/* Offline Download Button */}
+        <View style={styles.offlineSection}>
+          {cachedTrails.has(item.id) ? (
+            <View style={styles.offlineStatus}>
+              <Feather name="download" size={16} color={theme.success} />
+              <ThemedText style={[styles.offlineText, { color: theme.success }]}>
+                Available Offline
+              </ThemedText>
+            </View>
+          ) : (
+            <Pressable
+              style={[styles.downloadButton, { backgroundColor: theme.backgroundSecondary }]}
+              onPress={() => downloadTrailForOffline(item)}
+              disabled={downloadingTrails.has(item.id)}
+            >
+              {downloadingTrails.has(item.id) ? (
+                <>
+                  <Feather name="loader" size={16} color={theme.tabIconDefault} />
+                  <ThemedText style={[styles.downloadButtonText, { color: theme.tabIconDefault }]}>
+                    Downloading...
+                  </ThemedText>
+                </>
+              ) : (
+                <>
+                  <Feather name="download" size={16} color={theme.primary} />
+                  <ThemedText style={[styles.downloadButtonText, { color: theme.primary }]}>
+                    Download for Offline
+                  </ThemedText>
+                </>
+              )}
+            </Pressable>
+          )}
+        </View>
       </Pressable>
     );
   };
@@ -510,5 +579,45 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     maxWidth: 280,
+  },
+  startButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    marginTop: Spacing.md,
+    gap: Spacing.sm,
+  },
+  startButtonText: {
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  offlineSection: {
+    marginTop: Spacing.md,
+  },
+  offlineStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    paddingVertical: Spacing.xs,
+  },
+  offlineText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  downloadButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    gap: Spacing.xs,
+  },
+  downloadButtonText: {
+    fontSize: 12,
+    fontWeight: "600",
   },
 });

@@ -188,7 +188,7 @@ export default function NearbyScreen() {
         <View style={styles.distanceRow}>
           <Feather name="navigation" size={16} color={theme.accent} />
           <ThemedText style={[styles.distance, { color: theme.accent }]}>
-            {item.distance} miles away
+            {item.distance.toFixed(1)} miles away
           </ThemedText>
         </View>
       </View>

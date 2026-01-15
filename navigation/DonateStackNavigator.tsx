@@ -1,12 +1,12 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import DonateScreen from "@/screens/DonateScreen";
+import SubscriptionScreen from "@/screens/SubscriptionScreen";
 import { useTheme } from "@/hooks/useTheme";
 import { getCommonScreenOptions } from "@/navigation/screenOptions";
 
 export type DonateStackParamList = {
-  Donate: undefined;
+  Subscription: undefined;
 };
 
 const Stack = createNativeStackNavigator<DonateStackParamList>();
@@ -17,10 +17,10 @@ export default function DonateStackNavigator() {
   return (
     <Stack.Navigator screenOptions={getCommonScreenOptions({ theme, isDark })}>
       <Stack.Screen
-        name="Donate"
-        component={DonateScreen}
+        name="Subscription"
+        component={SubscriptionScreen}
         options={{
-          title: "Support Adventure Time",
+          title: "Premium Subscription",
         }}
       />
     </Stack.Navigator>

@@ -1,0 +1,3 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -workspace "/Users/sinjin/adventure repo/adventure-time/ios/AdventureTime.xcworkspace" -configuration Debug -scheme AdventureTime -destination id=ADCACD8E-6CAE-40D2-822C-9097E3515D81
+

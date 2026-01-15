@@ -10,12 +10,14 @@ import { useTheme } from "@/hooks/useTheme";
 import { AIScanStackParamList } from "@/navigation/AIScanStackNavigator";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage } from "@/utils/storage";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 
 type AIScanScreenNavigationProp = NativeStackNavigationProp<AIScanStackParamList, "AIScan">;
 
 export default function AIScanScreen() {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
+  const { isPremium } = useSubscription();
   const [scanHistory, setScanHistory] = useState<any[]>([]);
 
   useEffect(() => {
@@ -40,6 +42,18 @@ export default function AIScanScreen() {
   };
 
   const handleTakePhoto = async () => {
+    if (!isPremium) {
+      Alert.alert(
+        "Premium Feature",
+        "AI Recovery Analysis is a premium feature. Subscribe to unlock this and other premium features.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Subscribe", onPress: () => navigation.navigate("ProfileTab", { screen: "Subscription" }) }
+        ]
+      );
+      return;
+    }
+
     const hasPermission = await requestCameraPermission();
     if (!hasPermission) return;
 
@@ -55,6 +69,18 @@ export default function AIScanScreen() {
   };
 
   const handleUploadPhoto = async () => {
+    if (!isPremium) {
+      Alert.alert(
+        "Premium Feature",
+        "AI Recovery Analysis is a premium feature. Subscribe to unlock this and other premium features.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Subscribe", onPress: () => navigation.navigate("ProfileTab", { screen: "Subscription" }) }
+        ]
+      );
+      return;
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: false,
@@ -77,11 +103,12 @@ export default function AIScanScreen() {
           <Feather name="camera" size={64} color={theme.primary} />
         </View>
         <ThemedText style={[Typography.h3, styles.emptyTitle]}>
-          AI Recovery Analysis
+          AI Recovery Analysis {!isPremium && "🔒"}
         </ThemedText>
         <ThemedText style={[styles.emptyDescription, { color: theme.tabIconDefault }]}>
-          Take a photo of your vehicle's situation and get AI-powered recovery
-          recommendations
+          {isPremium 
+            ? "Take a photo of your vehicle's situation and get AI-powered recovery recommendations"
+            : "Premium feature: Subscribe to unlock AI-powered recovery analysis and recommendations"}
         </ThemedText>
       </View>
 

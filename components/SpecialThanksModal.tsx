@@ -46,6 +46,11 @@ export default function SpecialThanksModal({ visible, onClose }: SpecialThanksMo
               text="To those who prioritize safety and help others in need"
               theme={theme}
             />
+            <ThankItem
+              icon="heart"
+              text="Special thanks to Bryan, Bruce, Tayt, Ryan, Dillon, and ChloeAnn"
+              theme={theme}
+            />
           </View>
 
           <ThemedText style={[styles.footer, { color: theme.tabIconDefault }]}>

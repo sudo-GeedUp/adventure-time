@@ -11,6 +11,7 @@ import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage } from "@/utils/storage";
 import { calculateDistance } from "@/utils/location";
 import { Trail } from "@/utils/trails";
+import { OfflineMapsManager } from "@/utils/offlineMaps";
 
 type ActiveAdventureScreenRouteProp = RouteProp<any, "ActiveAdventure">;
 
@@ -31,6 +32,7 @@ export default function ActiveAdventureScreen() {
   const [session, setSession] = useState<AdventureSession | null>(null);
   const [isTracking, setIsTracking] = useState(true);
   const [speed, setSpeed] = useState(0);
+  const [altitude, setAltitude] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [newBadges, setNewBadges] = useState<string[]>([]);
 
@@ -63,9 +65,9 @@ export default function ActiveAdventureScreen() {
 
       locationSubscription = await Location.watchPositionAsync(
         {
-          accuracy: Location.Accuracy.High,
-          timeInterval: 5000,
-          distanceInterval: 10,
+          accuracy: Location.Accuracy.BestForNavigation,
+          timeInterval: 1000,
+          distanceInterval: 1,
         },
         (location) => {
           setSession((prev) => {
@@ -84,6 +86,7 @@ export default function ActiveAdventureScreen() {
             }
 
             setSpeed(location.coords.speed || 0);
+            setAltitude(location.coords.altitude || 0);
 
             return {
               ...prev,
@@ -109,6 +112,14 @@ export default function ActiveAdventureScreen() {
   const startAdventure = async () => {
     try {
       const location = await Location.getCurrentPositionAsync({});
+      setAltitude(location.coords.altitude || 0);
+      
+      // Cache trail for offline use if not already cached
+      const isTrailCached = await OfflineMapsManager.isTrailCached(trail.id);
+      if (!isTrailCached) {
+        await OfflineMapsManager.cacheTrail(trail);
+      }
+      
       setSession({
         startLocation: {
           latitude: location.coords.latitude,
@@ -214,6 +225,15 @@ export default function ActiveAdventureScreen() {
           <Feather name="zap" size={32} color={theme.warning} />
           <ThemedText style={[Typography.h2, styles.statValue]}>{formatSpeed(speed)}</ThemedText>
           <ThemedText style={[styles.statLabel, { color: theme.tabIconDefault }]}>mph</ThemedText>
+        </View>
+
+        {/* Altitude */}
+        <View style={styles.statBlock}>
+          <Feather name="trending-up" size={32} color={theme.success} />
+          <ThemedText style={[Typography.h2, styles.statValue]}>
+            {altitude > 0 ? Math.round(altitude) : '--'}
+          </ThemedText>
+          <ThemedText style={[styles.statLabel, { color: theme.tabIconDefault }]}>ft</ThemedText>
         </View>
       </View>
 

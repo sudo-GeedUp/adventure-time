@@ -20,8 +20,8 @@ export function calculateDistance(
   
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const distance = R * c;
-  
-  return Math.round(distance * 10) / 10;
+ 
+  return distance;
 }
 
 function toRad(degrees: number): number {
