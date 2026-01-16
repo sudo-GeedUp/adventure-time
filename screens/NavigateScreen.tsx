@@ -356,6 +356,36 @@ export default function NavigateScreen() {
         </ThemedText>
       </View>
 
+      {/* Start Free Adventure Button */}
+      <Pressable
+        style={[styles.freeAdventureButton, { backgroundColor: theme.primary }]}
+        onPress={() => navigation.navigate("ActiveAdventure", { 
+          trail: { 
+            name: "Custom Adventure", 
+            difficulty: "Moderate" as const,
+            id: `custom_${Date.now()}`,
+            description: "Track your own route",
+            distance: 0,
+            duration: 0,
+            safetyRating: 0,
+            landType: "public" as const,
+            features: [],
+            coordinates: { latitude: 0, longitude: 0 }
+          } 
+        })}
+      >
+        <Feather name="map" size={24} color="white" />
+        <View style={styles.freeAdventureTextContainer}>
+          <ThemedText style={[styles.freeAdventureTitle, { color: "white" }]}>
+            Start Free Adventure
+          </ThemedText>
+          <ThemedText style={[styles.freeAdventureSubtitle, { color: "rgba(255,255,255,0.8)" }]}>
+            Track your own custom route
+          </ThemedText>
+        </View>
+        <Feather name="chevron-right" size={24} color="white" />
+      </Pressable>
+
       <View style={[styles.searchBar, { backgroundColor: theme.backgroundDefault, borderColor: theme.primary }]}>
         <Feather name="search" size={18} color={theme.tabIconDefault} />
         <TextInput
@@ -430,6 +460,25 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: Spacing.lg,
+  },
+  freeAdventureButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.lg,
+    gap: Spacing.md,
+  },
+  freeAdventureTextContainer: {
+    flex: 1,
+  },
+  freeAdventureTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  freeAdventureSubtitle: {
+    fontSize: 13,
   },
   searchBar: {
     flexDirection: "row",
