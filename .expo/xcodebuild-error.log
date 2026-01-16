@@ -1,6 +1,10 @@
-2026-01-14 17:24:49.123 xcodebuild[20382:1136910] Writing error result bundle to /var/folders/n3/c85f_h7d3318bkwcd3dfqg840000gn/T/ResultBundle_2026-14-01_17-24-0049.xcresult
-xcodebuild: error: Unable to find a destination matching the provided destination specifier:
-		{ id:ADCACD8E-6CAE-40D2-822C-9097E3515D81 }
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:iOS Simulator, arch:arm64, id:5A0B57C1-6581-45FA-96E4-C1772C23FE12, OS:17.0, name:iPhone 15 Pro Max }
+{ platform:iOS Simulator, arch:x86_64, id:5A0B57C1-6581-45FA-96E4-C1772C23FE12, OS:17.0, name:iPhone 15 Pro Max }
+** BUILD FAILED **
 
-	Ineligible destinations for the "AdventureTime" scheme:
-		{ platform:iOS, id:dvtdevice-DVTiPhonePlaceholder-iphoneos:placeholder, name:Any iOS Device, error:iOS 26.2 is not installed. Please download and install the platform from Xcode > Settings > Components. }
+
+The following build commands failed:
+	PhaseScriptExecution [CP-User]\ Generate\ app.config\ for\ prebuilt\ Constants.manifest /Users/sinjin/Library/Developer/Xcode/DerivedData/AdventureTime-cvztrakimvgudcazgbeahjgpscey/Build/Intermediates.noindex/Pods.build/Debug-iphonesimulator/EXConstants.build/Script-46EB2E00028330.sh (in target 'EXConstants' from project 'Pods')
+	Building workspace AdventureTime with scheme AdventureTime and configuration Debug
+(2 failures)

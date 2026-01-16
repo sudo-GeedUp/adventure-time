@@ -170,7 +170,7 @@ export default function ActiveAdventureScreen() {
           text: "Back",
           onPress: () => navigation.goBack(),
         },
-        ...(!isPremium ? [{ text: "Subscribe", onPress: () => navigation.navigate("ProfileTab", { screen: "Subscription" }) }] : []),
+        ...(!isPremium ? [{ text: "Subscribe", onPress: () => (navigation as any).navigate("ProfileTab", { screen: "Subscription" }) }] : []),
       ]
     );
   };

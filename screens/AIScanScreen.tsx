@@ -48,7 +48,7 @@ export default function AIScanScreen() {
         "AI Recovery Analysis is a premium feature. Subscribe to unlock this and other premium features.",
         [
           { text: "Cancel", style: "cancel" },
-          { text: "Subscribe", onPress: () => navigation.navigate("ProfileTab", { screen: "Subscription" }) }
+          { text: "Subscribe", onPress: () => (navigation as any).navigate("ProfileTab", { screen: "Subscription" }) }
         ]
       );
       return;
@@ -75,7 +75,7 @@ export default function AIScanScreen() {
         "AI Recovery Analysis is a premium feature. Subscribe to unlock this and other premium features.",
         [
           { text: "Cancel", style: "cancel" },
-          { text: "Subscribe", onPress: () => navigation.navigate("ProfileTab", { screen: "Subscription" }) }
+          { text: "Subscribe", onPress: () => (navigation as any).navigate("ProfileTab", { screen: "Subscription" }) }
         ]
       );
       return;

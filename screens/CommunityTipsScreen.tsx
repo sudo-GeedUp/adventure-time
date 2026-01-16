@@ -43,7 +43,7 @@ export default function CommunityTipsScreen() {
         "Viewing community tips and trail conditions is a premium feature. Subscribe to access this feature!",
         [
           { text: "Cancel", style: "cancel" },
-          { text: "Subscribe", onPress: () => navigation.navigate("ProfileTab", { screen: "Subscription" }) }
+          { text: "Subscribe", onPress: () => (navigation as any).navigate("ProfileTab", { screen: "Subscription" }) }
         ]
       );
       return;
@@ -60,7 +60,7 @@ export default function CommunityTipsScreen() {
         "Posting community tips and trail conditions is a premium feature. Subscribe to share your knowledge!",
         [
           { text: "Cancel", style: "cancel" },
-          { text: "Subscribe", onPress: () => navigation.navigate("ProfileTab", { screen: "Subscription" }) }
+          { text: "Subscribe", onPress: () => (navigation as any).navigate("ProfileTab", { screen: "Subscription" }) }
         ]
       );
       return;
