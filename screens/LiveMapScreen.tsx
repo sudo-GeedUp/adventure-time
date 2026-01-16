@@ -11,6 +11,7 @@ import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { SAMPLE_TRAILS, Trail } from "@/utils/trails";
 import { calculateDistance } from "@/utils/location";
 import { OfflineMapsManager } from "@/utils/offlineMaps";
+import { storage, CompletedAdventure, AssistanceWaypoint } from "@/utils/storage";
 
 let MapView: any = null;
 let Marker: any = null;
@@ -55,6 +56,9 @@ export default function LiveMapScreen() {
   const [locationSubscription, setLocationSubscription] = useState<Location.LocationSubscription | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [selectedTrail, setSelectedTrail] = useState<Trail | null>(null);
+  const [communityAdventures, setCommunityAdventures] = useState<CompletedAdventure[]>([]);
+  const [assistanceWaypoints, setAssistanceWaypoints] = useState<{ adventure: CompletedAdventure; waypoint: AssistanceWaypoint }[]>([]);
+  const [showCommunityTrails, setShowCommunityTrails] = useState(true);
 
   const gpsAccuracyIsPoor =
     typeof gpsAccuracy === "number" &&
@@ -72,6 +76,7 @@ export default function LiveMapScreen() {
   useEffect(() => {
     initializeLocation();
     loadTrails();
+    loadCommunityAdventures();
   }, []);
 
   useEffect(() => {
@@ -185,6 +190,18 @@ export default function LiveMapScreen() {
     } catch (error) {
       console.error("Error loading trails:", error);
       setTrails(SAMPLE_TRAILS);
+    }
+  };
+
+  const loadCommunityAdventures = async () => {
+    try {
+      const adventures = await storage.getCommunityAdventures();
+      setCommunityAdventures(adventures);
+      
+      const activeWaypoints = await storage.getActiveAssistanceWaypoints();
+      setAssistanceWaypoints(activeWaypoints);
+    } catch (error) {
+      console.error("Error loading community adventures:", error);
     }
   };
 
@@ -335,6 +352,58 @@ export default function LiveMapScreen() {
           >
             <View style={[styles.trailMarker, { backgroundColor: theme.primary }]}>
               <Feather name="flag" size={16} color="white" />
+            </View>
+          </Marker>
+        ))}
+
+        {/* Community Adventure Routes */}
+        {showCommunityTrails && communityAdventures.map((adventure) => {
+          if (adventure.route.length < 2) return null;
+          return (
+            <Polyline
+              key={adventure.id}
+              coordinates={adventure.route.map(point => ({
+                latitude: point.latitude,
+                longitude: point.longitude,
+              }))}
+              strokeColor={theme.accent + "80"}
+              strokeWidth={2}
+            />
+          );
+        })}
+
+        {/* Hazard Markers from Community Adventures */}
+        {showCommunityTrails && communityAdventures.flatMap((adventure) =>
+          adventure.hazards.map((hazard) => (
+            <Marker
+              key={hazard.id}
+              coordinate={{
+                latitude: hazard.location.latitude,
+                longitude: hazard.location.longitude,
+              }}
+              title={hazard.type}
+              description={hazard.description}
+            >
+              <View style={[styles.hazardMarker, { backgroundColor: theme.warning }]}>
+                <Feather name="alert-triangle" size={16} color="white" />
+              </View>
+            </Marker>
+          ))
+        )}
+
+        {/* Active Assistance Waypoints */}
+        {assistanceWaypoints.map(({ waypoint }) => (
+          <Marker
+            key={waypoint.id}
+            coordinate={{
+              latitude: waypoint.location.latitude,
+              longitude: waypoint.location.longitude,
+            }}
+            title="⚠️ Assistance Needed"
+            description={waypoint.description}
+          >
+            <View style={[styles.assistanceMarker, { backgroundColor: theme.error }]}>
+              <Feather name="alert-circle" size={20} color="white" />
             </View>
           </Marker>
         ))}
@@ -538,6 +607,24 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
     justifyContent: "center",
     alignItems: "center",
+  },
+  hazardMarker: {
+    width: 28,
+    height: 28,
+    borderRadius: BorderRadius.full,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "white",
+  },
+  assistanceMarker: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.full,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "white",
   },
   trailInfo: {
     margin: Spacing.lg,
