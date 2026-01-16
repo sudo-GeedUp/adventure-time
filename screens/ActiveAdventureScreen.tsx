@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage } from "@/utils/storage";
 import { calculateDistance } from "@/utils/location";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Trail } from "@/utils/trails";
 import { OfflineMapsManager } from "@/utils/offlineMaps";
 
@@ -26,6 +27,7 @@ export default function ActiveAdventureScreen() {
   const route = useRoute<ActiveAdventureScreenRouteProp>();
   const navigation = useNavigation();
   const { theme } = useTheme();
+  const { isPremium } = useSubscription();
   const insets = useSafeAreaInsets();
   const trail: Trail = (route.params as any)?.trail || { name: "Unknown Trail" } as Trail;
 
@@ -146,23 +148,29 @@ export default function ActiveAdventureScreen() {
 
     setIsTracking(false);
 
-    // Log miles to profile
-    const { newBadges: earnedBadges, profile } = await storage.addTrailMiles(session.currentDistance);
-    setNewBadges(earnedBadges.map((b) => b.id));
+    // Only save to profile if premium
+    if (isPremium) {
+      // Log miles to profile
+      const { newBadges: earnedBadges, profile } = await storage.addTrailMiles(session.currentDistance);
+      setNewBadges(earnedBadges.map((b) => b.id));
+    }
 
     // Show summary and badge unlock alerts
+    const message = isPremium 
+      ? `You traveled ${session.currentDistance.toFixed(1)} miles on ${trail.name}${
+          newBadges.length > 0 ? `\n\n🏆 New badge${newBadges.length > 1 ? "s" : ""} unlocked!` : ""
+        }\n\nAdventure saved to your profile!`
+      : `You traveled ${session.currentDistance.toFixed(1)} miles on ${trail.name}\n\n🔒 Subscribe to save adventures and unlock badges!`;
+    
     Alert.alert(
       "Adventure Complete!",
-      `You traveled ${session.currentDistance.toFixed(1)} miles on ${trail.name}${
-        earnedBadges.length > 0
-          ? `\n\nNew Badge(s) Unlocked:\n${earnedBadges.map((b) => b.name).join("\n")}`
-          : ""
-      }`,
+      message,
       [
         {
           text: "Back",
           onPress: () => navigation.goBack(),
         },
+        ...(!isPremium ? [{ text: "Subscribe", onPress: () => navigation.navigate("ProfileTab", { screen: "Subscription" }) }] : []),
       ]
     );
   };

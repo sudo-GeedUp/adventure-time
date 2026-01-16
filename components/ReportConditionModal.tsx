@@ -14,6 +14,7 @@ import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage, CommunityTip } from "@/utils/storage";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 
 interface WarningType {
   id: string;
@@ -89,11 +90,27 @@ export default function ReportConditionModal({
   onReportSubmitted,
 }: ReportConditionModalProps) {
   const { theme } = useTheme();
+  const { isPremium } = useSubscription();
   const [selectedWarning, setSelectedWarning] = useState<string | null>(null);
   const [suggestedSpeed, setSuggestedSpeed] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
+    if (!isPremium) {
+      Alert.alert(
+        "Premium Feature",
+        "Posting trail conditions and warnings is a premium feature. Subscribe to help keep the community safe!",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Subscribe", onPress: () => {
+            onClose();
+            // Navigation would need to be passed as prop or use navigation hook
+          }}
+        ]
+      );
+      return;
+    }
+
     if (!selectedWarning || !userLocation) {
       Alert.alert("Error", "Please select a warning type and ensure location is available");
       return;
@@ -155,7 +172,7 @@ export default function ReportConditionModal({
         >
           <View style={styles.header}>
             <ThemedText style={[Typography.h3, styles.title]}>
-              Report Trail Condition
+              Report Trail Condition {!isPremium && "🔒"}
             </ThemedText>
             <Pressable onPress={onClose} style={styles.closeButton}>
               <Feather name="x" size={24} color={theme.tabIconDefault} />
@@ -163,7 +180,9 @@ export default function ReportConditionModal({
           </View>
 
           <ThemedText style={[styles.subtitle, { color: theme.tabIconDefault }]}>
-            Alert other offroaders about what you've encountered
+            {isPremium 
+              ? "Alert other offroaders about what you've encountered"
+              : "Premium feature: Subscribe to post trail warnings and conditions"}
           </ThemedText>
 
           <ScrollView style={styles.warningList} showsVerticalScrollIndicator={false}>

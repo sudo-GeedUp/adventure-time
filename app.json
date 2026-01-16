@@ -38,11 +38,15 @@
           }
         }
       ],
-      "expo-web-browser",
-      "react-native-purchases"
+      "expo-web-browser"
     ],
     "experiments": {
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "7c1e1824-4d93-4589-a286-9116128da97e"
+      }
     }
   }
 }

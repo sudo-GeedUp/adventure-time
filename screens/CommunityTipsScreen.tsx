@@ -9,6 +9,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 import { storage, CommunityTip, UserProfile } from "@/utils/storage";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 
 const CATEGORIES = [
   { id: "recovery", label: "Recovery", icon: "tool" },
@@ -21,6 +22,7 @@ const CATEGORIES = [
 export default function CommunityTipsScreen() {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
+  const { isPremium } = useSubscription();
   const insets = useSafeAreaInsets();
   const [tips, setTips] = useState<CommunityTip[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -35,13 +37,37 @@ export default function CommunityTipsScreen() {
   }, []);
 
   const loadTips = async () => {
+    if (!isPremium) {
+      Alert.alert(
+        "Premium Feature",
+        "Viewing community tips and trail conditions is a premium feature. Subscribe to access this feature!",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Subscribe", onPress: () => navigation.navigate("ProfileTab", { screen: "Subscription" }) }
+        ]
+      );
+      return;
+    }
+
     const communityTips = await storage.getCommunityTips();
     setTips(communityTips);
   };
 
   const handleSubmitTip = async () => {
+    if (!isPremium) {
+      Alert.alert(
+        "Premium Feature",
+        "Posting community tips and trail conditions is a premium feature. Subscribe to share your knowledge!",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Subscribe", onPress: () => navigation.navigate("ProfileTab", { screen: "Subscription" }) }
+        ]
+      );
+      return;
+    }
+
     if (!title.trim() || !description.trim()) {
-      Alert.alert("Missing Information", "Please provide a title and description for your tip.");
+      Alert.alert("Missing Information", "Please provide both a title and description");
       return;
     }
 
@@ -330,9 +356,11 @@ export default function CommunityTipsScreen() {
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <View style={styles.header}>
-            <ThemedText style={[Typography.h3, styles.headerTitle]}>Community Tips</ThemedText>
+            <ThemedText style={[Typography.h3, styles.headerTitle]}>Community Tips {!isPremium && "🔒"}</ThemedText>
             <ThemedText style={styles.headerSubtitle}>
-              Share recovery tips and trail conditions with fellow offroaders
+              {isPremium 
+                ? "Share recovery tips and trail conditions with fellow offroaders"
+                : "Premium feature: Subscribe to view and share trail conditions"}
             </ThemedText>
           </View>
         }
