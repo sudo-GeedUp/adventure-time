@@ -321,6 +321,29 @@ export default function ActiveAdventureScreen() {
         </View>
       </View>
 
+      {/* Quick Action Buttons */}
+      <View style={styles.quickActionsContainer}>
+        <Pressable
+          style={[styles.quickActionButton, { backgroundColor: theme.warning + "20", borderColor: theme.warning }]}
+          onPress={() => setShowHazardModal(true)}
+        >
+          <Feather name="alert-triangle" size={24} color={theme.warning} />
+          <ThemedText style={[styles.quickActionText, { color: theme.warning }]}>
+            Mark Hazard
+          </ThemedText>
+        </Pressable>
+
+        <Pressable
+          style={[styles.quickActionButton, { backgroundColor: theme.error + "20", borderColor: theme.error }]}
+          onPress={() => setShowAssistanceModal(true)}
+        >
+          <Feather name="alert-circle" size={24} color={theme.error} />
+          <ThemedText style={[styles.quickActionText, { color: theme.error }]}>
+            Need Help
+          </ThemedText>
+        </Pressable>
+      </View>
+
       {/* Spacer */}
       <View style={{ flex: 1 }} />
 
@@ -413,6 +436,26 @@ const styles = StyleSheet.create({
   },
   infoContent: {
     flex: 1,
+  },
+  quickActionsContainer: {
+    flexDirection: "row",
+    gap: Spacing.md,
+    marginTop: Spacing.lg,
+  },
+  quickActionButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    borderWidth: 2,
+    gap: Spacing.sm,
+  },
+  quickActionText: {
+    fontSize: 14,
+    fontWeight: "600",
   },
   infoValue: {
     fontSize: 14,
