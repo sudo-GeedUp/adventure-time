@@ -8,7 +8,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { AIScanStackParamList } from "@/navigation/AIScanStackNavigator";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage } from "@/utils/storage";
-import { analyzeVehicleSituation, Analysis } from "@/utils/openai";
+import { analyzeRecoverySituation, RecoveryAnalysis } from "@/services/openai";
 
 type AIResultsScreenRouteProp = RouteProp<AIScanStackParamList, "AIResults">;
 
@@ -29,17 +29,35 @@ export default function AIResultsScreen() {
     setIsAnalyzing(true);
     
     try {
-      const result = await analyzeVehicleSituation(imageUri);
-      setAnalysis(result);
+      const result = await analyzeRecoverySituation(imageUri);
+      
+      // Transform the new API response to match the existing UI format
+      const transformedResult = {
+        situationType: result.situation,
+        difficulty: result.estimatedDifficulty,
+        equipment: result.requiredEquipment,
+        steps: result.recommendations.map((rec, index) => ({
+          title: `Step ${index + 1}`,
+          description: rec,
+        })),
+        tips: result.safetyWarnings,
+        warning: result.severity === "critical" || result.severity === "high" 
+          ? "This is a high-risk situation. Consider requesting professional assistance."
+          : undefined,
+        recoverability: result.severity === "low" ? 0.9 : result.severity === "moderate" ? 0.7 : result.severity === "high" ? 0.5 : 0.3,
+        confidence: 0.85,
+      };
+      
+      setAnalysis(transformedResult);
 
       await storage.addScanHistory({
         id: Date.now().toString(),
         imageUri,
         timestamp: Date.now(),
-        situationType: result.situationType,
+        situationType: result.situation,
         analysis: JSON.stringify(result),
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Analysis error:", error);
       setAnalysis({
         situationType: "Analysis Error",
@@ -50,7 +68,7 @@ export default function AIResultsScreen() {
             description: "Exit the vehicle and carefully assess the terrain and vehicle position."
           }
         ],
-        warning: "Unable to complete analysis. Use the SOS button to request assistance."
+        warning: error.message || "Unable to complete analysis. Please check your API key configuration.",
       });
     } finally {
       setIsAnalyzing(false);
