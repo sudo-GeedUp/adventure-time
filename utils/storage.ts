@@ -13,6 +13,7 @@ const KEYS = {
   STATUS_UPDATES: "@adventure-time/status_updates",
   FIRST_LAUNCH: "@adventure-time/first_launch",
   SPECIAL_THANKS_SHOWN: "@adventure-time/special_thanks_shown",
+  COMMUNITY_ADVENTURES: "@adventure-time/community_adventures",
 };
 
 export interface TrailStats {
@@ -145,6 +146,56 @@ export interface Adventure {
   location: string;
   timestamp: number;
   difficulty: "Easy" | "Moderate" | "Hard";
+}
+
+export interface RoutePoint {
+  latitude: number;
+  longitude: number;
+  altitude?: number;
+  timestamp: number;
+  speed?: number;
+}
+
+export interface AdventureHazard {
+  id: string;
+  type: string;
+  description: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  timestamp: number;
+  suggestedSpeed?: number;
+}
+
+export interface AssistanceWaypoint {
+  id: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  description: string;
+  timestamp: number;
+  status: "active" | "resolved";
+}
+
+export interface CompletedAdventure {
+  id: string;
+  userId: string;
+  userName: string;
+  vehicleType: string;
+  title: string;
+  startTime: number;
+  endTime: number;
+  totalDistance: number;
+  maxSpeed: number;
+  maxAltitude: number;
+  route: RoutePoint[];
+  hazards: AdventureHazard[];
+  assistanceWaypoints: AssistanceWaypoint[];
+  difficulty?: "Easy" | "Moderate" | "Hard" | "Expert";
+  trailName?: string;
+  description?: string;
 }
 
 export interface Friend {
@@ -689,6 +740,76 @@ export const storage = {
       await AsyncStorage.setItem(KEYS.SPECIAL_THANKS_SHOWN, "true");
     } catch (error) {
       console.error("Error setting special thanks shown:", error);
+    }
+  },
+
+  async getCommunityAdventures(): Promise<CompletedAdventure[]> {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.COMMUNITY_ADVENTURES);
+      const adventures = data ? JSON.parse(data) : [];
+      return adventures.sort((a: CompletedAdventure, b: CompletedAdventure) => b.endTime - a.endTime);
+    } catch (error) {
+      console.error("Error loading community adventures:", error);
+      return [];
+    }
+  },
+
+  async saveCompletedAdventure(adventure: CompletedAdventure): Promise<void> {
+    try {
+      const adventures = await this.getCommunityAdventures();
+      adventures.unshift(adventure);
+      await AsyncStorage.setItem(KEYS.COMMUNITY_ADVENTURES, JSON.stringify(adventures.slice(0, 100)));
+    } catch (error) {
+      console.error("Error saving completed adventure:", error);
+    }
+  },
+
+  async getAdventuresNearLocation(
+    latitude: number,
+    longitude: number,
+    radiusMiles: number = 50
+  ): Promise<CompletedAdventure[]> {
+    try {
+      const adventures = await this.getCommunityAdventures();
+      return adventures.filter((adventure) => {
+        if (adventure.route.length === 0) return false;
+        const startPoint = adventure.route[0];
+        const R = 3959;
+        const dLat = ((startPoint.latitude - latitude) * Math.PI) / 180;
+        const dLon = ((startPoint.longitude - longitude) * Math.PI) / 180;
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos((latitude * Math.PI) / 180) *
+            Math.cos((startPoint.latitude * Math.PI) / 180) *
+            Math.sin(dLon / 2) *
+            Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c;
+        return distance <= radiusMiles;
+      });
+    } catch (error) {
+      console.error("Error getting nearby adventures:", error);
+      return [];
+    }
+  },
+
+  async getActiveAssistanceWaypoints(): Promise<{ adventure: CompletedAdventure; waypoint: AssistanceWaypoint }[]> {
+    try {
+      const adventures = await this.getCommunityAdventures();
+      const activeWaypoints: { adventure: CompletedAdventure; waypoint: AssistanceWaypoint }[] = [];
+      
+      adventures.forEach((adventure) => {
+        adventure.assistanceWaypoints
+          .filter((wp) => wp.status === "active")
+          .forEach((waypoint) => {
+            activeWaypoints.push({ adventure, waypoint });
+          });
+      });
+      
+      return activeWaypoints;
+    } catch (error) {
+      console.error("Error getting active assistance waypoints:", error);
+      return [];
     }
   },
 };

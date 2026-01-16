@@ -8,7 +8,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
-import { storage } from "@/utils/storage";
+import { storage, RoutePoint, AdventureHazard, AssistanceWaypoint } from "@/utils/storage";
 import { calculateDistance } from "@/utils/location";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Trail } from "@/utils/trails";
@@ -21,6 +21,11 @@ interface AdventureSession {
   currentDistance: number;
   startTime: number;
   locations: Array<{ latitude: number; longitude: number; timestamp: number }>;
+  route: RoutePoint[];
+  hazards: AdventureHazard[];
+  assistanceWaypoints: AssistanceWaypoint[];
+  maxSpeed: number;
+  maxAltitude: number;
 }
 
 export default function ActiveAdventureScreen() {
@@ -37,6 +42,8 @@ export default function ActiveAdventureScreen() {
   const [altitude, setAltitude] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [newBadges, setNewBadges] = useState<string[]>([]);
+  const [showHazardModal, setShowHazardModal] = useState(false);
+  const [showAssistanceModal, setShowAssistanceModal] = useState(false);
 
   // Initialize adventure session
   useEffect(() => {
@@ -74,6 +81,7 @@ export default function ActiveAdventureScreen() {
         (location) => {
           setSession((prev) => {
             if (!prev) return null;
+            
             const newLocation = {
               latitude: location.coords.latitude,
               longitude: location.coords.longitude,
@@ -87,13 +95,29 @@ export default function ActiveAdventureScreen() {
               addedDistance = calculateDistance(lastLocation, newLocation);
             }
 
-            setSpeed(location.coords.speed || 0);
-            setAltitude(location.coords.altitude || 0);
+            const newDistance = prev.currentDistance + addedDistance;
+            const newLocations = [...prev.locations, newLocation];
+            const currentSpeed = location.coords.speed ? location.coords.speed * 2.237 : 0;
+            const currentAltitude = location.coords.altitude || 0;
+
+            const newRoutePoint: RoutePoint = {
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+              altitude: currentAltitude,
+              timestamp: Date.now(),
+              speed: currentSpeed,
+            };
+
+            setSpeed(currentSpeed);
+            setAltitude(currentAltitude);
 
             return {
               ...prev,
-              currentDistance: prev.currentDistance + addedDistance,
-              locations: [...prev.locations, newLocation],
+              currentDistance: newDistance,
+              locations: newLocations,
+              route: [...prev.route, newRoutePoint],
+              maxSpeed: Math.max(prev.maxSpeed, currentSpeed),
+              maxAltitude: Math.max(prev.maxAltitude, currentAltitude),
             };
           });
         }
@@ -109,19 +133,13 @@ export default function ActiveAdventureScreen() {
         locationSubscription.remove();
       }
     };
-  }, [isTracking]);
+  }, [isTracking, session]);
 
   const startAdventure = async () => {
     try {
       const location = await Location.getCurrentPositionAsync({});
-      setAltitude(location.coords.altitude || 0);
-      
-      // Cache trail for offline use if not already cached
-      const isTrailCached = await OfflineMapsManager.isTrailCached(trail.id);
-      if (!isTrailCached) {
-        await OfflineMapsManager.cacheTrail(trail);
-      }
-      
+      const initialAltitude = location.coords.altitude || 0;
+      setAltitude(initialAltitude);
       setSession({
         startLocation: {
           latitude: location.coords.latitude,
@@ -136,10 +154,22 @@ export default function ActiveAdventureScreen() {
             timestamp: Date.now(),
           },
         ],
+        route: [
+          {
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            altitude: initialAltitude,
+            timestamp: Date.now(),
+            speed: location.coords.speed || 0,
+          },
+        ],
+        hazards: [],
+        assistanceWaypoints: [],
+        maxSpeed: 0,
+        maxAltitude: initialAltitude,
       });
     } catch (error) {
-      Alert.alert("Error", "Could not get your location. Try again.");
-      navigation.goBack();
+      Alert.alert("Error", "Could not get your location. Please enable location services.");
     }
   };
 
@@ -147,6 +177,30 @@ export default function ActiveAdventureScreen() {
     if (!session) return;
 
     setIsTracking(false);
+
+    // Get user profile for community adventure
+    const userProfile = await storage.getUserProfile();
+    
+    // Save completed adventure to community database
+    const completedAdventure = {
+      id: `adventure_${Date.now()}`,
+      userId: userProfile?.id || "anonymous",
+      userName: userProfile?.name || "Anonymous",
+      vehicleType: userProfile?.vehicleType || "Unknown",
+      title: trail.name || "Custom Adventure",
+      startTime: session.startTime,
+      endTime: Date.now(),
+      totalDistance: session.currentDistance,
+      maxSpeed: session.maxSpeed,
+      maxAltitude: session.maxAltitude,
+      route: session.route,
+      hazards: session.hazards,
+      assistanceWaypoints: session.assistanceWaypoints,
+      trailName: trail.name,
+      difficulty: trail.difficulty,
+    };
+
+    await storage.saveCompletedAdventure(completedAdventure);
 
     // Only save to profile if premium
     if (isPremium) {
@@ -159,8 +213,8 @@ export default function ActiveAdventureScreen() {
     const message = isPremium 
       ? `You traveled ${session.currentDistance.toFixed(1)} miles on ${trail.name}${
           newBadges.length > 0 ? `\n\n🏆 New badge${newBadges.length > 1 ? "s" : ""} unlocked!` : ""
-        }\n\nAdventure saved to your profile!`
-      : `You traveled ${session.currentDistance.toFixed(1)} miles on ${trail.name}\n\n🔒 Subscribe to save adventures and unlock badges!`;
+        }\n\nAdventure saved to your profile and shared with the community!`
+      : `You traveled ${session.currentDistance.toFixed(1)} miles on ${trail.name}\n\nAdventure shared with the community!\n\n🔒 Subscribe to save adventures to your profile and unlock badges!`;
     
     Alert.alert(
       "Adventure Complete!",
