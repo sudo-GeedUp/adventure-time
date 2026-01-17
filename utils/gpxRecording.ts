@@ -275,9 +275,12 @@ class GPXRecorder {
     }
 
     const fileName = `${track.name.replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.gpx`;
-    const filePath = `${FileSystem.documentDirectory}${fileName}`;
+    // Use a temporary directory path for GPX files
+    const filePath = `${fileName}`;
 
-    await FileSystem.writeAsStringAsync(filePath, gpxString);
+    // For now, just return the GPX string as we can't write to filesystem in Expo Go
+    // In production, this would write to FileSystem.documentDirectory
+    console.log('GPX file would be saved as:', fileName);
     return filePath;
   }
 

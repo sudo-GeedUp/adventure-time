@@ -1,6 +1,25 @@
 import * as Speech from 'expo-speech';
-import { calculateDistance } from './location';
 import { Trail } from './trails';
+
+function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371e3;
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
+}
 
 export interface NavigationInstruction {
   id: string;
@@ -242,14 +261,14 @@ class OfflineVoiceNavigationManager {
     }
   }
 
-  async setVoiceEnabled(enabled: boolean): void {
+  async setVoiceEnabled(enabled: boolean): Promise<void> {
     this.voiceEnabled = enabled;
     if (!enabled) {
       await Speech.stop();
     }
   }
 
-  async setVoiceSettings(settings: Partial<typeof this.voiceSettings>): void {
+  async setVoiceSettings(settings: Partial<typeof this.voiceSettings>): Promise<void> {
     this.voiceSettings = { ...this.voiceSettings, ...settings };
   }
 
@@ -275,7 +294,7 @@ class OfflineVoiceNavigationManager {
     await this.speakInstruction(currentInstruction);
   }
 
-  async getNextInstruction(): NavigationInstruction | null {
+  async getNextInstruction(): Promise<NavigationInstruction | null> {
     if (!this.currentRoute || this.currentRoute.currentInstructionIndex >= this.currentRoute.instructions.length - 1) {
       return null;
     }

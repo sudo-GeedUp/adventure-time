@@ -73,6 +73,7 @@ export default function ActiveAdventureScreen() {
   const [breadcrumbTrail, setBreadcrumbTrail] = useState<BreadcrumbTrail | null>(null);
   const [showBreadcrumbs, setShowBreadcrumbs] = useState(true);
   const [distanceToStart, setDistanceToStart] = useState<number | null>(null);
+  const [activeConvoy, setActiveConvoy] = useState<any>(null);
 
   const HAZARD_TYPES = [
     { id: "washout", label: "Washout", icon: "alert-triangle" },
