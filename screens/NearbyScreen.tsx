@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Pressable, FlatList, Alert, Platform, Linking } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
 import ThemedText from "@/components/ThemedText";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
@@ -15,6 +16,7 @@ import { analyzeTrailConditions, calculateImpactAssessment } from "@/utils/condi
 import type { WeatherCondition, ImpactAssessment, TrailConditionSummary } from "@/utils/conditions";
 import ReportConditionModal from "@/components/ReportConditionModal";
 import { getTrailsNearLocation, Trail } from "@/utils/trails";
+import { OfflineMapsManager } from "@/utils/offlineMaps";
 
 let MapView: any = null;
 let Marker: any = null;
@@ -76,11 +78,71 @@ export default function NearbyScreen() {
   const [allTrails, setAllTrails] = useState<Trail[]>([]);
   const [showTrailsMap, setShowTrailsMap] = useState(true);
   const [selectedTrail, setSelectedTrail] = useState<Trail | null>(null);
+  const [wishlistTrails, setWishlistTrails] = useState<Set<string>>(new Set());
+  const [downloadingTrails, setDownloadingTrails] = useState<Set<string>>(new Set());
+  const [cachedTrails, setCachedTrails] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     requestLocationPermission();
     loadUserProfile();
+    loadWishlist();
+    loadCachedTrails();
   }, []);
+
+  const loadWishlist = async () => {
+    try {
+      const saved = await AsyncStorage.getItem('trail_wishlist');
+      if (saved) {
+        setWishlistTrails(new Set(JSON.parse(saved)));
+      }
+    } catch (error) {
+      console.error('Error loading wishlist:', error);
+    }
+  };
+
+  const loadCachedTrails = async () => {
+    try {
+      const cached = await OfflineMapsManager.getCachedTrails();
+      setCachedTrails(new Set(cached.map(t => t.id)));
+    } catch (error) {
+      console.error('Error loading cached trails:', error);
+    }
+  };
+
+  const toggleWishlist = async (trailId: string) => {
+    const newWishlist = new Set(wishlistTrails);
+    if (newWishlist.has(trailId)) {
+      newWishlist.delete(trailId);
+      Alert.alert('Removed', 'Trail removed from wishlist');
+    } else {
+      newWishlist.add(trailId);
+      Alert.alert('Added', 'Trail added to wishlist');
+    }
+    setWishlistTrails(newWishlist);
+    await AsyncStorage.setItem('trail_wishlist', JSON.stringify(Array.from(newWishlist)));
+  };
+
+  const downloadTrailOffline = async (trail: Trail) => {
+    if (cachedTrails.has(trail.id)) {
+      Alert.alert('Already Downloaded', 'This trail is already available offline');
+      return;
+    }
+
+    setDownloadingTrails(prev => new Set(prev).add(trail.id));
+    try {
+      await OfflineMapsManager.cacheTrail(trail);
+      setCachedTrails(prev => new Set(prev).add(trail.id));
+      Alert.alert('Success', `${trail.name} is now available offline`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to download trail for offline use');
+    } finally {
+      setDownloadingTrails(prev => {
+        const next = new Set(prev);
+        next.delete(trail.id);
+        return next;
+      });
+    }
+  };
 
   const requestLocationPermission = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -520,14 +582,30 @@ export default function NearbyScreen() {
                   </ThemedText>
                 </Pressable>
                 <Pressable
-                  style={[styles.startButton, { backgroundColor: theme.accent }]}
-                  onPress={() => navigation.navigate("NavigateTab", { screen: "ActiveAdventure", params: { trail } })}
+                  style={[styles.actionButton, { backgroundColor: cachedTrails.has(trail.id) ? theme.success : theme.accent }]}
+                  onPress={() => downloadTrailOffline(trail)}
+                  disabled={downloadingTrails.has(trail.id) || cachedTrails.has(trail.id)}
                   android_ripple={{ color: "rgba(255,255,255,0.2)" }}
                 >
-                  <Feather name="play" size={18} color="white" />
-                  <ThemedText style={styles.startButtonText}>
-                    Start
+                  <Feather 
+                    name={cachedTrails.has(trail.id) ? "check-circle" : downloadingTrails.has(trail.id) ? "download-cloud" : "download"} 
+                    size={18} 
+                    color="white" 
+                  />
+                  <ThemedText style={styles.actionButtonText}>
+                    {cachedTrails.has(trail.id) ? 'Offline' : downloadingTrails.has(trail.id) ? 'Downloading...' : 'Download'}
                   </ThemedText>
+                </Pressable>
+                <Pressable
+                  style={[styles.wishlistButton, { backgroundColor: wishlistTrails.has(trail.id) ? theme.warning : theme.backgroundSecondary }]}
+                  onPress={() => toggleWishlist(trail.id)}
+                  android_ripple={{ color: theme.primary }}
+                >
+                  <Feather 
+                    name={wishlistTrails.has(trail.id) ? "heart" : "heart"} 
+                    size={18} 
+                    color={wishlistTrails.has(trail.id) ? "white" : theme.primary} 
+                  />
                 </Pressable>
               </View>
             </View>
@@ -871,33 +949,45 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   takeMeThereButton: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.sm,
     gap: Spacing.xs,
+    flex: 2,
+    marginRight: Spacing.xs,
   },
   takeMeThereText: {
     color: "white",
     fontSize: 14,
     fontWeight: "600",
   },
-  startButton: {
+  actionButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.sm,
     gap: Spacing.xs,
+    flex: 2,
+    marginRight: Spacing.xs,
   },
-  startButtonText: {
+  actionButtonText: {
     color: "white",
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "600",
+  },
+  wishlistButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    width: 40,
+    height: 40,
   },
   viewAllButton: {
     flexDirection: "row",

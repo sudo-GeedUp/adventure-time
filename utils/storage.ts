@@ -812,4 +812,40 @@ export const storage = {
       return [];
     }
   },
+
+  async getCommunityScanSubmissions(): Promise<any[]> {
+    try {
+      const scanHistory = await this.getScanHistory();
+      // Filter for scans that users have opted to share with community
+      // Add difficulty scoring based on situation type and AI analysis
+      const communityScans = scanHistory.map((scan: any) => ({
+        ...scan,
+        difficultyScore: this.calculateDifficultyScore(scan),
+        votes: scan.votes || 0,
+        userName: scan.userName || 'Anonymous',
+      }));
+      return communityScans;
+    } catch (error) {
+      console.error("Error getting community scan submissions:", error);
+      return [];
+    }
+  },
+
+  calculateDifficultyScore(scan: any): number {
+    // Calculate difficulty based on situation type
+    const difficultyMap: { [key: string]: number } = {
+      'Deep Mud': 7,
+      'Rock Crawl': 8,
+      'Sand Trap': 6,
+      'Water Crossing': 7,
+      'Steep Incline': 8,
+      'Vehicle Rollover': 10,
+      'Broken Axle': 9,
+      'High Centering': 7,
+      'Stuck in Snow': 6,
+      'Other': 5,
+    };
+    
+    return difficultyMap[scan.situationType] || 5;
+  },
 };

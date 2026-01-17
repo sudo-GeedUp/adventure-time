@@ -148,12 +148,19 @@ export default function NavigateScreen() {
   const applyFilters = () => {
     let filtered = [...trails];
 
-    // Search filter
+    // Search filter - search by trail name, description, location, and features
     if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (trail) =>
-          trail.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          trail.description.toLowerCase().includes(searchQuery.toLowerCase())
+          trail.name.toLowerCase().includes(query) ||
+          trail.description.toLowerCase().includes(query) ||
+          // Search by location coordinates (for city/region searches)
+          `${trail.location.latitude},${trail.location.longitude}`.includes(query) ||
+          // Search by features (rock crawling, scenic, etc.)
+          trail.features.some(feature => feature.toLowerCase().includes(query)) ||
+          // Search by vehicle types
+          trail.vehicleTypes.some(type => type.toLowerCase().includes(query))
       );
     }
 
