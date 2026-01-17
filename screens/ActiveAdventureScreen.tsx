@@ -14,6 +14,7 @@ import { ConvoyManager } from "@/utils/convoyMode";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Trail } from "@/utils/trails";
 import { OfflineMapsManager } from "@/utils/offlineMaps";
+import { breadcrumbManager, Breadcrumb, BreadcrumbTrail } from "@/utils/breadcrumbs";
 
 let MapView: any = null;
 let Marker: any = null;
@@ -66,8 +67,12 @@ export default function ActiveAdventureScreen() {
   const [showMap, setShowMap] = useState(true);
   const [mapRef, setMapRef] = useState<any>(null);
   const [showConvoyModal, setShowConvoyModal] = useState(false);
+  const [showJoinConvoyModal, setShowJoinConvoyModal] = useState(false);
   const [convoyCode, setConvoyCode] = useState("");
-  const [activeConvoy, setActiveConvoy] = useState<any>(null);
+  const [convoyName, setConvoyName] = useState("");
+  const [breadcrumbTrail, setBreadcrumbTrail] = useState<BreadcrumbTrail | null>(null);
+  const [showBreadcrumbs, setShowBreadcrumbs] = useState(true);
+  const [distanceToStart, setDistanceToStart] = useState<number | null>(null);
 
   const HAZARD_TYPES = [
     { id: "washout", label: "Washout", icon: "alert-triangle" },
