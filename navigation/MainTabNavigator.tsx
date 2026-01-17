@@ -52,36 +52,6 @@ export default function MainTabNavigator() {
       }}
     >
       <Tab.Screen
-        name="GuidesTab"
-        component={GuidesStackNavigator}
-        options={{
-          title: "Guides",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="book-open" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="AIScanTab"
-        component={AIScanStackNavigator}
-        options={{
-          title: "AI Scan",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="camera" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="NearbyTab"
-        component={NearbyStackNavigator}
-        options={{
-          title: "Nearby",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="map" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
         name="NavigateTab"
         component={NavigateStackNavigator}
         options={{
@@ -92,12 +62,22 @@ export default function MainTabNavigator() {
         }}
       />
       <Tab.Screen
-        name="FriendsTab"
-        component={FriendsStackNavigator}
+        name="NearbyTab"
+        component={NearbyStackNavigator}
         options={{
-          title: "Friends",
+          title: "Explore",
           tabBarIcon: ({ color, size }) => (
-            <Feather name="users" size={size} color={color} />
+            <Feather name="globe" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="AIScanTab"
+        component={AIScanStackNavigator}
+        options={{
+          title: "AI Recovery",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="tool" size={size} color={color} />
           ),
         }}
       />

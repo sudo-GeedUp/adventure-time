@@ -8,9 +8,22 @@
     "scheme": "adventure-time",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FF6B35"
+    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.adventuretime.app"
+      "bundleIdentifier": "com.adventuretime.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Adventure Time needs your location to track your off-road adventures, show nearby trails, and provide GPS navigation to trailheads.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Adventure Time needs your location to track your adventures even when the app is in the background.",
+        "NSCameraUsageDescription": "Adventure Time needs camera access for AI Recovery Scan to analyze recovery situations and provide equipment recommendations.",
+        "NSPhotoLibraryUsageDescription": "Adventure Time needs photo library access to save and analyze recovery situation photos.",
+        "NSPhotoLibraryAddUsageDescription": "Adventure Time needs permission to save photos to your library."
+      }
     },
     "android": {
       "package": "com.adventuretime.app",

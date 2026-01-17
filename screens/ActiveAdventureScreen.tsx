@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, Alert, Platform, Modal, TextInput, ScrollView } from "react-native";
+import { View, StyleSheet, Pressable, Alert, Platform, Modal, TextInput, ScrollView, KeyboardAvoidingView } from "react-native";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
@@ -10,9 +10,25 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage, RoutePoint, AdventureHazard, AssistanceWaypoint } from "@/utils/storage";
 import { calculateDistance } from "@/utils/location";
+import { ConvoyManager } from "@/utils/convoyMode";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Trail } from "@/utils/trails";
 import { OfflineMapsManager } from "@/utils/offlineMaps";
+
+let MapView: any = null;
+let Marker: any = null;
+let Polyline: any = null;
+
+if (Platform.OS !== "web") {
+  try {
+    const maps = require("react-native-maps");
+    MapView = maps.default;
+    Marker = maps.Marker;
+    Polyline = maps.Polyline;
+  } catch (e) {
+    console.log("Maps not available");
+  }
+}
 
 type ActiveAdventureScreenRouteProp = RouteProp<any, "ActiveAdventure">;
 
@@ -47,6 +63,11 @@ export default function ActiveAdventureScreen() {
   const [selectedHazardType, setSelectedHazardType] = useState<string | null>(null);
   const [hazardDescription, setHazardDescription] = useState("");
   const [assistanceDescription, setAssistanceDescription] = useState("");
+  const [showMap, setShowMap] = useState(true);
+  const [mapRef, setMapRef] = useState<any>(null);
+  const [showConvoyModal, setShowConvoyModal] = useState(false);
+  const [convoyCode, setConvoyCode] = useState("");
+  const [activeConvoy, setActiveConvoy] = useState<any>(null);
 
   const HAZARD_TYPES = [
     { id: "washout", label: "Washout", icon: "alert-triangle" },
@@ -330,6 +351,51 @@ export default function ActiveAdventureScreen() {
     return mph.toFixed(1);
   };
 
+  const loadActiveConvoy = async () => {
+    const convoy = await ConvoyManager.getActiveConvoy();
+    setActiveConvoy(convoy);
+  };
+
+  const handleCreateConvoy = async () => {
+    const convoy = await ConvoyManager.createConvoy(`${trail.name} Convoy`);
+    setActiveConvoy(convoy);
+    Alert.alert('Convoy Created', `Share code: ${convoy.code}`);
+  };
+
+  const handleJoinConvoy = async () => {
+    if (convoyCode.length !== 6) {
+      Alert.alert('Invalid Code', 'Convoy codes are 6 characters');
+      return;
+    }
+    const convoy = await ConvoyManager.joinConvoy(convoyCode);
+    if (convoy) {
+      setActiveConvoy(convoy);
+      setShowConvoyModal(false);
+      Alert.alert('Joined Convoy', `You've joined ${convoy.name}`);
+    } else {
+      Alert.alert('Error', 'Could not join convoy with that code');
+    }
+  };
+
+  const handleLeaveConvoy = async () => {
+    if (activeConvoy) {
+      const userId = Date.now().toString(); // Use timestamp as user ID for now
+      await ConvoyManager.leaveConvoy(userId);
+      setActiveConvoy(null);
+      Alert.alert('Left Convoy', 'You have left the convoy');
+    }
+  };
+
+  useEffect(() => {
+    startAdventure();
+    loadActiveConvoy();
+    return () => {
+      if (isTracking) {
+        endAdventure();
+      }
+    };
+  }, []);
+
   if (!session) {
     return (
       <ThemedView style={styles.container}>
@@ -346,8 +412,97 @@ export default function ActiveAdventureScreen() {
           <Feather name="chevron-left" size={28} color={theme.primary} />
         </Pressable>
         <ThemedText style={[Typography.h4, styles.headerTitle]}>{trail.name}</ThemedText>
-        <View style={{ width: 28 }} />
+        <Pressable onPress={() => setShowMap(!showMap)}>
+          <Feather name={showMap ? "eye-off" : "map"} size={24} color={theme.primary} />
+        </Pressable>
       </View>
+
+      {/* Live Map View */}
+      {showMap && MapView && session.locations.length > 0 && (
+        <View style={styles.mapContainer}>
+          <MapView
+            ref={mapRef}
+            style={styles.liveMap}
+            initialRegion={{
+              latitude: session.locations[session.locations.length - 1].latitude,
+              longitude: session.locations[session.locations.length - 1].longitude,
+              latitudeDelta: 0.005,
+              longitudeDelta: 0.005,
+            }}
+            showsUserLocation
+            followsUserLocation
+            showsMyLocationButton={false}
+            showsCompass
+            mapType="hybrid"
+          >
+            {/* Route Polyline */}
+            {session.route.length > 1 && (
+              <Polyline
+                coordinates={session.route.map(point => ({
+                  latitude: point.latitude,
+                  longitude: point.longitude,
+                }))}
+                strokeColor={theme.primary}
+                strokeWidth={4}
+              />
+            )}
+            
+            {/* Hazard Markers */}
+            {session.hazards.map((hazard) => (
+              <Marker
+                key={hazard.id}
+                coordinate={hazard.location}
+                title={hazard.type}
+                description={hazard.description}
+              >
+                <View style={[styles.hazardMapMarker, { backgroundColor: theme.warning }]}>
+                  <Feather name="alert-triangle" size={16} color="white" />
+                </View>
+              </Marker>
+            ))}
+            
+            {/* Assistance Waypoint Markers */}
+            {session.assistanceWaypoints.map((waypoint) => (
+              <Marker
+                key={waypoint.id}
+                coordinate={waypoint.location}
+                title="Assistance Request"
+                description={waypoint.description}
+              >
+                <View style={[styles.assistanceMapMarker, { backgroundColor: theme.error }]}>
+                  <Feather name="alert-circle" size={16} color="white" />
+                </View>
+              </Marker>
+            ))}
+          </MapView>
+          
+          {/* Waze-style Trail Info Overlay */}
+          <View style={[styles.trailInfoOverlay, { backgroundColor: theme.backgroundDefault + "F0" }]}>
+            <View style={styles.trailInfoRow}>
+              <Feather name="navigation" size={16} color={theme.primary} />
+              <ThemedText style={[styles.trailInfoText, { color: theme.text }]}>
+                {session.currentDistance.toFixed(1)} mi • {formatSpeed(speed)} mph
+              </ThemedText>
+            </View>
+            {session.hazards.length > 0 && (
+              <View style={[styles.trailAlertRow, { backgroundColor: theme.warning + "20" }]}>
+                <Feather name="alert-triangle" size={14} color={theme.warning} />
+                <ThemedText style={[styles.trailAlertText, { color: theme.warning }]}>
+                  {session.hazards.length} hazard{session.hazards.length > 1 ? 's' : ''} ahead
+                </ThemedText>
+              </View>
+            )}
+            {session.assistanceWaypoints.length > 0 && (
+              <View style={[styles.trailAlertRow, { backgroundColor: theme.error + "20" }]}>
+                <Feather name="alert-circle" size={14} color={theme.error} />
+                <ThemedText style={[styles.trailAlertText, { color: theme.error }]}>
+                  {session.assistanceWaypoints.length} assistance request{session.assistanceWaypoints.length > 1 ? 's' : ''}
+                </ThemedText>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
 
       {/* Live Stats */}
       <View style={[styles.statsCard, { backgroundColor: theme.backgroundDefault }]}>
@@ -404,6 +559,47 @@ export default function ActiveAdventureScreen() {
             </ThemedText>
           </View>
         </View>
+      </View>
+
+      {/* Convoy Section */}
+      <View style={styles.convoySection}>
+        {activeConvoy ? (
+          <View style={[styles.convoyCard, { backgroundColor: theme.backgroundDefault }]}>
+            <View style={styles.convoyHeader}>
+              <Feather name="users" size={20} color={theme.primary} />
+              <ThemedText style={[Typography.h4, { marginLeft: Spacing.sm }]}>
+                Convoy: {activeConvoy.name}
+              </ThemedText>
+            </View>
+            <ThemedText style={styles.convoyCode}>Code: {activeConvoy.code}</ThemedText>
+            <ThemedText style={styles.convoyMembers}>
+              {activeConvoy.members.length} member{activeConvoy.members.length !== 1 ? 's' : ''}
+            </ThemedText>
+            <Pressable
+              style={[styles.leaveConvoyButton, { backgroundColor: theme.error }]}
+              onPress={handleLeaveConvoy}
+            >
+              <ThemedText style={styles.convoyButtonText}>Leave Convoy</ThemedText>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={styles.convoyButtons}>
+            <Pressable
+              style={[styles.convoyButton, { backgroundColor: theme.primary }]}
+              onPress={() => handleCreateConvoy()}
+            >
+              <Feather name="users" size={20} color="white" />
+              <ThemedText style={styles.convoyButtonText}>Create Convoy</ThemedText>
+            </Pressable>
+            <Pressable
+              style={[styles.convoyButton, { backgroundColor: theme.accent }]}
+              onPress={() => setShowConvoyModal(true)}
+            >
+              <Feather name="user-plus" size={20} color="white" />
+              <ThemedText style={styles.convoyButtonText}>Join Convoy</ThemedText>
+            </Pressable>
+          </View>
+        )}
       </View>
 
       {/* Quick Action Buttons */}
@@ -566,7 +762,10 @@ export default function ActiveAdventureScreen() {
         animationType="slide"
         onRequestClose={() => setShowAssistanceModal(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
           <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
             <View style={styles.modalHeader}>
               <ThemedText style={[Typography.h3, styles.modalTitle]}>Request Assistance</ThemedText>
@@ -619,7 +818,50 @@ export default function ActiveAdventureScreen() {
               </Pressable>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Convoy Join Modal */}
+      <Modal
+        visible={showConvoyModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowConvoyModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
+            <View style={styles.modalHeader}>
+              <ThemedText style={[Typography.h3, styles.modalTitle]}>Join Convoy</ThemedText>
+              <Pressable onPress={() => setShowConvoyModal(false)}>
+                <Feather name="x" size={24} color={theme.tabIconDefault} />
+              </Pressable>
+            </View>
+
+            <ThemedText style={styles.modalDescription}>
+              Enter the 6-character convoy code to join
+            </ThemedText>
+
+            <TextInput
+              style={[styles.modalInput, { backgroundColor: theme.backgroundRoot, color: theme.text }]}
+              placeholder="Enter convoy code"
+              placeholderTextColor={theme.tabIconDefault}
+              value={convoyCode}
+              onChangeText={setConvoyCode}
+              maxLength={6}
+              autoCapitalize="characters"
+            />
+
+            <Pressable
+              style={[styles.modalButton, { backgroundColor: theme.primary }]}
+              onPress={handleJoinConvoy}
+            >
+              <ThemedText style={styles.modalButtonText}>Join Convoy</ThemedText>
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </ThemedView>
   );
@@ -635,11 +877,74 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: Spacing["2xl"],
+    marginBottom: Spacing.lg,
   },
   headerTitle: {
     flex: 1,
     textAlign: "center",
+  },
+  mapContainer: {
+    height: 250,
+    borderRadius: BorderRadius.lg,
+    overflow: "hidden",
+    marginBottom: Spacing.lg,
+  },
+  liveMap: {
+    flex: 1,
+  },
+  hazardMapMarker: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "white",
+  },
+  assistanceMapMarker: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "white",
+  },
+  trailInfoOverlay: {
+    position: "absolute",
+    top: Spacing.md,
+    left: Spacing.md,
+    right: Spacing.md,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.sm,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  trailInfoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    marginBottom: Spacing.xs,
+  },
+  trailInfoText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  trailAlertRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    marginTop: Spacing.xs,
+  },
+  trailAlertText: {
+    fontSize: 12,
+    fontWeight: "600",
   },
   statsCard: {
     flexDirection: "row",
@@ -788,28 +1093,83 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
-  },
-  warningText: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: "500",
-  },
-  modalButtons: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
     alignItems: "center",
     justifyContent: "center",
   },
   modalButtonText: {
     fontWeight: "600",
     fontSize: 16,
+    color: "white",
+  },
+  modalDescription: {
+    fontSize: 14,
+    opacity: 0.7,
+    marginBottom: Spacing.xl,
+  },
+  modalInput: {
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.xl,
+    fontSize: 16,
+  },
+  modalButton: {
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: Spacing.md,
+    marginTop: Spacing.lg,
+  },
+  warningText: {
+    fontSize: 14,
+    marginLeft: Spacing.sm,
+  },
+  convoySection: {
+    marginBottom: Spacing.xl,
+  },
+  convoyCard: {
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+  },
+  convoyHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.sm,
+  },
+  convoyCode: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: Spacing.xs,
+  },
+  convoyMembers: {
+    fontSize: 14,
+    opacity: 0.7,
+    marginBottom: Spacing.md,
+  },
+  convoyButtons: {
+    flexDirection: "row",
+    gap: Spacing.md,
+  },
+  convoyButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.xs,
+  },
+  convoyButtonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  leaveConvoyButton: {
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    alignItems: "center",
   },
 });

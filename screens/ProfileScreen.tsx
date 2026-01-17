@@ -456,6 +456,51 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.section}>
+        <ThemedText style={[Typography.h4, styles.sectionTitle]}>Safety</ThemedText>
+        <Pressable
+          style={[styles.menuItem, { backgroundColor: theme.error + "15" }]}
+          onPress={() => navigation.navigate("EmergencySOS")}
+          android_ripple={{ color: theme.error + "30" }}
+        >
+          <View style={styles.menuItemContent}>
+            <Feather name="alert-triangle" size={24} color={theme.error} />
+            <ThemedText style={[styles.menuItemText, { color: theme.error }]}>Emergency SOS</ThemedText>
+          </View>
+          <Feather name="chevron-right" size={24} color={theme.error} />
+        </Pressable>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText style={[Typography.h4, styles.sectionTitle]}>Social</ThemedText>
+        <Pressable
+          style={[styles.menuItem, { backgroundColor: theme.backgroundDefault }]}
+          onPress={() => navigation.getParent()?.navigate("FriendsTab" as never)}
+          android_ripple={{ color: theme.backgroundSecondary }}
+        >
+          <View style={styles.menuItemContent}>
+            <Feather name="users" size={24} color={theme.primary} />
+            <ThemedText style={styles.menuItemText}>Friends & Community</ThemedText>
+          </View>
+          <Feather name="chevron-right" size={24} color={theme.tabIconDefault} />
+        </Pressable>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText style={[Typography.h4, styles.sectionTitle]}>Vehicle</ThemedText>
+        <Pressable
+          style={[styles.menuItem, { backgroundColor: theme.backgroundDefault }]}
+          onPress={() => navigation.navigate("VehicleMaintenance")}
+          android_ripple={{ color: theme.backgroundSecondary }}
+        >
+          <View style={styles.menuItemContent}>
+            <Feather name="tool" size={24} color={theme.primary} />
+            <ThemedText style={styles.menuItemText}>Maintenance Log</ThemedText>
+          </View>
+          <Feather name="chevron-right" size={24} color={theme.tabIconDefault} />
+        </Pressable>
+      </View>
+
+      <View style={styles.section}>
         <ThemedText style={[Typography.h4, styles.sectionTitle]}>Settings</ThemedText>
         <Pressable
           style={[styles.menuItem, { backgroundColor: theme.backgroundDefault }]}
@@ -470,6 +515,8 @@ export default function ProfileScreen() {
         </Pressable>
       </View>
 
+      {/* Donation link removed for production - using Apple In-App Purchases via RevenueCat */}
+      {/* 
       <View style={styles.section}>
         <ThemedText style={[Typography.h4, styles.sectionTitle]}>Support</ThemedText>
         <Pressable
@@ -484,6 +531,7 @@ export default function ProfileScreen() {
           <Feather name="chevron-right" size={24} color={theme.primary} />
         </Pressable>
       </View>
+      */}
     </ScreenScrollView>
   );
 }

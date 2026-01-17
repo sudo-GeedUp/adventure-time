@@ -76,7 +76,8 @@ export default function AIResultsScreen() {
   };
 
   const handleRequestHelp = () => {
-    navigation.navigate("RequestHelp");
+    // Navigate to Explore tab where users can find nearby offroaders for help
+    (navigation as any).navigate("NearbyTab");
   };
 
   if (isAnalyzing) {

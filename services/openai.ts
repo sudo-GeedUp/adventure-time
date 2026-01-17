@@ -90,8 +90,17 @@ Focus on:
       throw new Error("No response from OpenAI API");
     }
 
-    // Parse JSON response
-    const analysis: RecoveryAnalysis = JSON.parse(content);
+    // Parse JSON response - handle potential markdown code blocks
+    let jsonContent = content.trim();
+    
+    // Remove markdown code blocks if present
+    if (jsonContent.startsWith("```json")) {
+      jsonContent = jsonContent.replace(/```json\n?/g, "").replace(/```\n?$/g, "");
+    } else if (jsonContent.startsWith("```")) {
+      jsonContent = jsonContent.replace(/```\n?/g, "").replace(/```\n?$/g, "");
+    }
+    
+    const analysis: RecoveryAnalysis = JSON.parse(jsonContent.trim());
 
     // Validate response structure
     if (

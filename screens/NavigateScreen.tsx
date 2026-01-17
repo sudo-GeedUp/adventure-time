@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, FlatList, Alert, TextInput, ScrollView } from "react-native";
+import { View, StyleSheet, Pressable, FlatList, Alert, TextInput, ScrollView, Linking, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
@@ -19,6 +19,7 @@ import {
 } from "@/utils/trails";
 import { calculateDistance } from "@/utils/location";
 import { OfflineMapsManager } from "@/utils/offlineMaps";
+import { storage } from "@/utils/storage";
 
 type DifficultyFilter = "All" | "Easy" | "Moderate" | "Hard" | "Expert";
 type LandTypeFilter = "All" | "Public" | "Private";
@@ -37,24 +38,36 @@ export default function NavigateScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [downloadingTrails, setDownloadingTrails] = useState<Set<string>>(new Set());
   const [cachedTrails, setCachedTrails] = useState<Set<string>>(new Set());
+  const [communityTrails, setCommunityTrails] = useState<Trail[]>([]);
 
   useEffect(() => {
-    // Load trails immediately with default location
-    const defaultLocation = {
-      coords: {
-        latitude: 38.5729,
-        longitude: -109.5898,
-        altitude: null,
-        accuracy: 0,
-        altitudeAccuracy: null,
-        heading: 0,
-        speed: 0,
-      },
-      timestamp: Date.now(),
-    };
-    setLocation(defaultLocation);
-    setTrails(sortTrailsByRating(SAMPLE_TRAILS));
+    loadCommunityTrails();
+    requestLocationPermission();
   }, []);
+
+  const loadCommunityTrails = async () => {
+    try {
+      const adventures = await storage.getCommunityAdventures();
+      const communityTrailsData: Trail[] = adventures.map((adv: any) => ({
+        id: adv.id,
+        name: adv.trailName || adv.title,
+        description: `Community trail by ${adv.userName}`,
+        difficulty: adv.difficulty || "Moderate",
+        distance: adv.totalDistance,
+        duration: Math.round((adv.endTime - adv.startTime) / 1000 / 60),
+        safetyRating: 7,
+        landType: "public" as const,
+        features: [],
+        location: adv.route[0] || { latitude: 0, longitude: 0 },
+        elevation: adv.maxAltitude || 0,
+        vehicleTypes: [adv.vehicleType || "All"],
+        popularity: 5,
+      }));
+      setCommunityTrails(communityTrailsData);
+    } catch (error) {
+      console.error("Error loading community trails:", error);
+    }
+  };
 
   useEffect(() => {
     applyFilters();
@@ -96,9 +109,40 @@ export default function NavigateScreen() {
 
   const loadNearbyTrails = (currentLocation: any) => {
     const nearbyTrails = getTrailsNearLocation(currentLocation.coords, 50);
-    const sortedTrails = sortTrailsByRating(nearbyTrails);
-    setTrails(sortedTrails);
+    const allTrails = [...nearbyTrails, ...communityTrails];
+    const sortedByDistance = allTrails.sort((a, b) => {
+      const distA = calculateDistance(currentLocation.coords, a.location);
+      const distB = calculateDistance(currentLocation.coords, b.location);
+      return distA - distB;
+    });
+    setTrails(sortedByDistance);
     setIsLoading(false);
+  };
+
+  const openGPSNavigation = (trail: Trail) => {
+    const { latitude, longitude } = trail.location;
+    const label = encodeURIComponent(trail.name);
+    
+    let url = '';
+    if (Platform.OS === 'ios') {
+      url = `maps://app?daddr=${latitude},${longitude}&q=${label}`;
+    } else {
+      url = `google.navigation:q=${latitude},${longitude}`;
+    }
+    
+    Linking.canOpenURL(url)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(url);
+        } else {
+          const webUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+          return Linking.openURL(webUrl);
+        }
+      })
+      .catch((err) => {
+        Alert.alert('Error', 'Unable to open GPS navigation');
+        console.error('Navigation error:', err);
+      });
   };
 
   const applyFilters = () => {
@@ -268,23 +312,46 @@ export default function NavigateScreen() {
           )}
         </View>
 
-        <Pressable
-          style={[styles.startButton, { backgroundColor: theme.primary }]}
-          onPress={() => navigation.navigate("ActiveAdventure", { trail: item })}
-          android_ripple={{ color: theme.secondary }}
-        >
-          <Feather name="play" size={20} color={theme.backgroundDefault} />
-          <ThemedText style={[styles.startButtonText, { color: theme.backgroundDefault }]}>
-            Start Adventure
-          </ThemedText>
-        </Pressable>
+        <View style={styles.actionButtons}>
+          <Pressable
+            style={[styles.startButton, { backgroundColor: theme.primary }]}
+            onPress={() => navigation.navigate("ActiveAdventure", { trail: item })}
+            android_ripple={{ color: theme.secondary }}
+          >
+            <Feather name="play" size={20} color="white" />
+            <ThemedText style={[styles.startButtonText, { color: "white" }]}>
+              Start Adventure
+            </ThemedText>
+          </Pressable>
+          <Pressable
+            style={[styles.navigationButton, { backgroundColor: theme.accent }]}
+            onPress={() => openGPSNavigation(item)}
+            android_ripple={{ color: "rgba(255,255,255,0.2)" }}
+          >
+            <Feather name="navigation" size={18} color="white" />
+            <ThemedText style={[styles.navigationButtonText, { color: "white" }]}>
+              Take Me There
+            </ThemedText>
+          </Pressable>
+          <Pressable
+            style={[styles.offlineButton, { backgroundColor: theme.backgroundSecondary }]}
+            onPress={() => downloadTrailForOffline(item)}
+            android_ripple={{ color: theme.primary }}
+          >
+            <Feather 
+              name={cachedTrails.has(item.id) ? "check-circle" : "download"} 
+              size={18} 
+              color={cachedTrails.has(item.id) ? theme.success : theme.primary} 
+            />
+          </Pressable>
+        </View>
 
         {/* Offline Download Button */}
         <View style={styles.offlineSection}>
           {cachedTrails.has(item.id) ? (
             <View style={styles.offlineStatus}>
               <Feather name="download" size={16} color={theme.success} />
-              <ThemedText style={[styles.offlineText, { color: theme.success }]}>
+              <ThemedText style={[styles.offlineText, { color: theme.success, marginLeft: Spacing.xs }]}>
                 Available Offline
               </ThemedText>
             </View>
@@ -354,6 +421,12 @@ export default function NavigateScreen() {
         <ThemedText style={[Typography.h3, styles.headerTitle]}>
           Navigate Trails
         </ThemedText>
+        <Pressable
+          onPress={() => (navigation as any).navigate("GuidesTab")}
+          style={styles.helpButton}
+        >
+          <Feather name="help-circle" size={24} color={theme.primary} />
+        </Pressable>
       </View>
 
       {/* Start Free Adventure Button */}
@@ -377,7 +450,7 @@ export default function NavigateScreen() {
         <Feather name="map" size={24} color="white" />
         <View style={styles.freeAdventureTextContainer}>
           <ThemedText style={[styles.freeAdventureTitle, { color: "white" }]}>
-            Start Free Adventure
+            Adventure Time
           </ThemedText>
           <ThemedText style={[styles.freeAdventureSubtitle, { color: "rgba(255,255,255,0.8)" }]}>
             Track your own custom route
@@ -460,6 +533,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: Spacing.lg,
+  },
+  helpButton: {
+    marginLeft: "auto",
+    padding: Spacing.xs,
   },
   freeAdventureButton: {
     flexDirection: "row",
@@ -629,17 +706,36 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     maxWidth: 280,
   },
+  actionButtons: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+  },
   startButton: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
     borderRadius: BorderRadius.md,
-    marginTop: Spacing.md,
     gap: Spacing.sm,
   },
   startButtonText: {
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  navigationButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.sm,
+  },
+  navigationButtonText: {
     fontWeight: "600",
     fontSize: 14,
   },
@@ -654,7 +750,15 @@ const styles = StyleSheet.create({
   },
   offlineText: {
     fontSize: 12,
-    fontWeight: "600",
+    marginLeft: Spacing.xs,
+  },
+  offlineButton: {
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
   },
   downloadButton: {
     flexDirection: "row",

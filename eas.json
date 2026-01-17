@@ -8,17 +8,30 @@
       "distribution": "internal",
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "env": {
+        "EXPO_PUBLIC_REVENUECAT_IOS_KEY": "appl_test_key",
+        "EXPO_PUBLIC_OPENAI_API_KEY": ""
       }
     },
     "preview": {
       "distribution": "internal",
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "env": {
+        "EXPO_PUBLIC_REVENUECAT_IOS_KEY": "appl_test_key",
+        "EXPO_PUBLIC_OPENAI_API_KEY": ""
       }
     },
     "production": {
       "ios": {
-        "resourceClass": "m-medium"
+        "resourceClass": "m-medium",
+        "bundleIdentifier": "com.adventuretime.app"
+      },
+      "env": {
+        "EXPO_PUBLIC_REVENUECAT_IOS_KEY": "appl_production_key",
+        "EXPO_PUBLIC_OPENAI_API_KEY": ""
       }
     }
   },
@@ -26,7 +39,8 @@
     "production": {
       "ios": {
         "appleId": "sinjin.gallegos@aol.com",
-        "ascAppId": "YOUR_APP_STORE_CONNECT_APP_ID"
+        "ascAppId": "PLACEHOLDER_UPDATE_AFTER_APP_STORE_CONNECT_SETUP",
+        "appleTeamId": "YOUR_APPLE_TEAM_ID"
       }
     }
   }

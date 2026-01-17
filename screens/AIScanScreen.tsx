@@ -42,17 +42,18 @@ export default function AIScanScreen() {
   };
 
   const handleTakePhoto = async () => {
-    if (!isPremium) {
-      Alert.alert(
-        "Premium Feature",
-        "AI Recovery Analysis is a premium feature. Subscribe to unlock this and other premium features.",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Subscribe", onPress: () => (navigation as any).navigate("ProfileTab", { screen: "Subscription" }) }
-        ]
-      );
-      return;
-    }
+    // TODO: Re-enable premium gate before launch
+    // if (!isPremium) {
+    //   Alert.alert(
+    //     "Premium Feature",
+    //     "AI Recovery Analysis is a premium feature. Subscribe to unlock this and other premium features.",
+    //     [
+    //       { text: "Cancel", style: "cancel" },
+    //       { text: "Subscribe", onPress: () => (navigation as any).navigate("ProfileTab", { screen: "Subscription" }) }
+    //     ]
+    //   );
+    //   return;
+    // }
 
     const hasPermission = await requestCameraPermission();
     if (!hasPermission) return;
@@ -69,17 +70,18 @@ export default function AIScanScreen() {
   };
 
   const handleUploadPhoto = async () => {
-    if (!isPremium) {
-      Alert.alert(
-        "Premium Feature",
-        "AI Recovery Analysis is a premium feature. Subscribe to unlock this and other premium features.",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Subscribe", onPress: () => (navigation as any).navigate("ProfileTab", { screen: "Subscription" }) }
-        ]
-      );
-      return;
-    }
+    // TODO: Re-enable premium gate before launch
+    // if (!isPremium) {
+    //   Alert.alert(
+    //     "Premium Feature",
+    //     "AI Recovery Analysis is a premium feature. Subscribe to unlock this and other premium features.",
+    //     [
+    //       { text: "Cancel", style: "cancel" },
+    //       { text: "Subscribe", onPress: () => (navigation as any).navigate("ProfileTab", { screen: "Subscription" }) }
+    //     ]
+    //   );
+    //   return;
+    // }
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -103,12 +105,10 @@ export default function AIScanScreen() {
           <Feather name="camera" size={64} color={theme.primary} />
         </View>
         <ThemedText style={[Typography.h3, styles.emptyTitle]}>
-          AI Recovery Analysis {!isPremium && "🔒"}
+          AI Recovery Analysis
         </ThemedText>
         <ThemedText style={[styles.emptyDescription, { color: theme.tabIconDefault }]}>
-          {isPremium 
-            ? "Take a photo of your vehicle's situation and get AI-powered recovery recommendations"
-            : "Premium feature: Subscribe to unlock AI-powered recovery analysis and recommendations"}
+          Take a photo of your vehicle's situation and get AI-powered recovery recommendations
         </ThemedText>
       </View>
 
@@ -131,6 +131,17 @@ export default function AIScanScreen() {
         <Feather name="image" size={24} color={theme.primary} />
         <ThemedText style={[Typography.button, { color: theme.primary, marginLeft: Spacing.md }]}>
           Upload from Gallery
+        </ThemedText>
+      </Pressable>
+
+      <Pressable
+        style={[styles.guidesButton, { backgroundColor: theme.accent }]}
+        onPress={() => navigation.navigate("Guides")}
+        android_ripple={{ color: "rgba(255,255,255,0.2)" }}
+      >
+        <Feather name="book-open" size={24} color="white" />
+        <ThemedText style={[Typography.button, { color: "white", marginLeft: Spacing.md }]}>
+          Recovery Guides
         </ThemedText>
       </Pressable>
 
@@ -195,6 +206,14 @@ const styles = StyleSheet.create({
     height: Spacing.buttonHeight,
     borderRadius: BorderRadius.md,
     borderWidth: 2,
+    marginBottom: Spacing.md,
+  },
+  guidesButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: Spacing.buttonHeight,
+    borderRadius: BorderRadius.md,
     marginBottom: Spacing["2xl"],
   },
   historySection: {

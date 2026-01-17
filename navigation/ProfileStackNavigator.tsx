@@ -4,6 +4,8 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ProfileScreen from "@/screens/ProfileScreen";
 import SettingsScreen from "@/screens/SettingsScreen";
 import SubscriptionScreen from "@/screens/SubscriptionScreen";
+import EmergencySOSScreen from "@/screens/EmergencySOSScreen";
+import VehicleMaintenanceScreen from "@/screens/VehicleMaintenanceScreen";
 import { useTheme } from "@/hooks/useTheme";
 import { getCommonScreenOptions } from "@/navigation/screenOptions";
 
@@ -11,6 +13,8 @@ export type ProfileStackParamList = {
   Profile: undefined;
   Settings: undefined;
   Subscription: undefined;
+  EmergencySOS: undefined;
+  VehicleMaintenance: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -39,6 +43,20 @@ export default function ProfileStackNavigator() {
         component={SubscriptionScreen}
         options={{
           title: "Premium Subscription",
+        }}
+      />
+      <Stack.Screen
+        name="EmergencySOS"
+        component={EmergencySOSScreen}
+        options={{
+          title: "Emergency SOS",
+        }}
+      />
+      <Stack.Screen
+        name="VehicleMaintenance"
+        component={VehicleMaintenanceScreen}
+        options={{
+          title: "Vehicle Maintenance",
         }}
       />
     </Stack.Navigator>

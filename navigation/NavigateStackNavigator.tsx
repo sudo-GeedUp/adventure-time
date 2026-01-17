@@ -27,17 +27,17 @@ export default function NavigateStackNavigator() {
       }}
     >
       <Stack.Screen
-        name="LiveMap"
-        component={LiveMapScreen}
-        options={{
-          title: "Live Map",
-        }}
-      />
-      <Stack.Screen
         name="NavigateMain"
         component={NavigateScreen}
         options={{
           title: "Navigate",
+        }}
+      />
+      <Stack.Screen
+        name="LiveMap"
+        component={LiveMapScreen}
+        options={{
+          title: "Live Map",
         }}
       />
       <Stack.Screen

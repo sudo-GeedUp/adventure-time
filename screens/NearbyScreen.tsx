@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, FlatList, Alert, Platform } from "react-native";
+import { View, StyleSheet, Pressable, FlatList, Alert, Platform, Linking } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
@@ -14,6 +14,7 @@ import { getWeather } from "@/utils/weather";
 import { analyzeTrailConditions, calculateImpactAssessment } from "@/utils/conditions";
 import type { WeatherCondition, ImpactAssessment, TrailConditionSummary } from "@/utils/conditions";
 import ReportConditionModal from "@/components/ReportConditionModal";
+import { getTrailsNearLocation, Trail } from "@/utils/trails";
 
 let MapView: any = null;
 let Marker: any = null;
@@ -70,6 +71,11 @@ export default function NearbyScreen() {
   const [weatherError, setWeatherError] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [nearbyTrails, setNearbyTrails] = useState<Trail[]>([]);
+  const [communityTrails, setCommunityTrails] = useState<Trail[]>([]);
+  const [allTrails, setAllTrails] = useState<Trail[]>([]);
+  const [showTrailsMap, setShowTrailsMap] = useState(true);
+  const [selectedTrail, setSelectedTrail] = useState<Trail | null>(null);
 
   useEffect(() => {
     requestLocationPermission();
@@ -90,6 +96,7 @@ export default function NearbyScreen() {
     setLocation(currentLocation);
     await loadNearbyOffroaders(currentLocation);
     await loadConditions(currentLocation);
+    await loadNearbyTrails(currentLocation);
   };
 
   const loadNearbyOffroaders = async (currentLocation: any) => {
@@ -153,8 +160,69 @@ export default function NearbyScreen() {
     }
   };
 
+  const loadNearbyTrails = async (currentLocation: any) => {
+    try {
+      // Get all popular 4x4 trails within 200 miles
+      const popularTrails = getTrailsNearLocation(currentLocation.coords, 200);
+      const adventures = await storage.getCommunityAdventures();
+      
+      // Convert community adventures to Trail format
+      const communityTrailsData: Trail[] = adventures.map((adv: any) => ({
+        id: `community_${adv.id}`,
+        name: adv.trailName || adv.title || "Community Trail",
+        description: `User-logged trail by ${adv.userName || "Anonymous"}`,
+        difficulty: adv.difficulty || "Moderate",
+        distance: adv.totalDistance || 0,
+        duration: Math.round((adv.endTime - adv.startTime) / 1000 / 60) || 60,
+        safetyRating: 7,
+        landType: "public" as const,
+        features: ["Community Trail", "User Logged"],
+        location: adv.route[0] || { latitude: 0, longitude: 0 },
+        elevation: adv.maxAltitude || 0,
+        vehicleTypes: [adv.vehicleType || "All"],
+        popularity: 5,
+      }));
+
+      // Combine all trails
+      const combinedTrails = [...popularTrails, ...communityTrailsData];
+      
+      // Calculate distance from user for each trail
+      const trailsWithDistance = combinedTrails.map(trail => ({
+        ...trail,
+        distanceFromUser: calculateDistance(currentLocation.coords, trail.location)
+      }));
+      
+      // Sort by distance
+      const sortedTrails = trailsWithDistance.sort((a, b) => a.distanceFromUser - b.distanceFromUser);
+      
+      setAllTrails(sortedTrails);
+      setNearbyTrails(sortedTrails.slice(0, 10)); // Top 10 nearest
+      setCommunityTrails(communityTrailsData);
+    } catch (error) {
+      console.error("Error loading nearby trails:", error);
+    }
+  };
+
   const handleRefresh = () => {
     requestLocationPermission();
+  };
+
+  const openGPSNavigation = (trail: any) => {
+    const { latitude, longitude } = trail.location;
+    const label = encodeURIComponent(trail.name);
+    
+    if (Platform.OS === "ios") {
+      const url = `maps://app?daddr=${latitude},${longitude}&q=${label}`;
+      Linking.openURL(url).catch(() => {
+        Alert.alert("Error", "Unable to open Maps. Please ensure Apple Maps is installed.");
+      });
+    } else {
+      const url = `google.navigation:q=${latitude},${longitude}&label=${label}`;
+      Linking.openURL(url).catch(() => {
+        const webUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+        Linking.openURL(webUrl);
+      });
+    }
   };
 
   const handleReportSubmitted = async () => {
@@ -222,21 +290,48 @@ export default function NearbyScreen() {
             initialRegion={{
               latitude: location.coords.latitude,
               longitude: location.coords.longitude,
-              latitudeDelta: 0.1,
-              longitudeDelta: 0.1,
+              latitudeDelta: 1.0,
+              longitudeDelta: 1.0,
             }}
             showsUserLocation
             showsMyLocationButton
           >
+            {/* Trail markers */}
+            {allTrails.slice(0, 20).map((trail: any) => (
+              <Marker
+                key={trail.id}
+                coordinate={trail.location}
+                title={trail.name}
+                description={`${trail.difficulty} • ${trail.distance.toFixed(1)} mi`}
+                pinColor={trail.id.startsWith('community_') ? "#10b981" : "#3b82f6"}
+                onPress={() => setSelectedTrail(trail)}
+              />
+            ))}
+            {/* Offroader markers */}
             {offroaders.map((offroader) => (
               <Marker
-                key={offroader.id}
+                key={`offroader_${offroader.id}`}
                 coordinate={offroader.location}
                 title={offroader.name}
                 description={offroader.vehicleType}
+                pinColor="#ef4444"
               />
             ))}
           </MapView>
+          <View style={[styles.mapLegend, { backgroundColor: theme.backgroundDefault }]}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: "#3b82f6" }]} />
+              <ThemedText style={styles.legendText}>Popular Trails</ThemedText>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: "#10b981" }]} />
+              <ThemedText style={styles.legendText}>Community Trails</ThemedText>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: "#ef4444" }]} />
+              <ThemedText style={styles.legendText}>Offroaders</ThemedText>
+            </View>
+          </View>
         </View>
       ) : (
         <View style={[styles.mapPlaceholder, { backgroundColor: theme.backgroundSecondary }]}>
@@ -356,6 +451,102 @@ export default function NearbyScreen() {
         </View>
       ) : null}
 
+      {nearbyTrails.length > 0 && (
+        <View style={styles.trailsSection}>
+          <View style={styles.sectionHeaderRow}>
+            <ThemedText style={[Typography.h4, styles.sectionHeaderTitle]}>
+              Local & Nearby Trails ({allTrails.length})
+            </ThemedText>
+            <ThemedText style={[styles.trailCount, { color: theme.tabIconDefault }]}>
+              {communityTrails.length} community
+            </ThemedText>
+          </View>
+          <ThemedText style={[styles.trailsDescription, { color: theme.tabIconDefault }]}>
+            Popular 4x4 trails and user-logged routes. Tap "Take Me There" for GPS navigation.
+          </ThemedText>
+          {nearbyTrails.map((trail: any) => (
+            <View
+              key={trail.id}
+              style={[styles.trailCard, { backgroundColor: theme.backgroundDefault }]}
+            >
+              <View style={styles.trailCardHeader}>
+                <View style={styles.trailCardContent}>
+                  <View style={styles.trailNameRow}>
+                    <ThemedText style={[Typography.h4, styles.trailName]}>
+                      {trail.name}
+                    </ThemedText>
+                    {trail.id.startsWith('community_') && (
+                      <View style={[styles.communityBadge, { backgroundColor: theme.success + "20" }]}>
+                        <ThemedText style={[styles.communityBadgeText, { color: theme.success }]}>
+                          Community
+                        </ThemedText>
+                      </View>
+                    )}
+                  </View>
+                  <ThemedText style={[styles.trailDescription, { color: theme.tabIconDefault }]} numberOfLines={1}>
+                    {trail.description}
+                  </ThemedText>
+                  <View style={styles.trailMetaRow}>
+                    <View style={styles.trailMetaItem}>
+                      <Feather name="navigation" size={14} color={theme.accent} />
+                      <ThemedText style={[styles.trailMetaText, { color: theme.accent }]}>
+                        {trail.distanceFromUser.toFixed(1)} mi away
+                      </ThemedText>
+                    </View>
+                    <View style={styles.trailMetaItem}>
+                      <Feather name="trending-up" size={14} color={theme.tabIconDefault} />
+                      <ThemedText style={[styles.trailMetaText, { color: theme.tabIconDefault }]}>
+                        {trail.difficulty}
+                      </ThemedText>
+                    </View>
+                    <View style={styles.trailMetaItem}>
+                      <Feather name="map" size={14} color={theme.tabIconDefault} />
+                      <ThemedText style={[styles.trailMetaText, { color: theme.tabIconDefault }]}>
+                        {trail.distance.toFixed(1)} mi
+                      </ThemedText>
+                    </View>
+                  </View>
+                </View>
+              </View>
+              <View style={styles.trailCardActions}>
+                <Pressable
+                  style={[styles.takeMeThereButton, { backgroundColor: theme.primary }]}
+                  onPress={() => openGPSNavigation(trail)}
+                  android_ripple={{ color: "rgba(255,255,255,0.2)" }}
+                >
+                  <Feather name="navigation" size={18} color="white" />
+                  <ThemedText style={styles.takeMeThereText}>
+                    Take Me There
+                  </ThemedText>
+                </Pressable>
+                <Pressable
+                  style={[styles.startButton, { backgroundColor: theme.accent }]}
+                  onPress={() => navigation.navigate("NavigateTab", { screen: "ActiveAdventure", params: { trail } })}
+                  android_ripple={{ color: "rgba(255,255,255,0.2)" }}
+                >
+                  <Feather name="play" size={18} color="white" />
+                  <ThemedText style={styles.startButtonText}>
+                    Start
+                  </ThemedText>
+                </Pressable>
+              </View>
+            </View>
+          ))}
+          {allTrails.length > 10 && (
+            <Pressable
+              style={[styles.viewAllButton, { backgroundColor: theme.backgroundDefault }]}
+              onPress={() => navigation.navigate("NavigateTab")}
+              android_ripple={{ color: theme.backgroundSecondary }}
+            >
+              <ThemedText style={[styles.viewAllText, { color: theme.primary }]}>
+                View All {allTrails.length} Trails
+              </ThemedText>
+              <Feather name="arrow-right" size={20} color={theme.primary} />
+            </Pressable>
+          )}
+        </View>
+      )}
+
       <View style={styles.listTitleContainer}>
         <ThemedText style={[Typography.h4, styles.listTitle]}>
           Nearby Offroaders ({offroaders.length})
@@ -432,10 +623,11 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
   },
   mapContainer: {
-    height: 200,
+    height: 300,
     borderRadius: BorderRadius.md,
     overflow: "hidden",
     marginBottom: Spacing.xl,
+    position: "relative",
   },
   map: {
     width: "100%",
@@ -600,5 +792,151 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     textAlign: "center",
+  },
+  trailsSection: {
+    marginBottom: Spacing.xl,
+  },
+  trailsDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: Spacing.md,
+  },
+  trailCount: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.md,
+  },
+  sectionHeaderTitle: {
+    flex: 1,
+  },
+  seeAllText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  trailCard: {
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.md,
+  },
+  trailCardHeader: {
+    marginBottom: Spacing.md,
+  },
+  trailCardContent: {
+    flex: 1,
+  },
+  trailNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.xs,
+    gap: Spacing.sm,
+  },
+  trailName: {
+    flex: 1,
+  },
+  trailDescription: {
+    fontSize: 14,
+    marginBottom: Spacing.sm,
+  },
+  communityBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.sm,
+  },
+  communityBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
+  trailMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+  trailMetaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+  },
+  trailMetaText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  trailCardActions: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
+  takeMeThereButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.xs,
+  },
+  takeMeThereText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  startButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.xs,
+  },
+  startButtonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  viewAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginTop: Spacing.sm,
+    gap: Spacing.xs,
+  },
+  viewAllText: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  mapLegend: {
+    position: "absolute",
+    top: Spacing.md,
+    right: Spacing.md,
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.xs,
+    gap: Spacing.xs,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  legendText: {
+    fontSize: 11,
+    fontWeight: "600",
   },
 });
