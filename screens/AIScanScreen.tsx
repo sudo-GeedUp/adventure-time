@@ -20,6 +20,8 @@ export default function AIScanScreen() {
   const { isPremium } = useSubscription();
   const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [stuckOfTheWeek, setStuckOfTheWeek] = useState<any>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<any>(null);
 
   useEffect(() => {
     loadScanHistory();
@@ -42,6 +44,24 @@ export default function AIScanScreen() {
   const loadScanHistory = async () => {
     const history = await storage.getScanHistory();
     setScanHistory(history);
+  };
+
+  const analyzeImage = async (imageUri: string) => {
+    // Mock analysis for development
+    return {
+      situationType: 'Rock Crawl',
+      severity: 'Moderate',
+      vehiclePosition: 'High-centered on rocks',
+      recommendations: [
+        'Use rock sliders for protection',
+        'Air down tires for better traction',
+        'Use a spotter for guidance',
+        'Consider winching if stuck'
+      ],
+      safetyNotes: 'Ensure vehicle is stable before attempting recovery',
+      estimatedRecoveryTime: '30-45 minutes',
+      requiredEquipment: ['Traction boards', 'Winch', 'Tow straps'],
+    };
   };
 
   const requestCameraPermission = async () => {
@@ -73,14 +93,42 @@ export default function AIScanScreen() {
     const hasPermission = await requestCameraPermission();
     if (!hasPermission) return;
 
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: false,
-      quality: 0.8,
-    });
+    setIsAnalyzing(true);
 
-    if (!result.canceled && result.assets[0]) {
-      navigation.navigate("AIResults", { imageUri: result.assets[0].uri });
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        try {
+          const analysis = await analyzeImage(result.assets[0].uri);
+          setAnalysisResult(analysis);
+        } catch (error) {
+          console.warn('AI analysis not available in development mode:', error);
+          setAnalysisResult({
+            situationType: 'Rock Crawl',
+            severity: 'Moderate',
+            vehiclePosition: 'High-centered on rocks',
+            recommendations: [
+              'Use rock sliders for protection',
+              'Air down tires for better traction',
+              'Use a spotter for guidance',
+              'Consider winching if stuck'
+            ],
+            safetyNotes: 'Ensure vehicle is stable before attempting recovery',
+            estimatedRecoveryTime: '30-45 minutes',
+            requiredEquipment: ['Traction boards', 'Winch', 'Tow straps'],
+          });
+        }
+        setIsAnalyzing(false);
+        navigation.navigate("AIResults", { imageUri: result.assets[0].uri, analysisResult });
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      setIsAnalyzing(false);
     }
   };
 

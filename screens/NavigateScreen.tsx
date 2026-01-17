@@ -429,7 +429,7 @@ export default function NavigateScreen() {
           Navigate Trails
         </ThemedText>
         <Pressable
-          onPress={() => (navigation as any).navigate("GuidesTab")}
+          onPress={() => (navigation as any).getParent()?.navigate("Guides")}
           style={styles.helpButton}
         >
           <Feather name="help-circle" size={24} color={theme.primary} />

@@ -574,12 +574,12 @@ export default function ActiveAdventureScreen() {
             <View style={styles.convoyHeader}>
               <Feather name="users" size={20} color={theme.primary} />
               <ThemedText style={[Typography.h4, { marginLeft: Spacing.sm }]}>
-                Convoy: {activeConvoy.name}
+                Convoy: {activeConvoy?.name || 'Unknown'}
               </ThemedText>
             </View>
-            <ThemedText style={styles.convoyCode}>Code: {activeConvoy.code}</ThemedText>
+            <ThemedText style={styles.convoyCode}>Code: {activeConvoy?.code || 'N/A'}</ThemedText>
             <ThemedText style={styles.convoyMembers}>
-              {activeConvoy.members.length} member{activeConvoy.members.length !== 1 ? 's' : ''}
+              {activeConvoy?.members?.length || 0} member{activeConvoy?.members?.length !== 1 ? 's' : ''}
             </ThemedText>
             <Pressable
               style={[styles.leaveConvoyButton, { backgroundColor: theme.error }]}
