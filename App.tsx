@@ -14,6 +14,7 @@ import { initializeFirebase } from "@/config/firebase";
 import { initializeAuth } from "@/utils/firebaseHelpers";
 import { storage } from "@/utils/storage";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 export default function App() {
   const [showSpecialThanks, setShowSpecialThanks] = useState(false);
@@ -43,16 +44,18 @@ export default function App() {
   return (
   <ErrorBoundary>
     <SafeAreaProvider>
-      <SubscriptionProvider>
-        <GestureHandlerRootView style={styles.root}>
-          <KeyboardProvider>
-            <NavigationContainer>
-              <RootNavigator />
-            </NavigationContainer>
-            <StatusBar style="auto" />
-          </KeyboardProvider>
-        </GestureHandlerRootView>
-      </SubscriptionProvider>
+      <AuthProvider>
+        <SubscriptionProvider>
+          <GestureHandlerRootView style={styles.root}>
+            <KeyboardProvider>
+              <NavigationContainer>
+                <RootNavigator />
+              </NavigationContainer>
+              <StatusBar style="auto" />
+            </KeyboardProvider>
+          </GestureHandlerRootView>
+        </SubscriptionProvider>
+      </AuthProvider>
     </SafeAreaProvider>
     <SpecialThanksModal visible={showSpecialThanks} onClose={handleCloseThanks} />
   </ErrorBoundary>
