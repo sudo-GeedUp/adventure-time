@@ -9,6 +9,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
+import ExploreMapScreen from "./ExploreMapScreen";
+import { pickSmartRandomAdventure } from "@/utils/adventurePicker";
 import {
   getTrailsNearLocation,
   filterTrailsByDifficulty,
@@ -39,6 +41,8 @@ export default function NavigateScreen() {
   const [downloadingTrails, setDownloadingTrails] = useState<Set<string>>(new Set());
   const [cachedTrails, setCachedTrails] = useState<Set<string>>(new Set());
   const [communityTrails, setCommunityTrails] = useState<Trail[]>([]);
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [showRandomPicker, setShowRandomPicker] = useState(false);
 
   useEffect(() => {
     loadCommunityTrails();
@@ -119,6 +123,33 @@ export default function NavigateScreen() {
     setIsLoading(false);
   };
 
+  const handleRandomAdventure = () => {
+    const allTrails = [...trails, ...communityTrails];
+    if (allTrails.length === 0) {
+      Alert.alert('No Adventures Available', 'Please wait while we load nearby trails.');
+      return;
+    }
+
+    const result = pickSmartRandomAdventure(allTrails, {
+      difficulty: difficultyFilter !== 'All' ? difficultyFilter as any : undefined,
+    });
+
+    if (result) {
+      Alert.alert(
+        `${result.emoji} ${result.reason}`,
+        `We've picked "${result.trail.name}" for you!\n\nDifficulty: ${result.trail.difficulty}\nDistance: ${result.trail.distance.toFixed(1)} miles\n\nReady to start this adventure?`,
+        [
+          { text: 'Pick Another', onPress: handleRandomAdventure },
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Start Adventure',
+            onPress: () => navigation.navigate('ActiveAdventure', { trail: result.trail }),
+          },
+        ]
+      );
+    }
+  };
+
   const openGPSNavigation = (trail: Trail) => {
     const { latitude, longitude } = trail.location;
     const label = encodeURIComponent(trail.name);
@@ -176,7 +207,6 @@ export default function NavigateScreen() {
       filtered = filterTrailsByLandType(filtered, "private");
     }
 
-    console.log("Apply filters debug:", { trails: trails.length, filtered: filtered.length, difficultyFilter, landTypeFilter, searchQuery });
     setFilteredTrails(filtered);
   };
 
@@ -411,6 +441,28 @@ export default function NavigateScreen() {
     </Pressable>
   );
 
+  // If map view is selected, show the map screen
+  if (viewMode === 'map') {
+    return (
+      <View style={{ flex: 1 }}>
+        <ExploreMapScreen />
+        <Pressable
+          style={[
+            styles.viewToggleButton,
+            { 
+              top: insets.top + 70,
+              right: Spacing.md,
+              backgroundColor: theme.backgroundDefault 
+            }
+          ]}
+          onPress={() => setViewMode('list')}
+        >
+          <Feather name="list" size={20} color={theme.primary} />
+        </Pressable>
+      </View>
+    );
+  }
+
   return (
     <ScrollView
       style={[
@@ -429,12 +481,35 @@ export default function NavigateScreen() {
           Navigate Trails
         </ThemedText>
         <Pressable
+          onPress={() => setViewMode('map')}
+          style={styles.viewToggleHeaderButton}
+        >
+          <Feather name="map" size={24} color={theme.primary} />
+        </Pressable>
+        <Pressable
           onPress={() => (navigation as any).getParent()?.navigate("Guides")}
           style={styles.helpButton}
         >
           <Feather name="help-circle" size={24} color={theme.primary} />
         </Pressable>
       </View>
+
+      {/* You Pick Random Adventure Button */}
+      <Pressable
+        style={[styles.randomPickButton, { backgroundColor: theme.accent }]}
+        onPress={handleRandomAdventure}
+      >
+        <Feather name="shuffle" size={24} color="white" />
+        <View style={styles.freeAdventureTextContainer}>
+          <ThemedText style={[styles.freeAdventureTitle, { color: "white" }]}>
+            You Pick!
+          </ThemedText>
+          <ThemedText style={[styles.freeAdventureSubtitle, { color: "rgba(255,255,255,0.8)" }]}>
+            Let us choose your next adventure
+          </ThemedText>
+        </View>
+        <Feather name="chevron-right" size={24} color="white" />
+      </Pressable>
 
       {/* Start Free Adventure Button */}
       <Pressable
@@ -544,6 +619,14 @@ const styles = StyleSheet.create({
   helpButton: {
     marginLeft: "auto",
     padding: Spacing.xs,
+  },
+  randomPickButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.md,
+    gap: Spacing.md,
   },
   freeAdventureButton: {
     flexDirection: "row",
@@ -779,5 +862,22 @@ const styles = StyleSheet.create({
   downloadButtonText: {
     fontSize: 12,
     fontWeight: "600",
+  },
+  viewToggleButton: {
+    position: 'absolute',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  viewToggleHeaderButton: {
+    padding: Spacing.xs,
+    marginLeft: Spacing.sm,
   },
 });

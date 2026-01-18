@@ -43,6 +43,8 @@ interface AdventureSession {
   assistanceWaypoints: AssistanceWaypoint[];
   maxSpeed: number;
   maxAltitude: number;
+  totalSpeed: number;
+  speedReadings: number;
 }
 
 export default function ActiveAdventureScreen() {
@@ -159,6 +161,8 @@ export default function ActiveAdventureScreen() {
               route: [...prev.route, newRoutePoint],
               maxSpeed: Math.max(prev.maxSpeed, currentSpeed),
               maxAltitude: Math.max(prev.maxAltitude, currentAltitude),
+              totalSpeed: prev.totalSpeed + currentSpeed,
+              speedReadings: prev.speedReadings + 1,
             };
           });
         }
@@ -208,6 +212,8 @@ export default function ActiveAdventureScreen() {
         assistanceWaypoints: [],
         maxSpeed: 0,
         maxAltitude: initialAltitude,
+        totalSpeed: 0,
+        speedReadings: 0,
       });
     } catch (error) {
       Alert.alert("Error", "Could not get your location. Please enable location services.");
@@ -510,12 +516,49 @@ export default function ActiveAdventureScreen() {
         </View>
       )}
 
+      {/* Speedometer Card */}
+      <View style={[styles.speedometerCard, { backgroundColor: theme.backgroundDefault }]}>
+        <View style={styles.speedometerHeader}>
+          <Feather name="activity" size={24} color={theme.primary} />
+          <ThemedText style={[Typography.h4, { marginLeft: Spacing.sm }]}>Speedometer</ThemedText>
+        </View>
+        
+        {/* Current Speed - Large Display */}
+        <View style={styles.currentSpeedDisplay}>
+          <ThemedText style={[styles.currentSpeedValue, { color: theme.primary }]}>
+            {speed.toFixed(1)}
+          </ThemedText>
+          <ThemedText style={[styles.currentSpeedUnit, { color: theme.tabIconDefault }]}>mph</ThemedText>
+        </View>
+
+        {/* Speed Stats Row */}
+        <View style={styles.speedStatsRow}>
+          <View style={styles.speedStat}>
+            <ThemedText style={[styles.speedStatLabel, { color: theme.tabIconDefault }]}>Max</ThemedText>
+            <ThemedText style={[styles.speedStatValue, { color: theme.warning }]}>
+              {session.maxSpeed.toFixed(1)}
+            </ThemedText>
+            <ThemedText style={[styles.speedStatUnit, { color: theme.tabIconDefault }]}>mph</ThemedText>
+          </View>
+          
+          <View style={styles.speedStatDivider} />
+          
+          <View style={styles.speedStat}>
+            <ThemedText style={[styles.speedStatLabel, { color: theme.tabIconDefault }]}>Avg</ThemedText>
+            <ThemedText style={[styles.speedStatValue, { color: theme.accent }]}>
+              {session.speedReadings > 0 ? (session.totalSpeed / session.speedReadings).toFixed(1) : '0.0'}
+            </ThemedText>
+            <ThemedText style={[styles.speedStatUnit, { color: theme.tabIconDefault }]}>mph</ThemedText>
+          </View>
+        </View>
+      </View>
+
       {/* Live Stats */}
       <View style={[styles.statsCard, { backgroundColor: theme.backgroundDefault }]}>
         {/* Distance */}
         <View style={styles.statBlock}>
-          <Feather name="navigation" size={32} color={theme.primary} />
-          <ThemedText style={[Typography.h2, styles.statValue]}>
+          <Feather name="navigation" size={28} color={theme.primary} />
+          <ThemedText style={[Typography.h3, styles.statValue]}>
             {session.currentDistance.toFixed(1)}
           </ThemedText>
           <ThemedText style={[styles.statLabel, { color: theme.tabIconDefault }]}>miles</ThemedText>
@@ -523,22 +566,15 @@ export default function ActiveAdventureScreen() {
 
         {/* Time */}
         <View style={styles.statBlock}>
-          <Feather name="clock" size={32} color={theme.accent} />
-          <ThemedText style={[Typography.h2, styles.statValue]}>{formatTime(elapsedTime)}</ThemedText>
+          <Feather name="clock" size={28} color={theme.accent} />
+          <ThemedText style={[Typography.h3, styles.statValue]}>{formatTime(elapsedTime)}</ThemedText>
           <ThemedText style={[styles.statLabel, { color: theme.tabIconDefault }]}>elapsed</ThemedText>
-        </View>
-
-        {/* Speed */}
-        <View style={styles.statBlock}>
-          <Feather name="zap" size={32} color={theme.warning} />
-          <ThemedText style={[Typography.h2, styles.statValue]}>{formatSpeed(speed)}</ThemedText>
-          <ThemedText style={[styles.statLabel, { color: theme.tabIconDefault }]}>mph</ThemedText>
         </View>
 
         {/* Altitude */}
         <View style={styles.statBlock}>
-          <Feather name="trending-up" size={32} color={theme.success} />
-          <ThemedText style={[Typography.h2, styles.statValue]}>
+          <Feather name="trending-up" size={28} color={theme.success} />
+          <ThemedText style={[Typography.h3, styles.statValue]}>
             {altitude > 0 ? Math.round(altitude) : '--'}
           </ThemedText>
           <ThemedText style={[styles.statLabel, { color: theme.tabIconDefault }]}>ft</ThemedText>
@@ -1177,5 +1213,59 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
     borderRadius: BorderRadius.md,
     alignItems: "center",
+  },
+  speedometerCard: {
+    padding: Spacing.xl,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.lg,
+  },
+  speedometerHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.lg,
+  },
+  currentSpeedDisplay: {
+    alignItems: "center",
+    marginBottom: Spacing.xl,
+  },
+  currentSpeedValue: {
+    fontSize: 72,
+    fontWeight: "700",
+    lineHeight: 80,
+  },
+  currentSpeedUnit: {
+    fontSize: 24,
+    fontWeight: "600",
+    marginTop: -Spacing.sm,
+  },
+  speedStatsRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingTop: Spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.1)",
+  },
+  speedStat: {
+    alignItems: "center",
+    flex: 1,
+  },
+  speedStatLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    marginBottom: Spacing.xs,
+    textTransform: "uppercase",
+  },
+  speedStatValue: {
+    fontSize: 28,
+    fontWeight: "700",
+    marginBottom: Spacing.xs,
+  },
+  speedStatUnit: {
+    fontSize: 12,
+  },
+  speedStatDivider: {
+    width: 1,
+    height: "100%",
+    backgroundColor: "rgba(255,255,255,0.1)",
   },
 });

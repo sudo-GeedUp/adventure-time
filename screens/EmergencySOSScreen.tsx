@@ -26,9 +26,13 @@ export default function EmergencySOSScreen() {
   const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([]);
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [showSOSModal, setShowSOSModal] = useState(false);
+  const [showLocationShareModal, setShowLocationShareModal] = useState(false);
   const [sosMessage, setSOSMessage] = useState('');
+  const [locationMessage, setLocationMessage] = useState('');
   const [currentLocation, setCurrentLocation] = useState<any>(null);
   const [trailName, setTrailName] = useState('');
+  const [isTrackingRoute, setIsTrackingRoute] = useState(false);
+  const [routeStats, setRouteStats] = useState({ distance: 0, duration: 0, points: 0 });
   const [newContact, setNewContact] = useState({
     name: '',
     phone: '',
@@ -38,7 +42,36 @@ export default function EmergencySOSScreen() {
   useEffect(() => {
     loadEmergencyContacts();
     getCurrentLocation();
+    checkRouteTracking();
   }, []);
+
+  useEffect(() => {
+    let locationSubscription: any;
+    
+    if (isTrackingRoute) {
+      // Update location every 30 seconds while tracking
+      const startTracking = async () => {
+        locationSubscription = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            timeInterval: 30000,
+            distanceInterval: 50,
+          },
+          async (location) => {
+            await EmergencySOS.addRoutePoint(location);
+            await updateRouteStats();
+          }
+        );
+      };
+      startTracking();
+    }
+
+    return () => {
+      if (locationSubscription) {
+        locationSubscription.remove();
+      }
+    };
+  }, [isTrackingRoute]);
 
   const loadEmergencyContacts = async () => {
     const contacts = await EmergencySOS.getEmergencyContacts();
@@ -55,6 +88,64 @@ export default function EmergencySOSScreen() {
     } catch (error) {
       console.error('Error getting location:', error);
     }
+  };
+
+  const checkRouteTracking = async () => {
+    const tracking = await EmergencySOS.getRouteTracking();
+    if (tracking) {
+      setIsTrackingRoute(tracking.isTracking);
+      await updateRouteStats();
+    }
+  };
+
+  const updateRouteStats = async () => {
+    const tracking = await EmergencySOS.getRouteTracking();
+    if (!tracking) return;
+
+    const route = tracking.route || [];
+    let distance = 0;
+    for (let i = 1; i < route.length; i++) {
+      distance += EmergencySOS.calculateDistance(
+        route[i - 1].latitude,
+        route[i - 1].longitude,
+        route[i].latitude,
+        route[i].longitude
+      );
+    }
+
+    const duration = tracking.startTime ? Date.now() - tracking.startTime : 0;
+    setRouteStats({ distance, duration, points: route.length });
+  };
+
+  const handleStartTracking = async () => {
+    await EmergencySOS.startRouteTracking();
+    setIsTrackingRoute(true);
+    Alert.alert('Route Tracking Started', 'Your route is now being tracked');
+  };
+
+  const handleStopTracking = async () => {
+    await EmergencySOS.stopRouteTracking();
+    setIsTrackingRoute(false);
+    setRouteStats({ distance: 0, duration: 0, points: 0 });
+    Alert.alert('Route Tracking Stopped', 'Route tracking has been stopped');
+  };
+
+  const handleShareLocation = async () => {
+    Alert.alert(
+      '📍 Share Location & Route?',
+      'This will send your current location and the route you took to your contacts.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Share',
+          onPress: async () => {
+            await EmergencySOS.shareLocationWithRoute(locationMessage, trailName);
+            setShowLocationShareModal(false);
+            setLocationMessage('');
+          },
+        },
+      ]
+    );
   };
 
   const handleSendSOS = async () => {
@@ -89,10 +180,6 @@ export default function EmergencySOSScreen() {
         },
       ]
     );
-  };
-
-  const handleShareLocation = async () => {
-    await EmergencySOS.shareLiveLocation();
   };
 
   const handleAddContact = async () => {
@@ -135,25 +222,84 @@ export default function EmergencySOSScreen() {
 
   return (
     <ScreenScrollView>
-      {/* Emergency Actions */}
+      {/* Location Sharing */}
       <View style={styles.emergencySection}>
         <ThemedText style={[Typography.h3, styles.sectionTitle]}>
-          Emergency Actions
+          Location Sharing
         </ThemedText>
         
+        {/* Route Tracking Card */}
+        <View style={[styles.trackingCard, { backgroundColor: theme.backgroundDefault }]}>
+          <View style={styles.trackingHeader}>
+            <Feather 
+              name={isTrackingRoute ? "navigation" : "map"} 
+              size={24} 
+              color={isTrackingRoute ? theme.success : theme.tabIconDefault} 
+            />
+            <ThemedText style={[Typography.h4, { marginLeft: Spacing.sm }]}>
+              {isTrackingRoute ? 'Tracking Route' : 'Route Tracking'}
+            </ThemedText>
+          </View>
+          
+          {isTrackingRoute && (
+            <View style={styles.routeStats}>
+              <View style={styles.statItem}>
+                <ThemedText style={styles.statLabel}>Distance</ThemedText>
+                <ThemedText style={styles.statValue}>
+                  {routeStats.distance.toFixed(2)} km
+                </ThemedText>
+              </View>
+              <View style={styles.statItem}>
+                <ThemedText style={styles.statLabel}>Duration</ThemedText>
+                <ThemedText style={styles.statValue}>
+                  {Math.round(routeStats.duration / 60000)} min
+                </ThemedText>
+              </View>
+              <View style={styles.statItem}>
+                <ThemedText style={styles.statLabel}>Points</ThemedText>
+                <ThemedText style={styles.statValue}>
+                  {routeStats.points}
+                </ThemedText>
+              </View>
+            </View>
+          )}
+          
+          <Pressable
+            style={[styles.trackingButton, { 
+              backgroundColor: isTrackingRoute ? theme.error : theme.success 
+            }]}
+            onPress={isTrackingRoute ? handleStopTracking : handleStartTracking}
+          >
+            <Feather 
+              name={isTrackingRoute ? "stop-circle" : "play-circle"} 
+              size={20} 
+              color="white" 
+            />
+            <ThemedText style={styles.trackingButtonText}>
+              {isTrackingRoute ? 'Stop Tracking' : 'Start Tracking'}
+            </ThemedText>
+          </Pressable>
+        </View>
+
+        {/* Share Location Button */}
         <Pressable
-          style={[styles.sosButton, { backgroundColor: theme.error }]}
-          onPress={() => setShowSOSModal(true)}
+          style={[styles.shareButton, { backgroundColor: theme.primary }]}
+          onPress={() => setShowLocationShareModal(true)}
         >
-          <Feather name="alert-triangle" size={32} color="white" />
-          <ThemedText style={[Typography.h2, styles.sosButtonText]}>
-            Send SOS Alert
+          <Feather name="send" size={28} color="white" />
+          <ThemedText style={[Typography.h3, styles.shareButtonText]}>
+            Share My Location
           </ThemedText>
-          <ThemedText style={styles.sosButtonSubtext}>
-            Alert all emergency contacts
+          <ThemedText style={styles.shareButtonSubtext}>
+            Send location {isTrackingRoute ? 'and route' : ''} to contacts
           </ThemedText>
         </Pressable>
 
+        {/* Emergency Actions */}
+        <ThemedText style={[Typography.h4, styles.sectionTitle, { marginTop: Spacing.xl }]}>
+          Emergency
+        </ThemedText>
+        
         <View style={styles.quickActions}>
           <Pressable
             style={[styles.quickActionButton, { backgroundColor: theme.backgroundDefault }]}
@@ -165,10 +311,10 @@ export default function EmergencySOSScreen() {
 
           <Pressable
             style={[styles.quickActionButton, { backgroundColor: theme.backgroundDefault }]}
-            onPress={handleShareLocation}
+            onPress={() => setShowSOSModal(true)}
           >
-            <Feather name="map-pin" size={24} color={theme.primary} />
-            <ThemedText style={styles.quickActionText}>Share Location</ThemedText>
+            <Feather name="alert-triangle" size={24} color={theme.error} />
+            <ThemedText style={styles.quickActionText}>Send SOS</ThemedText>
           </Pressable>
         </View>
       </View>
@@ -301,12 +447,12 @@ export default function EmergencySOSScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* SOS Message Modal */}
+      {/* Location Share Modal */}
       <Modal
-        visible={showSOSModal}
+        visible={showLocationShareModal}
         transparent
         animationType="slide"
-        onRequestClose={() => setShowSOSModal(false)}
+        onRequestClose={() => setShowLocationShareModal(false)}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -314,16 +460,16 @@ export default function EmergencySOSScreen() {
         >
           <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
             <View style={styles.modalHeader}>
-              <ThemedText style={[Typography.h3, styles.modalTitle, { color: theme.error }]}>
-                🆘 Send Emergency Alert
+              <ThemedText style={[Typography.h3, styles.modalTitle]}>
+                📍 Share Location
               </ThemedText>
-              <Pressable onPress={() => setShowSOSModal(false)}>
+              <Pressable onPress={() => setShowLocationShareModal(false)}>
                 <Feather name="x" size={24} color={theme.tabIconDefault} />
               </Pressable>
             </View>
 
             <ThemedText style={styles.modalDescription}>
-              This will send your location and message to all emergency contacts
+              Share your current location{isTrackingRoute ? ' and route' : ''} with your contacts
             </ThemedText>
 
             <TextInput
@@ -339,7 +485,64 @@ export default function EmergencySOSScreen() {
                 styles.messageInput,
                 { backgroundColor: theme.backgroundRoot, color: theme.text },
               ]}
-              placeholder="Emergency message (optional)"
+              placeholder="Message (optional)"
+              placeholderTextColor={theme.tabIconDefault}
+              value={locationMessage}
+              onChangeText={setLocationMessage}
+              multiline
+              numberOfLines={4}
+            />
+
+            <Pressable
+              style={[styles.modalButton, { backgroundColor: theme.primary }]}
+              onPress={handleShareLocation}
+            >
+              <Feather name="send" size={20} color="white" />
+              <ThemedText style={styles.modalButtonText}>Share Location</ThemedText>
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* SOS Message Modal */}
+      <Modal
+        visible={showSOSModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowSOSModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalContainer}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
+            <View style={styles.modalHeader}>
+              <ThemedText style={[Typography.h3, styles.modalTitle, { color: theme.error }]}>
+                🆘 Emergency SOS
+              </ThemedText>
+              <Pressable onPress={() => setShowSOSModal(false)}>
+                <Feather name="x" size={24} color={theme.tabIconDefault} />
+              </Pressable>
+            </View>
+
+            <ThemedText style={[styles.modalDescription, { color: theme.error }]}>
+              ⚠️ Use only for true emergencies. This sends an urgent alert to all contacts.
+            </ThemedText>
+
+            <TextInput
+              style={[styles.input, { backgroundColor: theme.backgroundRoot, color: theme.text }]}
+              placeholder="Trail name (optional)"
+              placeholderTextColor={theme.tabIconDefault}
+              value={trailName}
+              onChangeText={setTrailName}
+            />
+
+            <TextInput
+              style={[
+                styles.messageInput,
+                { backgroundColor: theme.backgroundRoot, color: theme.text },
+              ]}
+              placeholder="Emergency details (optional)"
               placeholderTextColor={theme.tabIconDefault}
               value={sosMessage}
               onChangeText={setSOSMessage}
@@ -352,7 +555,7 @@ export default function EmergencySOSScreen() {
               onPress={handleSendSOS}
             >
               <Feather name="alert-triangle" size={20} color="white" />
-              <ThemedText style={styles.modalButtonText}>Send SOS Alert</ThemedText>
+              <ThemedText style={styles.modalButtonText}>Send Emergency SOS</ThemedText>
             </Pressable>
           </View>
         </KeyboardAvoidingView>
@@ -522,5 +725,61 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  trackingCard: {
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.lg,
+  },
+  trackingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  routeStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: Spacing.md,
+    paddingVertical: Spacing.md,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statLabel: {
+    fontSize: 12,
+    opacity: 0.6,
+    marginBottom: Spacing.xs,
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  trackingButton: {
+    flexDirection: 'row',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+  },
+  trackingButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  shareButton: {
+    padding: Spacing.xl,
+    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
+  shareButtonText: {
+    color: 'white',
+    marginTop: Spacing.md,
+  },
+  shareButtonSubtext: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+    marginTop: Spacing.xs,
   },
 });
