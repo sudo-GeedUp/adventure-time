@@ -41,7 +41,7 @@ export default function NavigateScreen() {
   const [downloadingTrails, setDownloadingTrails] = useState<Set<string>>(new Set());
   const [cachedTrails, setCachedTrails] = useState<Set<string>>(new Set());
   const [communityTrails, setCommunityTrails] = useState<Trail[]>([]);
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
   const [showRandomPicker, setShowRandomPicker] = useState(false);
 
   useEffect(() => {
@@ -52,24 +52,32 @@ export default function NavigateScreen() {
   const loadCommunityTrails = async () => {
     try {
       const adventures = await storage.getCommunityAdventures();
-      const communityTrailsData: Trail[] = adventures.map((adv: any) => ({
-        id: adv.id,
-        name: adv.trailName || adv.title,
-        description: `Community trail by ${adv.userName}`,
-        difficulty: adv.difficulty || "Moderate",
-        distance: adv.totalDistance,
-        duration: Math.round((adv.endTime - adv.startTime) / 1000 / 60),
-        safetyRating: 7,
-        landType: "public" as const,
-        features: [],
-        location: adv.route[0] || { latitude: 0, longitude: 0 },
-        elevation: adv.maxAltitude || 0,
-        vehicleTypes: [adv.vehicleType || "All"],
-        popularity: 5,
-      }));
+      if (!adventures || adventures.length === 0) {
+        console.log("No community trails found");
+        return;
+      }
+      const communityTrailsData: Trail[] = adventures
+        .filter((adv: any) => adv.route && adv.route.length > 0)
+        .map((adv: any) => ({
+          id: adv.id,
+          name: adv.trailName || adv.title || "Community Trail",
+          description: `Community trail by ${adv.userName || "Unknown"}`,
+          difficulty: adv.difficulty || "Moderate",
+          distance: adv.totalDistance || 0,
+          duration: adv.endTime && adv.startTime ? Math.round((adv.endTime - adv.startTime) / 1000 / 60) : 0,
+          safetyRating: 7,
+          landType: "public" as const,
+          features: [],
+          location: adv.route[0] || { latitude: 0, longitude: 0 },
+          elevation: adv.maxAltitude || 0,
+          vehicleTypes: [adv.vehicleType || "All"],
+          popularity: 5,
+        }));
       setCommunityTrails(communityTrailsData);
+      console.log("Loaded", communityTrailsData.length, "community trails");
     } catch (error) {
       console.error("Error loading community trails:", error);
+      setCommunityTrails([]);
     }
   };
 
@@ -494,34 +502,15 @@ export default function NavigateScreen() {
         </Pressable>
       </View>
 
-      {/* Choose For Me Adventure Button - Featured */}
+      {/* Adventure Time - Hero Feature */}
       <Pressable
-        style={[styles.chooseForMeButton, { backgroundColor: theme.accent }]}
-        onPress={handleRandomAdventure}
-      >
-        <View style={styles.chooseForMeContent}>
-          <Feather name="shuffle" size={32} color="white" />
-          <View style={styles.chooseForMeTextContainer}>
-            <ThemedText style={[styles.chooseForMeTitle, { color: "white" }]}>
-              Choose For Me! 🎲
-            </ThemedText>
-            <ThemedText style={[styles.chooseForMeSubtitle, { color: "rgba(255,255,255,0.9)" }]}>
-              Let us pick your perfect adventure
-            </ThemedText>
-          </View>
-          <Feather name="chevron-right" size={28} color="white" />
-        </View>
-      </Pressable>
-
-      {/* Start Free Adventure Button */}
-      <Pressable
-        style={[styles.freeAdventureButton, { backgroundColor: theme.primary }]}
+        style={[styles.adventureTimeHero, { backgroundColor: theme.primary }]}
         onPress={() => navigation.navigate("ActiveAdventure", { 
           trail: { 
-            name: "Custom Adventure", 
+            name: "Adventure Time", 
             difficulty: "Moderate" as const,
-            id: `custom_${Date.now()}`,
-            description: "Track your own route",
+            id: `adventure_${Date.now()}`,
+            description: "Live GPS tracking with community data",
             distance: 0,
             duration: 0,
             safetyRating: 0,
@@ -531,16 +520,42 @@ export default function NavigateScreen() {
           } 
         })}
       >
-        <Feather name="map" size={24} color="white" />
-        <View style={styles.freeAdventureTextContainer}>
-          <ThemedText style={[styles.freeAdventureTitle, { color: "white" }]}>
-            Adventure Time
-          </ThemedText>
-          <ThemedText style={[styles.freeAdventureSubtitle, { color: "rgba(255,255,255,0.8)" }]}>
-            Track your own custom route
-          </ThemedText>
+        <View style={styles.heroContent}>
+          <View style={styles.heroIconContainer}>
+            <Feather name="navigation" size={48} color="white" />
+          </View>
+          <View style={styles.heroTextContainer}>
+            <ThemedText style={[styles.heroTitle, { color: "white" }]}>
+              🏁 Adventure Time
+            </ThemedText>
+            <ThemedText style={[styles.heroSubtitle, { color: "rgba(255,255,255,0.95)" }]}>
+              Live GPS tracking with rally navigator
+            </ThemedText>
+            <ThemedText style={[styles.heroDescription, { color: "rgba(255,255,255,0.8)" }]}>
+              Real-time callouts • Community data • Route tracking
+            </ThemedText>
+          </View>
+          <Feather name="chevron-right" size={32} color="white" />
         </View>
-        <Feather name="chevron-right" size={24} color="white" />
+      </Pressable>
+
+      {/* Choose For Me Adventure Button */}
+      <Pressable
+        style={[styles.chooseForMeButton, { backgroundColor: theme.accent }]}
+        onPress={handleRandomAdventure}
+      >
+        <View style={styles.chooseForMeContent}>
+          <Feather name="shuffle" size={28} color="white" />
+          <View style={styles.chooseForMeTextContainer}>
+            <ThemedText style={[styles.chooseForMeTitle, { color: "white" }]}>
+              Choose For Me! 🎲
+            </ThemedText>
+            <ThemedText style={[styles.chooseForMeSubtitle, { color: "rgba(255,255,255,0.9)" }]}>
+              Let us pick your perfect adventure
+            </ThemedText>
+          </View>
+          <Feather name="chevron-right" size={24} color="white" />
+        </View>
       </Pressable>
 
       <View style={[styles.searchBar, { backgroundColor: theme.backgroundDefault, borderColor: theme.primary }]}>
@@ -622,15 +637,58 @@ const styles = StyleSheet.create({
     marginLeft: "auto",
     padding: Spacing.xs,
   },
+  adventureTimeHero: {
+    borderRadius: BorderRadius.xl,
+    marginBottom: Spacing.xl,
+    padding: Spacing.xl,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 12,
+    minHeight: 160,
+  },
+  heroContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.lg,
+  },
+  heroIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroTextContainer: {
+    flex: 1,
+  },
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: "900",
+    marginBottom: 6,
+    letterSpacing: 0.5,
+  },
+  heroSubtitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  heroDescription: {
+    fontSize: 13,
+    fontWeight: "500",
+    lineHeight: 18,
+  },
   chooseForMeButton: {
     borderRadius: BorderRadius.lg,
     marginBottom: Spacing.lg,
-    padding: Spacing.lg,
+    padding: Spacing.md,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 6,
   },
   chooseForMeContent: {
     flexDirection: "row",

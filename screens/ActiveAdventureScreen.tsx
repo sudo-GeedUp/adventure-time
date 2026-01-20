@@ -68,7 +68,6 @@ export default function ActiveAdventureScreen() {
   const [hazardDescription, setHazardDescription] = useState("");
   const [assistanceDescription, setAssistanceDescription] = useState("");
   const [showMap, setShowMap] = useState(true);
-  const [mapRef, setMapRef] = useState<any>(null);
   const [showConvoyModal, setShowConvoyModal] = useState(false);
   const [showJoinConvoyModal, setShowJoinConvoyModal] = useState(false);
   const [convoyCode, setConvoyCode] = useState("");
@@ -79,6 +78,8 @@ export default function ActiveAdventureScreen() {
   const [activeConvoy, setActiveConvoy] = useState<any>(null);
   const [navigationCallouts, setNavigationCallouts] = useState<NavigationCallout[]>([]);
   const [showNavigator, setShowNavigator] = useState(true);
+  const [communityTrails, setCommunityTrails] = useState<any[]>([]);
+  const mapRef = React.useRef<any>(null);
 
   const HAZARD_TYPES = [
     { id: "washout", label: "Washout", icon: "alert-triangle" },
@@ -91,9 +92,25 @@ export default function ActiveAdventureScreen() {
     { id: "other", label: "Other Hazard", icon: "alert-circle" },
   ];
 
+  // Load community trail data
+  const loadCommunityTrails = async () => {
+    try {
+      const adventures = await storage.getCommunityAdventures();
+      // Get recent adventures with routes near current location
+      const recentTrails = adventures
+        .filter((adv: any) => adv.route && adv.route.length > 0)
+        .slice(0, 20); // Show last 20 community trails
+      setCommunityTrails(recentTrails);
+      console.log('[Community Data] Loaded', recentTrails.length, 'trails from past users');
+    } catch (error) {
+      console.error('[Community Data] Error loading trails:', error);
+    }
+  };
+
   // Initialize adventure session
   useEffect(() => {
     startAdventure();
+    loadCommunityTrails();
     // Initialize rally navigator with trail data
     console.log('[Rally Navigator] Initializing with trail:', trail.name);
     console.log('[Rally Navigator] Hazards:', trail.hazards?.length || 0);
@@ -534,7 +551,24 @@ export default function ActiveAdventureScreen() {
             showsCompass
             mapType="hybrid"
           >
-            {/* Route Polyline */}
+            {/* Community Trail Routes - Past User Logs */}
+            {communityTrails.map((trail) => (
+              trail.route && trail.route.length > 1 && (
+                <Polyline
+                  key={trail.id}
+                  coordinates={trail.route.map((point: any) => ({
+                    latitude: point.latitude,
+                    longitude: point.longitude,
+                  }))}
+                  strokeColor="#888888"
+                  strokeWidth={2}
+                  lineDashPattern={[5, 5]}
+                  opacity={0.4}
+                />
+              )
+            ))}
+
+            {/* Current Route Polyline */}
             {session.route.length > 1 && (
               <Polyline
                 coordinates={session.route.map(point => ({
