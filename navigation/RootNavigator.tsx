@@ -30,35 +30,34 @@ export default function RootNavigator() {
   useEffect(() => {
     const checkFirstLaunch = async () => {
       const hasLaunched = await storage.getFirstLaunchDone();
+      console.log('RootNavigator: First launch check:', !hasLaunched);
       setIsFirstLaunch(!hasLaunched);
     };
     checkFirstLaunch();
   }, []);
 
-  if (isFirstLaunch === null || authLoading) {
+  console.log('RootNavigator: Rendering with state:', {
+    isFirstLaunch,
+    authLoading,
+    isAuthenticated
+  });
+
+  if (authLoading) {
+    console.log('RootNavigator: Showing loading indicator');
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: theme.backgroundDefault }}>
         <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
 
+  console.log('RootNavigator: Rendering navigator - going directly to MainTabs');
+
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {isFirstLaunch ? (
-        <Stack.Screen
-          name="Welcome"
-          component={WelcomeScreen}
-          options={{ gestureEnabled: false }}
-        />
-      ) : null}
-      {!isAuthenticated ? (
-        <Stack.Screen
-          name="Auth"
-          component={AuthStackNavigator}
-          options={{ gestureEnabled: false }}
-        />
-      ) : null}
+    <Stack.Navigator 
+      initialRouteName="MainTabs"
+      screenOptions={{ headerShown: false }}
+    >
       <Stack.Screen name="MainTabs" component={MainTabNavigator} />
       <Stack.Screen
         name="Chat"

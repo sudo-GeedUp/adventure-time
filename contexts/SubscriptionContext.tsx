@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Platform } from 'react-native';
 import Purchases, { CustomerInfo } from 'react-native-purchases';
 import { 
   initializeRevenueCat, 
@@ -20,12 +21,16 @@ interface SubscriptionContextType {
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
 
 export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isPremium, setIsPremium] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isPremium, setIsPremium] = useState(true); // Always premium for testing
+  const [isLoading, setIsLoading] = useState(false); // No loading needed
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
 
   const refreshStatus = async () => {
     try {
+      if (Platform.OS === 'web') {
+        setIsPremium(true);
+        return;
+      }
       const info = await Purchases.getCustomerInfo();
       setCustomerInfo(info);
       const hasPremium = info.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined;
@@ -37,30 +42,10 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   useEffect(() => {
-    const initialize = async () => {
-      setIsLoading(true);
-      const initialized = await initializeRevenueCat();
-      
-      if (initialized) {
-        await refreshStatus();
-        
-        // Set up listener for customer info updates
-        Purchases.addCustomerInfoUpdateListener((info) => {
-          setCustomerInfo(info);
-          const hasPremium = info.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined;
-          setIsPremium(hasPremium);
-        });
-      }
-      
-      setIsLoading(false);
-    };
-
-    initialize();
-
-    return () => {
-      // Clean up listener
-      Purchases.removeCustomerInfoUpdateListener(() => {});
-    };
+    // Always set premium to true for testing - no subscription checks needed
+    console.log('Subscriptions: Premium access enabled for testing');
+    setIsPremium(true);
+    setIsLoading(false);
   }, []);
 
   const purchaseSubscription = async (): Promise<boolean> => {

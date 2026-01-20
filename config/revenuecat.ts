@@ -17,6 +17,12 @@ export const ENTITLEMENT_IDS = {
 
 export const initializeRevenueCat = async () => {
   try {
+    // RevenueCat is not supported on web
+    if (Platform.OS === 'web') {
+      console.log('RevenueCat not available on web platform');
+      return false;
+    }
+
     // Configure RevenueCat
     Purchases.setLogLevel(LOG_LEVEL.VERBOSE); // Set to INFO in production
     

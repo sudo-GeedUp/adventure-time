@@ -24,24 +24,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = authService.onAuthStateChanged(async (firebaseUser) => {
-      setUser(firebaseUser);
-      
-      if (firebaseUser) {
-        const profile = await authService.getUserProfile(firebaseUser.uid);
-        setUserProfile(profile);
+    console.log('AuthContext: Auto-authenticating for testing');
+    
+    // Auto-authenticate without requiring login
+    const autoAuth = async () => {
+      try {
+        // Create a mock user profile for testing (with premium access)
+        const mockProfile: UserProfile = {
+          uid: 'test-user-' + Date.now(),
+          email: 'test@adventure.app',
+          displayName: 'Test User',
+          photoURL: undefined,
+          createdAt: Date.now(),
+          lastLogin: Date.now(),
+          isPremium: true,
+        };
         
-        const premiumStatus = await authService.checkPremiumStatus();
-        setIsPremium(premiumStatus);
-      } else {
-        setUserProfile(null);
-        setIsPremium(false);
+        setUserProfile(mockProfile);
+        setIsPremium(true);
+        console.log('AuthContext: Auto-authenticated as test user');
+      } catch (error) {
+        console.error('Error in auto-auth:', error);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
-    });
-
-    return unsubscribe;
+    };
+    
+    autoAuth();
   }, []);
 
   const signUp = async (email: string, password: string, displayName: string) => {

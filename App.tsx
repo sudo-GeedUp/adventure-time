@@ -15,25 +15,92 @@ import { initializeAuth } from "@/utils/firebaseHelpers";
 import { storage } from "@/utils/storage";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { sentryService } from "@/services/sentryService";
+import { analyticsService } from "@/services/analyticsService";
+import { notificationService } from "@/services/notificationService";
 
 export default function App() {
   const [showSpecialThanks, setShowSpecialThanks] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     const init = async () => {
-      // Initialize Firebase
-      const firebaseServices = await initializeFirebase();
-      if (firebaseServices && firebaseServices.auth) {
-        await initializeAuth(firebaseServices.auth);
-      }
+      try {
+        console.log('App initialization starting...');
+        
+        // Set a timeout to ensure app renders even if initialization hangs
+        const initTimeout = setTimeout(() => {
+          console.warn('Initialization timeout - rendering app anyway');
+          setIsInitialized(true);
+        }, 5000);
 
-      // Check if special thanks has been shown
-      const hasSeenThanks = await storage.getSpecialThanksShown();
-      if (!hasSeenThanks) {
-        setShowSpecialThanks(true);
+        // Initialize Sentry for crash reporting (optional)
+        try {
+          sentryService.initialize();
+        } catch (error) {
+          console.log('Sentry initialization skipped');
+        }
+
+        // Initialize Firebase (optional - app works without it)
+        try {
+          const firebaseServices = await initializeFirebase();
+          if (firebaseServices && firebaseServices.auth) {
+            await initializeAuth(firebaseServices.auth);
+          }
+        } catch (error) {
+          console.log('Firebase initialization skipped - app will use local storage');
+        }
+
+        // Initialize Analytics (optional)
+        try {
+          analyticsService.initialize();
+        } catch (error) {
+          console.log('Analytics initialization skipped');
+        }
+
+        // Initialize Notifications (optional)
+        try {
+          await notificationService.initialize();
+          notificationService.setupListeners(
+            (notification) => {
+              console.log('Notification received:', notification);
+            },
+            (response) => {
+              console.log('Notification tapped:', response);
+            }
+          );
+        } catch (error) {
+          console.log('Notifications initialization skipped');
+        }
+
+        // Check if special thanks has been shown
+        try {
+          const hasSeenThanks = await storage.getSpecialThanksShown();
+          if (!hasSeenThanks) {
+            setShowSpecialThanks(true);
+          }
+        } catch (error) {
+          console.log('Special thanks check skipped');
+        }
+        
+        clearTimeout(initTimeout);
+        setIsInitialized(true);
+        console.log('App initialization complete!');
+      } catch (error) {
+        console.error('Critical error during app initialization:', error);
+        setIsInitialized(true); // Render app anyway
       }
     };
+    
     init();
+
+    return () => {
+      try {
+        notificationService.removeListeners();
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+    };
   }, []);
 
   const handleCloseThanks = async () => {

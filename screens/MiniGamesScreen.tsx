@@ -7,7 +7,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type MiniGamesStackParamList = {
   MiniGamesHome: undefined;
-  AntGame: undefined;
 };
 
 type NavigationProp = NativeStackNavigationProp<MiniGamesStackParamList>;
@@ -21,13 +20,8 @@ interface GameCard {
 }
 
 const games: GameCard[] = [
-  {
-    id: 'ant-game',
-    title: 'Ant Smasher',
-    description: 'Help your dog catch the running ants!',
-    icon: 'target',
-    screen: 'AntGame',
-  },
+  // Ant game has been moved to a standalone project
+  // Add new mini-games here
 ];
 
 export default function MiniGamesScreen() {

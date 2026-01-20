@@ -380,7 +380,7 @@ export class TrailDifficultyCalculator {
 
     // Sort by priority and improvement
     suggestions.sort((a, b) => {
-      const priorityOrder = { 'Essential': 0, 'Recommended': 1, 'Nice to Have': 2 };
+      const priorityOrder: Record<string, number> = { 'Essential': 0, 'Recommended': 1, 'Nice to Have': 2 };
       if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
         return priorityOrder[a.priority] - priorityOrder[b.priority];
       }

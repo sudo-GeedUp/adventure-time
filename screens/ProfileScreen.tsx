@@ -455,20 +455,6 @@ export default function ProfileScreen() {
         )}
       </View>
 
-      <View style={styles.section}>
-        <ThemedText style={[Typography.h4, styles.sectionTitle]}>Safety</ThemedText>
-        <Pressable
-          style={[styles.menuItem, { backgroundColor: theme.error + "15" }]}
-          onPress={() => navigation.navigate("EmergencySOS")}
-          android_ripple={{ color: theme.error + "30" }}
-        >
-          <View style={styles.menuItemContent}>
-            <Feather name="alert-triangle" size={24} color={theme.error} />
-            <ThemedText style={[styles.menuItemText, { color: theme.error }]}>Emergency SOS</ThemedText>
-          </View>
-          <Feather name="chevron-right" size={24} color={theme.error} />
-        </Pressable>
-      </View>
 
       <View style={styles.section}>
         <ThemedText style={[Typography.h4, styles.sectionTitle]}>Social</ThemedText>

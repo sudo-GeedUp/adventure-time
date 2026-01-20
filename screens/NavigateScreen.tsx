@@ -494,21 +494,23 @@ export default function NavigateScreen() {
         </Pressable>
       </View>
 
-      {/* You Pick Random Adventure Button */}
+      {/* Choose For Me Adventure Button - Featured */}
       <Pressable
-        style={[styles.randomPickButton, { backgroundColor: theme.accent }]}
+        style={[styles.chooseForMeButton, { backgroundColor: theme.accent }]}
         onPress={handleRandomAdventure}
       >
-        <Feather name="shuffle" size={24} color="white" />
-        <View style={styles.freeAdventureTextContainer}>
-          <ThemedText style={[styles.freeAdventureTitle, { color: "white" }]}>
-            You Pick!
-          </ThemedText>
-          <ThemedText style={[styles.freeAdventureSubtitle, { color: "rgba(255,255,255,0.8)" }]}>
-            Let us choose your next adventure
-          </ThemedText>
+        <View style={styles.chooseForMeContent}>
+          <Feather name="shuffle" size={32} color="white" />
+          <View style={styles.chooseForMeTextContainer}>
+            <ThemedText style={[styles.chooseForMeTitle, { color: "white" }]}>
+              Choose For Me! 🎲
+            </ThemedText>
+            <ThemedText style={[styles.chooseForMeSubtitle, { color: "rgba(255,255,255,0.9)" }]}>
+              Let us pick your perfect adventure
+            </ThemedText>
+          </View>
+          <Feather name="chevron-right" size={28} color="white" />
         </View>
-        <Feather name="chevron-right" size={24} color="white" />
       </Pressable>
 
       {/* Start Free Adventure Button */}
@@ -620,13 +622,32 @@ const styles = StyleSheet.create({
     marginLeft: "auto",
     padding: Spacing.xs,
   },
-  randomPickButton: {
+  chooseForMeButton: {
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.lg,
+    padding: Spacing.lg,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  chooseForMeContent: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.md,
-    gap: Spacing.md,
+    gap: Spacing.lg,
+  },
+  chooseForMeTextContainer: {
+    flex: 1,
+  },
+  chooseForMeTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    marginBottom: 4,
+  },
+  chooseForMeSubtitle: {
+    fontSize: 15,
+    fontWeight: "500",
   },
   freeAdventureButton: {
     flexDirection: "row",

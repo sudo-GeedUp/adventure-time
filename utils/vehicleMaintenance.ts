@@ -147,10 +147,11 @@ export class MaintenanceTracker {
       
       if (itemIndex !== -1) {
         const item = schedule[itemIndex];
-        const stats = await storage.getUserStats();
+        // TODO: Implement getUserStats in storage
+        const totalMiles = 0; // await storage.getUserStats();
         
         item.lastPerformed = Date.now();
-        item.nextDueMiles = (stats?.totalMiles || 0) + item.intervalMiles;
+        item.nextDueMiles = totalMiles + item.intervalMiles;
         item.nextDueDate = Date.now() + (item.intervalMonths * 30 * 24 * 60 * 60 * 1000);
         
         schedule[itemIndex] = item;
@@ -165,8 +166,8 @@ export class MaintenanceTracker {
   static async checkDueMaintenance(): Promise<MaintenanceSchedule[]> {
     try {
       const schedule = await this.getMaintenanceSchedule();
-      const stats = await storage.getTrailStats();
-      const currentMiles = stats?.totalMiles || 0;
+      // TODO: Implement getTrailStats in storage
+      const currentMiles = 0; // (await storage.getTrailStats())?.totalMiles || 0;
       const now = Date.now();
 
       return schedule.filter(item => 
