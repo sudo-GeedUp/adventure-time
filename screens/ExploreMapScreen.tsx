@@ -118,9 +118,24 @@ export default function ExploreMapScreen() {
           latitudeDelta: 0.1,
           longitudeDelta: 0.1,
         });
+      } else {
+        // Set default region (Moab, Utah) when permission denied
+        setRegion({
+          latitude: 38.5729,
+          longitude: -109.5898,
+          latitudeDelta: 0.1,
+          longitudeDelta: 0.1,
+        });
       }
     } catch (error) {
       console.error('Error getting location:', error);
+      // Set default region on error
+      setRegion({
+        latitude: 38.5729,
+        longitude: -109.5898,
+        latitudeDelta: 0.1,
+        longitudeDelta: 0.1,
+      });
     }
   };
 
@@ -651,8 +666,7 @@ export default function ExploreMapScreen() {
         ref={mapRef}
         style={styles.map}
         provider={PROVIDER_GOOGLE}
-        region={region}
-        onRegionChangeComplete={setRegion}
+        initialRegion={region}
         showsUserLocation
         showsMyLocationButton={false}
       >

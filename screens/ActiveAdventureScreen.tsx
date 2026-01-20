@@ -94,8 +94,15 @@ export default function ActiveAdventureScreen() {
   // Initialize adventure session
   useEffect(() => {
     startAdventure();
-    // Initialize rally navigator
-    rallyNavigatorService.initialize(trail, [], []);
+    // Initialize rally navigator with trail data
+    console.log('[Rally Navigator] Initializing with trail:', trail.name);
+    console.log('[Rally Navigator] Hazards:', trail.hazards?.length || 0);
+    rallyNavigatorService.initialize(
+      trail,
+      [],
+      trail.hazards || []
+    );
+    console.log('[Rally Navigator] Initialized successfully');
   }, []);
 
   // Update elapsed time every second
@@ -127,9 +134,16 @@ export default function ActiveAdventureScreen() {
           distanceInterval: 1,
         },
         (location) => {
-          // Process GPS update through rally navigator
+          console.log('[Rally Navigator] Processing GPS update:', {
+            lat: location.coords.latitude,
+            lng: location.coords.longitude,
+            speed: location.coords.speed,
+            altitude: location.coords.altitude
+          });
           const callouts = rallyNavigatorService.processGPSUpdate(location);
+          console.log('[Rally Navigator] Generated callouts:', callouts.length);
           if (callouts.length > 0) {
+            console.log('[Rally Navigator] Callouts:', callouts.map(c => c.message));
             setNavigationCallouts(prev => [...callouts, ...prev].slice(0, 10)); // Keep last 10 callouts
           }
 

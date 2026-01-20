@@ -9,13 +9,11 @@ import NearbyStackNavigator from "@/navigation/NearbyStackNavigator";
 import NavigateStackNavigator from "@/navigation/NavigateStackNavigator";
 import FriendsStackNavigator from "@/navigation/FriendsStackNavigator";
 import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
-import AIGuideStackNavigator from "@/navigation/AIGuideStackNavigator";
 import { useTheme } from "@/hooks/useTheme";
 
 export type MainTabParamList = {
   GuidesTab: undefined;
   AIScanTab: undefined;
-  AIGuideTab: undefined;
   NearbyTab: undefined;
   NavigateTab: undefined;
   FriendsTab: undefined;
@@ -80,16 +78,6 @@ export default function MainTabNavigator() {
           title: "AI Recovery",
           tabBarIcon: ({ color, size }) => (
             <Feather name="tool" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="AIGuideTab"
-        component={AIGuideStackNavigator}
-        options={{
-          title: "AI Guide",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="message-circle" size={size} color={color} />
           ),
         }}
       />
