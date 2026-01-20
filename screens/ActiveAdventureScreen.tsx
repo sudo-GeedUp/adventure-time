@@ -10,7 +10,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage, RoutePoint, AdventureHazard, AssistanceWaypoint } from "@/utils/storage";
 import { calculateDistance } from "@/utils/location";
-import { ConvoyManager } from "@/utils/convoyMode";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Trail } from "@/utils/trails";
 import { OfflineMapsManager } from "@/utils/offlineMaps";
@@ -68,14 +67,9 @@ export default function ActiveAdventureScreen() {
   const [hazardDescription, setHazardDescription] = useState("");
   const [assistanceDescription, setAssistanceDescription] = useState("");
   const [showMap, setShowMap] = useState(true);
-  const [showConvoyModal, setShowConvoyModal] = useState(false);
-  const [showJoinConvoyModal, setShowJoinConvoyModal] = useState(false);
-  const [convoyCode, setConvoyCode] = useState("");
-  const [convoyName, setConvoyName] = useState("");
   const [breadcrumbTrail, setBreadcrumbTrail] = useState<BreadcrumbTrail | null>(null);
   const [showBreadcrumbs, setShowBreadcrumbs] = useState(true);
   const [distanceToStart, setDistanceToStart] = useState<number | null>(null);
-  const [activeConvoy, setActiveConvoy] = useState<any>(null);
   const [navigationCallouts, setNavigationCallouts] = useState<NavigationCallout[]>([]);
   const [showNavigator, setShowNavigator] = useState(true);
   const [communityTrails, setCommunityTrails] = useState<any[]>([]);
@@ -435,44 +429,9 @@ export default function ActiveAdventureScreen() {
     return mph.toFixed(1);
   };
 
-  const loadActiveConvoy = async () => {
-    const convoy = await ConvoyManager.getActiveConvoy();
-    setActiveConvoy(convoy);
-  };
-
-  const handleCreateConvoy = async () => {
-    const convoy = await ConvoyManager.createConvoy(`${trail.name} Convoy`);
-    setActiveConvoy(convoy);
-    Alert.alert('Convoy Created', `Share code: ${convoy.code}`);
-  };
-
-  const handleJoinConvoy = async () => {
-    if (convoyCode.length !== 6) {
-      Alert.alert('Invalid Code', 'Convoy codes are 6 characters');
-      return;
-    }
-    const convoy = await ConvoyManager.joinConvoy(convoyCode);
-    if (convoy) {
-      setActiveConvoy(convoy);
-      setShowConvoyModal(false);
-      Alert.alert('Joined Convoy', `You've joined ${convoy.name}`);
-    } else {
-      Alert.alert('Error', 'Could not join convoy with that code');
-    }
-  };
-
-  const handleLeaveConvoy = async () => {
-    if (activeConvoy) {
-      const userId = Date.now().toString(); // Use timestamp as user ID for now
-      await ConvoyManager.leaveConvoy(userId);
-      setActiveConvoy(null);
-      Alert.alert('Left Convoy', 'You have left the convoy');
-    }
-  };
 
   useEffect(() => {
     startAdventure();
-    loadActiveConvoy();
     return () => {
       if (isTracking) {
         endAdventure();
@@ -754,47 +713,6 @@ export default function ActiveAdventureScreen() {
         </View>
       </View>
 
-      {/* Convoy Section */}
-      <View style={styles.convoySection}>
-        {activeConvoy ? (
-          <View style={[styles.convoyCard, { backgroundColor: theme.backgroundDefault }]}>
-            <View style={styles.convoyHeader}>
-              <Feather name="users" size={20} color={theme.primary} />
-              <ThemedText style={[Typography.h4, { marginLeft: Spacing.sm }]}>
-                Convoy: {activeConvoy?.name || 'Unknown'}
-              </ThemedText>
-            </View>
-            <ThemedText style={styles.convoyCode}>Code: {activeConvoy?.code || 'N/A'}</ThemedText>
-            <ThemedText style={styles.convoyMembers}>
-              {activeConvoy?.members?.length || 0} member{activeConvoy?.members?.length !== 1 ? 's' : ''}
-            </ThemedText>
-            <Pressable
-              style={[styles.leaveConvoyButton, { backgroundColor: theme.error }]}
-              onPress={handleLeaveConvoy}
-            >
-              <ThemedText style={styles.convoyButtonText}>Leave Convoy</ThemedText>
-            </Pressable>
-          </View>
-        ) : (
-          <View style={styles.convoyButtons}>
-            <Pressable
-              style={[styles.convoyButton, { backgroundColor: theme.primary }]}
-              onPress={() => handleCreateConvoy()}
-            >
-              <Feather name="users" size={20} color="white" />
-              <ThemedText style={styles.convoyButtonText}>Create Convoy</ThemedText>
-            </Pressable>
-            <Pressable
-              style={[styles.convoyButton, { backgroundColor: theme.accent }]}
-              onPress={() => setShowConvoyModal(true)}
-            >
-              <Feather name="user-plus" size={20} color="white" />
-              <ThemedText style={styles.convoyButtonText}>Join Convoy</ThemedText>
-            </Pressable>
-          </View>
-        )}
-      </View>
-
       {/* Quick Action Buttons */}
       <View style={styles.quickActionsContainer}>
         <Pressable
@@ -1014,48 +932,6 @@ export default function ActiveAdventureScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Convoy Join Modal */}
-      <Modal
-        visible={showConvoyModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowConvoyModal(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.modalOverlay}
-        >
-          <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
-            <View style={styles.modalHeader}>
-              <ThemedText style={[Typography.h3, styles.modalTitle]}>Join Convoy</ThemedText>
-              <Pressable onPress={() => setShowConvoyModal(false)}>
-                <Feather name="x" size={24} color={theme.tabIconDefault} />
-              </Pressable>
-            </View>
-
-            <ThemedText style={styles.modalDescription}>
-              Enter the 6-character convoy code to join
-            </ThemedText>
-
-            <TextInput
-              style={[styles.modalInput, { backgroundColor: theme.backgroundRoot, color: theme.text }]}
-              placeholder="Enter convoy code"
-              placeholderTextColor={theme.tabIconDefault}
-              value={convoyCode}
-              onChangeText={setConvoyCode}
-              maxLength={6}
-              autoCapitalize="characters"
-            />
-
-            <Pressable
-              style={[styles.modalButton, { backgroundColor: theme.primary }]}
-              onPress={handleJoinConvoy}
-            >
-              <ThemedText style={styles.modalButtonText}>Join Convoy</ThemedText>
-            </Pressable>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
     </ThemedView>
   );
 }
@@ -1320,9 +1196,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: Spacing.sm,
   },
-  convoySection: {
-    marginBottom: Spacing.xl,
-  },
   navigatorPanel: {
     backgroundColor: 'rgba(0,0,0,0.9)',
     borderRadius: BorderRadius.md,
@@ -1352,48 +1225,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     lineHeight: 18,
-  },
-  convoyCard: {
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.md,
-  },
-  convoyHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Spacing.sm,
-  },
-  convoyCode: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: Spacing.xs,
-  },
-  convoyMembers: {
-    fontSize: 14,
-    opacity: 0.7,
-    marginBottom: Spacing.md,
-  },
-  convoyButtons: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  convoyButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    gap: Spacing.xs,
-  },
-  convoyButtonText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  leaveConvoyButton: {
-    padding: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    alignItems: "center",
   },
   speedometerCard: {
     padding: Spacing.xl,
