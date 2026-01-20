@@ -47,6 +47,18 @@ class RallyNavigatorService {
     this.hazards = hazards;
     this.calloutHistory = [];
     this.lastCalloutTime = 0;
+    this.lastSpeedWarning = 0;
+    
+    // Generate initial welcome callout
+    const welcomeCallout: NavigationCallout = {
+      id: `welcome-${Date.now()}`,
+      type: 'info',
+      message: `🏁 Adventure started on ${trail.name}! Stay safe and have fun!`,
+      priority: 'medium',
+      timestamp: Date.now(),
+      icon: 'flag',
+    };
+    this.calloutHistory.push(welcomeCallout);
   }
 
   /**
@@ -63,9 +75,21 @@ class RallyNavigatorService {
     const currentAltitude = location.coords.altitude || 0;
     const currentHeading = location.coords.heading || 0;
 
+    console.log('[Rally Navigator Service] Speed check:', {
+      currentSpeed,
+      difficulty: this.currentTrail?.difficulty,
+      lastSpeedWarning: now - this.lastSpeedWarning,
+      lastCalloutTime: now - this.lastCalloutTime
+    });
+
     // Check for speed advisories
     const speedCallout = this.checkSpeed(currentSpeed, now);
-    if (speedCallout) callouts.push(speedCallout);
+    if (speedCallout) {
+      console.log('[Rally Navigator Service] Speed callout generated:', speedCallout.message);
+      callouts.push(speedCallout);
+    } else {
+      console.log('[Rally Navigator Service] No speed callout generated');
+    }
 
     // Check for upcoming hazards
     const hazardCallouts = this.checkUpcomingHazards(location, now);
@@ -130,7 +154,7 @@ class RallyNavigatorService {
 
     // Optimal speed callouts
     if (currentSpeed >= 15 && currentSpeed <= 25 && this.currentTrail?.difficulty === 'Moderate') {
-      if (now - this.lastSpeedWarning > 30000) { // Every 30 seconds
+      if (now - this.lastSpeedWarning > 5000) { // Every 5 seconds for testing
         this.lastSpeedWarning = now;
         return {
           id: `speed-${now}`,
@@ -142,6 +166,21 @@ class RallyNavigatorService {
           icon: 'check-circle',
         };
       }
+    }
+
+    // Fallback: Generate general speed callouts if moving
+    if (currentSpeed > 5 && now - this.lastSpeedWarning > 5000) {
+      this.lastSpeedWarning = now;
+      const difficulty = this.currentTrail?.difficulty || 'Unknown';
+      return {
+        id: `speed-${now}`,
+        type: 'info',
+        message: `📍 Traveling at ${Math.round(currentSpeed)} mph on ${difficulty} terrain`,
+        priority: 'low',
+        timestamp: now,
+        speed: currentSpeed,
+        icon: 'navigation',
+      };
     }
 
     return null;

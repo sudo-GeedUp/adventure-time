@@ -113,6 +113,17 @@ export default function ActiveAdventureScreen() {
       [] // Hazards will be added dynamically during the adventure
     );
     console.log('[Rally Navigator] Initialized successfully');
+    
+    // Show initial welcome callout
+    const welcomeCallout: NavigationCallout = {
+      id: `welcome-${Date.now()}`,
+      type: 'info',
+      message: `🏁 Adventure started on ${trail.name}! Stay safe and have fun!`,
+      priority: 'medium',
+      timestamp: Date.now(),
+      icon: 'flag',
+    };
+    setNavigationCallouts([welcomeCallout]);
   }, []);
 
   // Update elapsed time every second
