@@ -15,6 +15,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Trail } from "@/utils/trails";
 import { OfflineMapsManager } from "@/utils/offlineMaps";
 import { breadcrumbManager, Breadcrumb, BreadcrumbTrail } from "@/utils/breadcrumbs";
+import { rallyNavigatorService, NavigationCallout } from "@/services/rallyNavigatorService";
 
 let MapView: any = null;
 let Marker: any = null;
@@ -76,6 +77,8 @@ export default function ActiveAdventureScreen() {
   const [showBreadcrumbs, setShowBreadcrumbs] = useState(true);
   const [distanceToStart, setDistanceToStart] = useState<number | null>(null);
   const [activeConvoy, setActiveConvoy] = useState<any>(null);
+  const [navigationCallouts, setNavigationCallouts] = useState<NavigationCallout[]>([]);
+  const [showNavigator, setShowNavigator] = useState(true);
 
   const HAZARD_TYPES = [
     { id: "washout", label: "Washout", icon: "alert-triangle" },
@@ -91,6 +94,8 @@ export default function ActiveAdventureScreen() {
   // Initialize adventure session
   useEffect(() => {
     startAdventure();
+    // Initialize rally navigator
+    rallyNavigatorService.initialize(trail, [], []);
   }, []);
 
   // Update elapsed time every second
@@ -122,6 +127,12 @@ export default function ActiveAdventureScreen() {
           distanceInterval: 1,
         },
         (location) => {
+          // Process GPS update through rally navigator
+          const callouts = rallyNavigatorService.processGPSUpdate(location);
+          if (callouts.length > 0) {
+            setNavigationCallouts(prev => [...callouts, ...prev].slice(0, 10)); // Keep last 10 callouts
+          }
+
           setSession((prev) => {
             if (!prev) return null;
             
@@ -424,10 +435,72 @@ export default function ActiveAdventureScreen() {
           <Feather name="chevron-left" size={28} color={theme.primary} />
         </Pressable>
         <ThemedText style={[Typography.h4, styles.headerTitle]}>{trail.name}</ThemedText>
-        <Pressable onPress={() => setShowMap(!showMap)}>
-          <Feather name={showMap ? "eye-off" : "map"} size={24} color={theme.primary} />
+        <Pressable onPress={() => setShowNavigator(!showNavigator)}>
+          <Feather name={showNavigator ? "volume-2" : "volume-x"} size={24} color={theme.primary} />
         </Pressable>
       </View>
+
+      {/* Rally Navigator Callouts */}
+      {showNavigator && navigationCallouts.length > 0 && (
+        <View style={[styles.navigatorPanel, { backgroundColor: theme.backgroundDefault }]}>
+          <View style={styles.navigatorHeader}>
+            <Feather name="radio" size={20} color={theme.primary} />
+            <ThemedText style={[Typography.label, { color: theme.primary, marginLeft: Spacing.xs }]}>
+              CO-DRIVER
+            </ThemedText>
+          </View>
+          {navigationCallouts.slice(0, 3).map((callout) => (
+            <View
+              key={callout.id}
+              style={[
+                styles.calloutItem,
+                {
+                  backgroundColor:
+                    callout.priority === 'critical'
+                      ? theme.error + '20'
+                      : callout.priority === 'high'
+                      ? theme.warning + '20'
+                      : theme.backgroundSecondary,
+                  borderLeftColor:
+                    callout.priority === 'critical'
+                      ? theme.error
+                      : callout.priority === 'high'
+                      ? theme.warning
+                      : theme.primary,
+                },
+              ]}
+            >
+              <Feather
+                name={callout.icon as any || 'navigation'}
+                size={18}
+                color={
+                  callout.priority === 'critical'
+                    ? theme.error
+                    : callout.priority === 'high'
+                    ? theme.warning
+                    : theme.primary
+                }
+              />
+              <ThemedText
+                style={[
+                  styles.calloutText,
+                  {
+                    color:
+                      callout.priority === 'critical'
+                        ? theme.error
+                        : callout.priority === 'high'
+                        ? theme.warning
+                        : theme.text,
+                    fontWeight: callout.priority === 'critical' ? '800' : '600',
+                  },
+                ]}
+              >
+                {callout.message}
+              </ThemedText>
+            </View>
+          ))}
+        </View>
+      )}
 
       {/* Live Map View */}
       {showMap && MapView && session.locations.length > 0 && (
@@ -1171,6 +1244,36 @@ const styles = StyleSheet.create({
   },
   convoySection: {
     marginBottom: Spacing.xl,
+  },
+  navigatorPanel: {
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  navigatorHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+    paddingBottom: Spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  calloutItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.xs,
+    borderLeftWidth: 4,
+    gap: Spacing.sm,
+  },
+  calloutText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 18,
   },
   convoyCard: {
     padding: Spacing.lg,

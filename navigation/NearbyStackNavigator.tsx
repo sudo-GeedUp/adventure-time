@@ -3,11 +3,7 @@ import { Platform } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useTheme } from "@/hooks/useTheme";
 import { getCommonScreenOptions } from "@/navigation/screenOptions";
-
-// Conditionally import NearbyScreen only on native platforms
-const NearbyScreen = Platform.OS !== "web" 
-  ? require("@/screens/NearbyScreen").default 
-  : null;
+import NearbyScreen from "@/screens/NearbyScreen";
 
 export type NearbyStackParamList = {
   Nearby: undefined;
