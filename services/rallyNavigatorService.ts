@@ -1,4 +1,5 @@
 import * as Location from 'expo-location';
+import * as Speech from 'expo-speech';
 import { Trail } from '@/utils/trails';
 import { RoutePoint, AdventureHazard } from '@/utils/storage';
 import { calculateDistance } from '@/utils/location';
@@ -37,6 +38,7 @@ class RallyNavigatorService {
   private hazards: AdventureHazard[] = [];
   private lastSpeedWarning: number = 0;
   private lastLocation: Location.LocationObject | null = null;
+  private audioEnabled: boolean = true;
 
   /**
    * Initialize navigator with trail and route data
@@ -112,9 +114,54 @@ class RallyNavigatorService {
     if (filteredCallouts.length > 0) {
       this.lastCalloutTime = now;
       this.calloutHistory.push(...filteredCallouts);
+      
+      // Speak the callouts over device speakers
+      if (this.audioEnabled) {
+        filteredCallouts.forEach(callout => {
+          this.speakCallout(callout);
+        });
+      }
     }
 
     return filteredCallouts;
+  }
+
+  /**
+   * Speak a callout using text-to-speech
+   */
+  private speakCallout(callout: NavigationCallout): void {
+    // Remove emojis for cleaner speech
+    const cleanMessage = callout.message.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
+    
+    // Determine speech rate based on priority
+    const rate = callout.priority === 'critical' ? 1.1 : 0.95;
+    const pitch = callout.priority === 'critical' ? 1.2 : 1.0;
+    
+    Speech.speak(cleanMessage, {
+      language: 'en-US',
+      pitch: pitch,
+      rate: rate,
+      volume: 1.0,
+    });
+    
+    console.log('[Rally Navigator Audio] Speaking:', cleanMessage);
+  }
+
+  /**
+   * Enable or disable audio callouts
+   */
+  setAudioEnabled(enabled: boolean): void {
+    this.audioEnabled = enabled;
+    if (!enabled) {
+      Speech.stop();
+    }
+  }
+
+  /**
+   * Stop all current speech
+   */
+  stopSpeaking(): void {
+    Speech.stop();
   }
 
   /**

@@ -539,25 +539,6 @@ export default function NavigateScreen() {
         </View>
       </Pressable>
 
-      {/* Choose For Me Adventure Button */}
-      <Pressable
-        style={[styles.chooseForMeButton, { backgroundColor: theme.accent }]}
-        onPress={handleRandomAdventure}
-      >
-        <View style={styles.chooseForMeContent}>
-          <Feather name="shuffle" size={28} color="white" />
-          <View style={styles.chooseForMeTextContainer}>
-            <ThemedText style={[styles.chooseForMeTitle, { color: "white" }]}>
-              Choose For Me! 🎲
-            </ThemedText>
-            <ThemedText style={[styles.chooseForMeSubtitle, { color: "rgba(255,255,255,0.9)" }]}>
-              Let us pick your perfect adventure
-            </ThemedText>
-          </View>
-          <Feather name="chevron-right" size={24} color="white" />
-        </View>
-      </Pressable>
-
       <View style={[styles.searchBar, { backgroundColor: theme.backgroundDefault, borderColor: theme.primary }]}>
         <Feather name="search" size={18} color={theme.tabIconDefault} />
         <TextInput
