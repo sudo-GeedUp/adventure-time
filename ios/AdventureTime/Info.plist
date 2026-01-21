@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>adventure-time</string>
-          <string>com.adventuretime.app</string>
+          <string>com.masongallegos.adventuretime</string>
         </array>
       </dict>
       <dict>
