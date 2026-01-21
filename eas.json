@@ -27,7 +27,7 @@
     "production": {
       "ios": {
         "resourceClass": "m-medium",
-        "bundleIdentifier": "com.adventuretime.app"
+        "bundleIdentifier": "com.masongallegos.adventuretime"
       },
       "env": {
         "EXPO_PUBLIC_REVENUECAT_IOS_KEY": "appl_production_key",

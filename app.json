@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.adventuretime.app",
+      "bundleIdentifier": "com.masongallegos.adventuretime",
       "buildNumber": "1",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Adventure Time needs your location to track your off-road adventures, show nearby trails, and provide GPS navigation to trailheads.",
