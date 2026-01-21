@@ -15,6 +15,7 @@ import { Trail } from "@/utils/trails";
 import { OfflineMapsManager } from "@/utils/offlineMaps";
 import { breadcrumbManager, Breadcrumb, BreadcrumbTrail } from "@/utils/breadcrumbs";
 import { rallyNavigatorService, NavigationCallout } from "@/services/rallyNavigatorService";
+import { EmergencySOS } from "@/utils/emergencySOS";
 
 let MapView: any = null;
 let Marker: any = null;
@@ -124,6 +125,10 @@ export default function ActiveAdventureScreen() {
       icon: 'flag',
     };
     setNavigationCallouts([welcomeCallout]);
+    
+    // Start route tracking for emergency contact feature
+    EmergencySOS.startRouteTracking();
+    console.log('[Emergency SOS] Route tracking started');
   }, []);
 
   // Update elapsed time every second
@@ -227,6 +232,9 @@ export default function ActiveAdventureScreen() {
               timestamp: Date.now(),
               speed: currentSpeed,
             };
+            
+            // Add route point to emergency SOS tracking
+            EmergencySOS.addRoutePoint(location);
 
             setSpeed(currentSpeed);
             setAltitude(currentAltitude);
@@ -413,14 +421,17 @@ export default function ActiveAdventureScreen() {
         assistanceWaypoints: [...session.assistanceWaypoints, newWaypoint],
       });
 
-      Alert.alert(
-        "Help Request Sent",
-        "Your location and request have been shared. Nearby offroaders will be notified."
+      // Send location and route to emergency contacts
+      await EmergencySOS.shareLocationWithRoute(
+        `🆘 ASSISTANCE NEEDED: ${assistanceDescription.trim()}`,
+        trail.name
       );
+
       setShowAssistanceModal(false);
       setAssistanceDescription("");
     } catch (error) {
-      Alert.alert("Error", "Could not get your location to request assistance.");
+      console.error('[Emergency SOS] Error sending assistance request:', error);
+      Alert.alert("Error", "Could not send assistance request. Please try again.");
     }
   };
 
