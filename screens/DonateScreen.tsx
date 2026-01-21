@@ -1,53 +1,45 @@
 import React, { useState } from "react";
 import { View, StyleSheet, Pressable, TextInput, Alert, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import * as WebBrowser from "expo-web-browser";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 
-const STRIPE_PAYMENT_LINK = "https://donate.stripe.com/bJe5kDb4Dd1V8Ah273fMA01";
+// TODO: Implement Apple In-App Purchase tip jar
+// Product IDs to configure in App Store Connect:
+// - com.adventuretime.tip.small ($2.99)
+// - com.adventuretime.tip.medium ($4.99)
+// - com.adventuretime.tip.large ($9.99)
+// - com.adventuretime.tip.generous ($19.99)
 
 export default function DonateScreen() {
   const { theme } = useTheme();
   const [customAmount, setCustomAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const openStripePaymentLink = async () => {
-    if (!STRIPE_PAYMENT_LINK) {
+  const handleDonate = async (amount: number) => {
+    if (isProcessing) return;
+    
+    setIsProcessing(true);
+    try {
+      // TODO: Implement Apple IAP purchase flow
+      // 1. Request products from App Store
+      // 2. Present purchase UI
+      // 3. Process purchase
+      // 4. Deliver non-consumable tip
+      
       Alert.alert(
-        "Stripe Setup Required",
-        "To enable donations:\n\n1. Go to stripe.com/dashboard\n2. Create a Payment Link with 'Let customer choose price' enabled\n3. Add the URL to STRIPE_PAYMENT_LINK in DonateScreen.tsx",
+        "Coming Soon",
+        "Tip jar will be available in the next update via Apple In-App Purchases. Thank you for your support!",
         [{ text: "OK" }]
       );
-      return;
-    }
-
-    try {
-      setIsProcessing(true);
-      await WebBrowser.openBrowserAsync(STRIPE_PAYMENT_LINK, {
-        dismissButtonStyle: "close",
-        presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
-      });
     } catch (error) {
-      Alert.alert("Error", "Failed to open payment page. Please try again.");
+      Alert.alert("Error", "Failed to process donation. Please try again.");
       console.error(error);
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const handleDonate = async () => {
-    if (isProcessing) return;
-    
-    const amount = parseFloat(customAmount);
-    if (isNaN(amount) || amount <= 0) {
-      Alert.alert("Invalid Amount", "Please enter a valid donation amount");
-      return;
-    }
-    
-    await openStripePaymentLink();
   };
 
   return (
@@ -110,7 +102,7 @@ export default function DonateScreen() {
                 opacity: isProcessing ? 0.6 : 1,
               },
             ]}
-            onPress={handleDonate}
+            onPress={() => handleDonate(parseFloat(customAmount) || 0)}
             disabled={isProcessing || !customAmount}
           >
             {isProcessing ? (
@@ -124,7 +116,7 @@ export default function DonateScreen() {
                     { color: theme.backgroundDefault },
                   ]}
                 >
-                  Donate Now
+                  Support (Coming Soon)
                 </ThemedText>
               </>
             )}

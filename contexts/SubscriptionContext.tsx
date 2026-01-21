@@ -21,13 +21,14 @@ interface SubscriptionContextType {
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
 
 export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isPremium, setIsPremium] = useState(true); // Always premium for testing
-  const [isLoading, setIsLoading] = useState(false); // No loading needed
+  const [isPremium, setIsPremium] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
 
   const refreshStatus = async () => {
     try {
       if (Platform.OS === 'web') {
+        // Web users get free access (no IAP on web)
         setIsPremium(true);
         return;
       }
@@ -42,10 +43,34 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
   };
 
   useEffect(() => {
-    // Always set premium to true for testing - no subscription checks needed
-    console.log('Subscriptions: Premium access enabled for testing');
-    setIsPremium(true);
-    setIsLoading(false);
+    const initSubscriptions = async () => {
+      try {
+        if (Platform.OS === 'web') {
+          // Web platform - no RevenueCat, grant free access
+          setIsPremium(true);
+          setIsLoading(false);
+          return;
+        }
+
+        // Initialize RevenueCat for mobile platforms
+        const initialized = await initializeRevenueCat();
+        if (initialized) {
+          await refreshStatus();
+        } else {
+          // If RevenueCat fails to initialize, grant free access
+          console.warn('RevenueCat not initialized, granting free access');
+          setIsPremium(true);
+        }
+      } catch (error) {
+        console.error('Error initializing subscriptions:', error);
+        // On error, grant free access to avoid blocking users
+        setIsPremium(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initSubscriptions();
   }, []);
 
   const purchaseSubscription = async (): Promise<boolean> => {

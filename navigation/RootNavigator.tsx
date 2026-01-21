@@ -5,6 +5,7 @@ import MainTabNavigator from "@/navigation/MainTabNavigator";
 import AuthStackNavigator from "@/navigation/AuthStackNavigator";
 import ChatScreen from "@/screens/ChatScreen";
 import WelcomeScreen from "@/screens/WelcomeScreen";
+import PaywallScreen from "@/screens/PaywallScreen";
 import { storage } from "@/utils/storage";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +19,7 @@ export type RootStackParamList = {
     participantName: string;
     participantVehicle: string;
   };
+  Paywall: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -65,6 +67,14 @@ export default function RootNavigator() {
         options={{
           headerShown: true,
           headerTitle: "",
+        }}
+      />
+      <Stack.Screen
+        name="Paywall"
+        component={PaywallScreen}
+        options={{
+          presentation: 'modal',
+          headerShown: false,
         }}
       />
     </Stack.Navigator>

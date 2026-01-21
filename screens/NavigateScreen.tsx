@@ -588,9 +588,11 @@ export default function NavigateScreen() {
           <ThemedText style={[Typography.label, styles.resultCount]}>
             {filteredTrails.length} trail{filteredTrails.length !== 1 ? "s" : ""} found
           </ThemedText>
-          {filteredTrails.map((trail) => (
-            <View key={trail.id}>{renderTrailCard({ item: trail })}</View>
-          ))}
+          <View style={{ gap: Spacing.md }}>
+            {filteredTrails.map((trail) => (
+              <View key={trail.id}>{renderTrailCard({ item: trail })}</View>
+            ))}
+          </View>
         </>
       ) : (
         <View style={styles.emptyState}>
@@ -845,10 +847,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   emptyState: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.lg,
+    paddingVertical: Spacing["2xl"],
   },
   emptyText: {
     textAlign: "center",

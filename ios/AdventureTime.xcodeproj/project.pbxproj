@@ -20,7 +20,7 @@
 		13B07F961A680F5B00A75B9A /* AdventureTime.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AdventureTime.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = AdventureTime/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = AdventureTime/Info.plist; sourceTree = "<group>"; };
-		21FBCE4C3D8BCDEBC0EE10EB /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = AdventureTime/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		21FBCE4C3D8BCDEBC0EE10EB /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = AdventureTime/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		68E01DF34319F6559294CFFC /* libPods-AdventureTime.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-AdventureTime.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A79D31C4BE3B5A406A4008EB /* Pods-AdventureTime.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AdventureTime.release.xcconfig"; path = "Target Support Files/Pods-AdventureTime/Pods-AdventureTime.release.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = AdventureTime/SplashScreen.storyboard; sourceTree = "<group>"; };
@@ -111,7 +111,6 @@
 				E85A78AD124EA389E2E4384D /* Pods-AdventureTime.debug.xcconfig */,
 				A79D31C4BE3B5A406A4008EB /* Pods-AdventureTime.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -359,6 +358,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = AdventureTime/AdventureTime.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2AU7KFCM84;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -395,6 +395,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = AdventureTime/AdventureTime.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2AU7KFCM84;
 				INFOPLIST_FILE = AdventureTime/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (

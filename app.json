@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Adventure Time",
+    "name": "Its Adventure Time",
     "slug": "adventure-time",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "adventure-time",
+    "scheme": "its-adventure-time",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -15,18 +15,18 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.masongallegos.adventuretime",
+      "bundleIdentifier": "com.masongallegos.itsadventuretime",
       "buildNumber": "1",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Adventure Time needs your location to track your off-road adventures, show nearby trails, and provide GPS navigation to trailheads.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Adventure Time needs your location to track your adventures even when the app is in the background.",
-        "NSCameraUsageDescription": "Adventure Time needs camera access for AI Recovery Scan to analyze recovery situations and provide equipment recommendations.",
-        "NSPhotoLibraryUsageDescription": "Adventure Time needs photo library access to save and analyze recovery situation photos.",
-        "NSPhotoLibraryAddUsageDescription": "Adventure Time needs permission to save photos to your library."
+        "NSLocationWhenInUseUsageDescription": "Its Adventure Time needs your location to track your off-road adventures, show nearby trails, and provide GPS navigation to trailheads.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Its Adventure Time needs your location to track your adventures even when the app is in the background.",
+        "NSCameraUsageDescription": "Its Adventure Time needs camera access for AI Recovery Scan to analyze recovery situations and provide equipment recommendations.",
+        "NSPhotoLibraryUsageDescription": "Its Adventure Time needs photo library access to save and analyze recovery situation photos.",
+        "NSPhotoLibraryAddUsageDescription": "Its Adventure Time needs permission to save photos to your library."
       }
     },
     "android": {
-      "package": "com.adventuretime.app",
+      "package": "com.masongallegos.itsadventuretime",
       "adaptiveIcon": {
         "backgroundColor": "#FF6B35",
         "foregroundImage": "./assets/images/icon.png"

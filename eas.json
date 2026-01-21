@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 5.2.0"
+    "version": ">= 5.2.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -8,30 +9,17 @@
       "distribution": "internal",
       "ios": {
         "resourceClass": "m-medium"
-      },
-      "env": {
-        "EXPO_PUBLIC_REVENUECAT_IOS_KEY": "appl_test_key",
-        "EXPO_PUBLIC_OPENAI_API_KEY": ""
       }
     },
     "preview": {
       "distribution": "internal",
       "ios": {
         "resourceClass": "m-medium"
-      },
-      "env": {
-        "EXPO_PUBLIC_REVENUECAT_IOS_KEY": "appl_test_key",
-        "EXPO_PUBLIC_OPENAI_API_KEY": ""
       }
     },
     "production": {
       "ios": {
-        "resourceClass": "m-medium",
-        "bundleIdentifier": "com.masongallegos.adventuretime"
-      },
-      "env": {
-        "EXPO_PUBLIC_REVENUECAT_IOS_KEY": "appl_production_key",
-        "EXPO_PUBLIC_OPENAI_API_KEY": ""
+        "resourceClass": "m-medium"
       }
     }
   },

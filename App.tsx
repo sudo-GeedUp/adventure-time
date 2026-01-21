@@ -24,16 +24,14 @@ export default function App() {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
+    // Render app immediately for testing
+    setIsInitialized(true);
+    
+    // Initialize services in background (non-blocking)
     const init = async () => {
       try {
-        console.log('App initialization starting...');
+        console.log('App initialization starting in background...');
         
-        // Set a timeout to ensure app renders even if initialization hangs
-        const initTimeout = setTimeout(() => {
-          console.warn('Initialization timeout - rendering app anyway');
-          setIsInitialized(true);
-        }, 5000);
-
         // Initialize Sentry for crash reporting (optional)
         try {
           sentryService.initialize();
@@ -83,12 +81,9 @@ export default function App() {
           console.log('Special thanks check skipped');
         }
         
-        clearTimeout(initTimeout);
-        setIsInitialized(true);
         console.log('App initialization complete!');
       } catch (error) {
-        console.error('Critical error during app initialization:', error);
-        setIsInitialized(true); // Render app anyway
+        console.error('Error during app initialization:', error);
       }
     };
     

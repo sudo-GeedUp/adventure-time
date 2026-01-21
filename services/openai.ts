@@ -16,9 +16,12 @@ export async function analyzeRecoverySituation(
   imageUri: string
 ): Promise<RecoveryAnalysis> {
   if (!OPENAI_API_KEY) {
-    throw new Error(
-      "OpenAI API key not configured. Please add EXPO_PUBLIC_OPENAI_API_KEY to your .env file."
+    Alert.alert(
+      "AI Scan Unavailable",
+      "OpenAI API key not configured. This feature requires a valid API key.",
+      [{ text: "OK" }]
     );
+    throw new Error("OpenAI API key not configured");
   }
 
   try {

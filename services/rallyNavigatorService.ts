@@ -6,7 +6,7 @@ import { calculateDistance } from '@/utils/location';
 
 export interface NavigationCallout {
   id: string;
-  type: 'direction' | 'speed' | 'obstacle' | 'warning' | 'info' | 'turn' | 'terrain';
+  type: 'direction' | 'speed' | 'obstacle' | 'warning' | 'info' | 'turn' | 'terrain' | 'altitude' | 'status';
   message: string;
   priority: 'low' | 'medium' | 'high' | 'critical';
   timestamp: number;
@@ -38,6 +38,7 @@ class RallyNavigatorService {
   private hazards: AdventureHazard[] = [];
   private lastSpeedWarning: number = 0;
   private lastLocation: Location.LocationObject | null = null;
+  private lastHeading: number | null = null;
   private audioEnabled: boolean = true;
 
   /**
@@ -73,57 +74,83 @@ class RallyNavigatorService {
     // Update last location
     this.lastLocation = location;
 
-    const currentSpeed = location.coords.speed ? location.coords.speed * 2.237 : 0; // Convert m/s to mph
+    // Use enhanced speed if available (already in MPH from ActiveAdventureScreen)
+    // Otherwise convert GPS speed from m/s to mph
+    const currentSpeed = (location as any).enhancedSpeed !== undefined 
+      ? (location as any).enhancedSpeed 
+      : (location.coords.speed ? location.coords.speed * 2.237 : 0);
     const currentAltitude = location.coords.altitude || 0;
     const currentHeading = location.coords.heading || 0;
 
-    console.log('[Rally Navigator Service] Speed check:', {
-      currentSpeed,
-      difficulty: this.currentTrail?.difficulty,
-      lastSpeedWarning: now - this.lastSpeedWarning,
-      lastCalloutTime: now - this.lastCalloutTime
-    });
-
-    // Check for speed advisories
-    const speedCallout = this.checkSpeed(currentSpeed, now);
-    if (speedCallout) {
-      console.log('[Rally Navigator Service] Speed callout generated:', speedCallout.message);
-      callouts.push(speedCallout);
-    } else {
-      console.log('[Rally Navigator Service] No speed callout generated');
+    // Only generate callouts every 5 seconds to prevent spam
+    if (now - this.lastCalloutTime < 5000) {
+      return [];
     }
 
-    // Check for upcoming hazards
-    const hazardCallouts = this.checkUpcomingHazards(location, now);
-    callouts.push(...hazardCallouts);
+    console.log(`[Rally Navigator] Speed: ${currentSpeed.toFixed(1)} MPH, Heading: ${currentHeading}°, Altitude: ${currentAltitude.toFixed(0)} ft`);
 
-    // Check for terrain changes
-    const terrainCallout = this.checkTerrainChange(location, currentAltitude, now);
-    if (terrainCallout) callouts.push(terrainCallout);
+    // Check for speed advisories (lower threshold for off-road)
+    if (currentSpeed > 30) {
+      callouts.push({
+        id: `speed-${now}`,
+        message: `⚠️ Speed ${Math.round(currentSpeed)} mph - Slow down for trail conditions`,
+        priority: 'high',
+        type: 'speed',
+        timestamp: now,
+        icon: 'alert-triangle',
+      });
+    }
 
-    // Check for turns/direction changes
-    const directionCallout = this.checkDirectionChange(location, currentHeading, now);
-    if (directionCallout) callouts.push(directionCallout);
+    // Check for direction changes
+    if (this.lastHeading !== null && Math.abs(currentHeading - this.lastHeading) > 45) {
+      callouts.push({
+        id: `turn-${now}`,
+        message: `🔄 Turn ${currentHeading > this.lastHeading ? 'right' : 'left'} ahead`,
+        priority: 'medium',
+        type: 'direction',
+        timestamp: now,
+        icon: 'refresh-cw',
+      });
+      this.lastHeading = currentHeading;
+    }
 
-    // Filter out callouts that are too frequent
-    const filteredCallouts = callouts.filter(callout => {
-      if (callout.priority === 'critical') return true;
-      return now - this.lastCalloutTime >= this.minCalloutInterval;
-    });
+    // Check for altitude changes (steep ascent/descent)
+    if (this.lastLocation && this.lastLocation.coords.altitude) {
+      const altitudeChange = currentAltitude - this.lastLocation.coords.altitude;
+      if (Math.abs(altitudeChange) > 100) { // 100 feet change
+        callouts.push({
+          id: `altitude-${now}`,
+          message: altitudeChange > 0 ? `⬆️ Steep ascent ahead (${Math.round(altitudeChange)}ft gain)` : `⬇️ Steep descent ahead (${Math.abs(Math.round(altitudeChange))}ft drop)`,
+          priority: 'medium',
+          type: 'altitude',
+          timestamp: now,
+          icon: altitudeChange > 0 ? 'trending-up' : 'trending-down',
+        });
+      }
+    }
 
-    if (filteredCallouts.length > 0) {
+    // Only return the highest priority callout to avoid clutter
+    if (callouts.length > 1) {
+      // Sort by priority: critical > high > medium > low
+      const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+      callouts.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+      // Keep only the top priority callout
+      callouts.splice(1);
+    }
+
+    if (callouts.length > 0) {
       this.lastCalloutTime = now;
-      this.calloutHistory.push(...filteredCallouts);
+      this.calloutHistory.push(...callouts);
       
       // Speak the callouts over device speakers
       if (this.audioEnabled) {
-        filteredCallouts.forEach(callout => {
+        callouts.forEach(callout => {
           this.speakCallout(callout);
         });
       }
     }
 
-    return filteredCallouts;
+    return callouts;
   }
 
   /**
