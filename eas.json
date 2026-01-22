@@ -8,17 +8,21 @@
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
+        "scheme": "ItsAdventureTime",
         "resourceClass": "m-medium"
       }
     },
     "preview": {
       "distribution": "internal",
+      "channel": "preview",
       "ios": {
+        "scheme": "ItsAdventureTime",
         "resourceClass": "m-medium"
       }
     },
     "production": {
       "ios": {
+        "scheme": "ItsAdventureTime",
         "resourceClass": "m-medium"
       }
     }
