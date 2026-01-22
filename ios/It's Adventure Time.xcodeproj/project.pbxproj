@@ -17,7 +17,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		13B07F961A680F5B00A75B9A /* AdventureTime.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AdventureTime.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07F961A680F5B00A75B9A /* IOt's Adventure Time.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "IOt's Adventure Time.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = AdventureTime/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = AdventureTime/Info.plist; sourceTree = "<group>"; };
 		21FBCE4C3D8BCDEBC0EE10EB /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = AdventureTime/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -92,7 +92,7 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* AdventureTime.app */,
+				13B07F961A680F5B00A75B9A /* IOt's Adventure Time.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -134,9 +134,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		13B07F861A680F5B00A75B9A /* AdventureTime */ = {
+		13B07F861A680F5B00A75B9A /* IOt's Adventure Time */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "AdventureTime" */;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "IOt's Adventure Time" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
 				16D6F8154B1C54E64264162D /* [Expo] Configure project */,
@@ -151,9 +151,9 @@
 			);
 			dependencies = (
 			);
-			name = AdventureTime;
+			name = "IOt's Adventure Time";
 			productName = AdventureTime;
-			productReference = 13B07F961A680F5B00A75B9A /* AdventureTime.app */;
+			productReference = 13B07F961A680F5B00A75B9A /* IOt's Adventure Time.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -169,7 +169,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "AdventureTime" */;
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "IOt's Adventure Time" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -182,7 +182,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				13B07F861A680F5B00A75B9A /* AdventureTime */,
+				13B07F861A680F5B00A75B9A /* IOt's Adventure Time */,
 			);
 		};
 /* End PBXProject section */
@@ -377,8 +377,8 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.masongallegos.adventuretime;
-				PRODUCT_NAME = AdventureTime;
+				PRODUCT_BUNDLE_IDENTIFIER = com.masongallegos.itsadventuretime;
+				PRODUCT_NAME = "IOt's Adventure Time";
 				SWIFT_OBJC_BRIDGING_HEADER = "AdventureTime/AdventureTime-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -409,8 +409,8 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.masongallegos.adventuretime;
-				PRODUCT_NAME = AdventureTime;
+				PRODUCT_BUNDLE_IDENTIFIER = com.masongallegos.itsadventuretime;
+				PRODUCT_NAME = "IOt's Adventure Time";
 				SWIFT_OBJC_BRIDGING_HEADER = "AdventureTime/AdventureTime-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -539,7 +539,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "AdventureTime" */ = {
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "IOt's Adventure Time" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
@@ -548,7 +548,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "AdventureTime" */ = {
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "IOt's Adventure Time" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
