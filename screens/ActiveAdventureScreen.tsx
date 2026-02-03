@@ -712,14 +712,25 @@ export default function ActiveAdventureScreen() {
       return;
     }
 
+    // Validate input length
+    if (hazardDescription.length > 500) {
+      Alert.alert("Error", "Description must be less than 500 characters");
+      return;
+    }
+
     try {
       const location = await Location.getCurrentPositionAsync({});
       const hazardType = HAZARD_TYPES.find((h) => h.id === selectedHazardType);
       
+      // Sanitize description
+      const sanitizedDescription = hazardDescription.trim()
+        .replace(/[<>"'&]/g, '') // Remove potentially dangerous characters
+        .substring(0, 500); // Ensure max length
+      
       const newHazard: AdventureHazard = {
         id: `hazard_${Date.now()}`,
         type: hazardType?.label || "Unknown",
-        description: hazardDescription.trim() || "No description provided",
+        description: sanitizedDescription || "No description provided",
         location: {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
@@ -779,6 +790,38 @@ export default function ActiveAdventureScreen() {
       Alert.alert("Error", "Could not send assistance request. Please try again.");
     }
   };
+
+  useEffect(() => {
+    return () => {
+      // Clear timeouts
+      if (speedUpdateTimeoutRef.current) {
+        clearTimeout(speedUpdateTimeoutRef.current);
+        speedUpdateTimeoutRef.current = null;
+      }
+      if (altitudeUpdateTimeoutRef.current) {
+        clearTimeout(altitudeUpdateTimeoutRef.current);
+        altitudeUpdateTimeoutRef.current = null;
+      }
+      
+      // Clear location subscription properly
+      if (locationSubscriptionRef.current) {
+        try {
+          locationSubscriptionRef.current.remove();
+        } catch (error) {
+          console.error('[Location] Error removing subscription:', error);
+        } finally {
+          locationSubscriptionRef.current = null;
+        }
+      }
+      
+      // Stop emergency SOS tracking
+      try {
+        EmergencySOS.stopRouteTracking();
+      } catch (error) {
+        console.error('[Emergency SOS] Error stopping route tracking:', error);
+      }
+    };
+  }, []);
 
   const formatTime = (ms: number) => {
     const seconds = Math.floor(ms / 1000);
