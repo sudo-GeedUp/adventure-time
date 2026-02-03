@@ -1,18 +1,33 @@
-import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
-import { getDatabase, ref, set, onValue, off, push, update, remove, Database } from 'firebase/database';
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import * as Location from 'expo-location';
-import { storage } from './storage';
+import { initializeApp, getApps, FirebaseApp } from "firebase/app";
+import {
+  getDatabase,
+  ref,
+  set,
+  onValue,
+  off,
+  push,
+  update,
+  remove,
+  Database,
+} from "firebase/database";
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
+import * as Location from "expo-location";
+import { storage } from "./storage";
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || '',
-  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
-  databaseURL: process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL || '',
-  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || '',
-  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || '',
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "",
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
+  databaseURL: process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL || "",
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || "",
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || "",
 };
 
 let app: FirebaseApp | null = null;
@@ -24,7 +39,7 @@ let isFirebaseEnabled = false;
 export function initializeFirebase() {
   try {
     if (!firebaseConfig.apiKey) {
-      console.log('Firebase config not set up. Using local storage mode.');
+      console.log("Firebase config not set up. Using local storage mode.");
       return false;
     }
 
@@ -33,12 +48,12 @@ export function initializeFirebase() {
       database = getDatabase(app);
       storageInstance = getStorage(app);
       isFirebaseEnabled = true;
-      console.log('Firebase initialized successfully');
+      console.log("Firebase initialized successfully");
       return true;
     }
     return true;
   } catch (error) {
-    console.error('Error initializing Firebase:', error);
+    console.error("Error initializing Firebase:", error);
     return false;
   }
 }
@@ -70,7 +85,7 @@ export class FirebaseLocationService {
   // Start broadcasting user location
   static async startLocationBroadcast(userId: string): Promise<void> {
     if (!isFirebaseAvailable()) {
-      console.log('Firebase not available, skipping location broadcast');
+      console.log("Firebase not available, skipping location broadcast");
       return;
     }
 
@@ -86,19 +101,19 @@ export class FirebaseLocationService {
 
         const userLocation: UserLocation = {
           userId,
-          userName: userProfile?.name || 'Anonymous',
+          userName: userProfile?.name || "Anonymous",
           location: {
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
           },
-          vehicleType: userProfile?.vehicleType || 'Unknown',
+          vehicleType: userProfile?.vehicleType || "Unknown",
           isOnline: true,
           lastSeen: Date.now(),
         };
 
         await this.updateUserLocation(userId, userLocation);
       } catch (error) {
-        console.error('Error updating location:', error);
+        console.error("Error updating location:", error);
       }
     }, 10000);
   }
@@ -117,7 +132,10 @@ export class FirebaseLocationService {
   }
 
   // Update user location in Firebase
-  static async updateUserLocation(userId: string, location: UserLocation): Promise<void> {
+  static async updateUserLocation(
+    userId: string,
+    location: UserLocation,
+  ): Promise<void> {
     if (!database) return;
     const userRef = ref(database, `users/locations/${userId}`);
     await set(userRef, location);
@@ -126,15 +144,15 @@ export class FirebaseLocationService {
   // Get nearby users
   static subscribeToNearbyUsers(
     callback: (users: UserLocation[]) => void,
-    maxDistance: number = 50
+    maxDistance: number = 50,
   ): () => void {
     if (!database) {
       callback([]);
       return () => {};
     }
 
-    const usersRef = ref(database, 'users/locations');
-    
+    const usersRef = ref(database, "users/locations");
+
     const unsubscribe = onValue(usersRef, (snapshot) => {
       const users: UserLocation[] = [];
       snapshot.forEach((childSnapshot) => {
@@ -147,7 +165,7 @@ export class FirebaseLocationService {
       callback(users);
     });
 
-    return () => off(usersRef, 'value', unsubscribe);
+    return () => off(usersRef, "value", unsubscribe);
   }
 }
 
@@ -156,8 +174,8 @@ export interface TrailEvent {
   id: string;
   trailId: string;
   trailName: string;
-  type: 'warning' | 'closure' | 'condition' | 'event';
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  type: "warning" | "closure" | "condition" | "event";
+  severity: "low" | "medium" | "high" | "critical";
   title: string;
   description: string;
   location: {
@@ -176,12 +194,17 @@ export interface TrailEvent {
 
 export class TrailEventsService {
   // Report a trail event
-  static async reportTrailEvent(event: Omit<TrailEvent, 'id' | 'timestamp' | 'upvotes' | 'downvotes' | 'verified'>): Promise<string> {
-    if (!database) throw new Error('Firebase not available');
+  static async reportTrailEvent(
+    event: Omit<
+      TrailEvent,
+      "id" | "timestamp" | "upvotes" | "downvotes" | "verified"
+    >,
+  ): Promise<string> {
+    if (!database) throw new Error("Firebase not available");
 
-    const eventsRef = ref(database, 'trail-events');
+    const eventsRef = ref(database, "trail-events");
     const newEventRef = push(eventsRef);
-    
+
     const fullEvent: TrailEvent = {
       ...event,
       id: newEventRef.key!,
@@ -198,78 +221,90 @@ export class TrailEventsService {
   // Get trail events for a specific trail
   static subscribeToTrailEvents(
     trailId: string,
-    callback: (events: TrailEvent[]) => void
+    callback: (events: TrailEvent[]) => void,
   ): () => void {
     if (!database) {
       callback([]);
       return () => {};
     }
 
-    const eventsRef = ref(database, 'trail-events');
-    
+    const eventsRef = ref(database, "trail-events");
+
     const unsubscribe = onValue(eventsRef, (snapshot) => {
       const events: TrailEvent[] = [];
       const now = Date.now();
-      
+
       snapshot.forEach((childSnapshot) => {
         const event = childSnapshot.val() as TrailEvent;
         // Filter by trail and check if not expired
-        if (event.trailId === trailId && (!event.expiresAt || event.expiresAt > now)) {
+        if (
+          event.trailId === trailId &&
+          (!event.expiresAt || event.expiresAt > now)
+        ) {
           events.push(event);
         }
       });
-      
+
       // Sort by timestamp (newest first)
       events.sort((a, b) => b.timestamp - a.timestamp);
       callback(events);
     });
 
-    return () => off(eventsRef, 'value', unsubscribe);
+    return () => off(eventsRef, "value", unsubscribe);
   }
 
   // Get all active trail events
-  static subscribeToAllTrailEvents(callback: (events: TrailEvent[]) => void): () => void {
+  static subscribeToAllTrailEvents(
+    callback: (events: TrailEvent[]) => void,
+  ): () => void {
     if (!database) {
       callback([]);
       return () => {};
     }
 
-    const eventsRef = ref(database, 'trail-events');
-    
+    const eventsRef = ref(database, "trail-events");
+
     const unsubscribe = onValue(eventsRef, (snapshot) => {
       const events: TrailEvent[] = [];
       const now = Date.now();
-      
+
       snapshot.forEach((childSnapshot) => {
         const event = childSnapshot.val() as TrailEvent;
         if (!event.expiresAt || event.expiresAt > now) {
           events.push(event);
         }
       });
-      
+
       events.sort((a, b) => b.timestamp - a.timestamp);
       callback(events);
     });
 
-    return () => off(eventsRef, 'value', unsubscribe);
+    return () => off(eventsRef, "value", unsubscribe);
   }
 
   // Upvote/downvote an event
-  static async voteOnEvent(eventId: string, vote: 'up' | 'down'): Promise<void> {
+  static async voteOnEvent(
+    eventId: string,
+    vote: "up" | "down",
+  ): Promise<void> {
     if (!database) return;
-    
+
     const eventRef = ref(database, `trail-events/${eventId}`);
-    const field = vote === 'up' ? 'upvotes' : 'downvotes';
-    
+    const field = vote === "up" ? "upvotes" : "downvotes";
+
     // Get current value and increment
-    onValue(eventRef, (snapshot) => {
-      const event = snapshot.val() as TrailEvent;
-      if (event) {
-        const updates: any = {};
-        updates[field] = (event[field] || 0) + 1;
-        update(eventRef, updates);
-      }
-    }, { onlyOnce: true });
+    onValue(
+      eventRef,
+      (snapshot) => {
+        const event = snapshot.val() as TrailEvent;
+        if (event) {
+          const updates: any = {};
+          updates[field] = (event[field] || 0) + 1;
+          update(eventRef, updates);
+        }
+      },
+      { onlyOnce: true },
+    );
   }
 
   // Delete an event (admin or reporter only)
@@ -286,16 +321,16 @@ export class MediaService {
   static async uploadPhoto(
     uri: string,
     path: string,
-    fileName: string
+    fileName: string,
   ): Promise<string> {
-    if (!storageInstance) throw new Error('Firebase Storage not available');
+    if (!storageInstance) throw new Error("Firebase Storage not available");
 
     const response = await fetch(uri);
     const blob = await response.blob();
-    
+
     const photoRef = storageRef(storageInstance, `${path}/${fileName}`);
     await uploadBytes(photoRef, blob);
-    
+
     const downloadURL = await getDownloadURL(photoRef);
     return downloadURL;
   }
@@ -303,14 +338,21 @@ export class MediaService {
   // Upload adventure photo
   static async uploadAdventurePhoto(
     adventureId: string,
-    photoUri: string
+    photoUri: string,
   ): Promise<string> {
     const fileName = `${Date.now()}.jpg`;
-    return await this.uploadPhoto(photoUri, `adventures/${adventureId}`, fileName);
+    return await this.uploadPhoto(
+      photoUri,
+      `adventures/${adventureId}`,
+      fileName,
+    );
   }
 
   // Upload profile photo
-  static async uploadProfilePhoto(userId: string, photoUri: string): Promise<string> {
+  static async uploadProfilePhoto(
+    userId: string,
+    photoUri: string,
+  ): Promise<string> {
     const fileName = `profile.jpg`;
     return await this.uploadPhoto(photoUri, `profiles/${userId}`, fileName);
   }
@@ -318,10 +360,14 @@ export class MediaService {
   // Upload trail event photo
   static async uploadTrailEventPhoto(
     eventId: string,
-    photoUri: string
+    photoUri: string,
   ): Promise<string> {
     const fileName = `${Date.now()}.jpg`;
-    return await this.uploadPhoto(photoUri, `trail-events/${eventId}`, fileName);
+    return await this.uploadPhoto(
+      photoUri,
+      `trail-events/${eventId}`,
+      fileName,
+    );
   }
 }
 
@@ -332,7 +378,7 @@ export interface FriendRequest {
   fromUserName: string;
   toUserId: string;
   toUserName: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: "pending" | "accepted" | "rejected";
   timestamp: number;
 }
 
@@ -350,20 +396,20 @@ export class SocialService {
     fromUserId: string,
     fromUserName: string,
     toUserId: string,
-    toUserName: string
+    toUserName: string,
   ): Promise<string> {
-    if (!database) throw new Error('Firebase not available');
+    if (!database) throw new Error("Firebase not available");
 
-    const requestsRef = ref(database, 'friend-requests');
+    const requestsRef = ref(database, "friend-requests");
     const newRequestRef = push(requestsRef);
-    
+
     const request: FriendRequest = {
       id: newRequestRef.key!,
       fromUserId,
       fromUserName,
       toUserId,
       toUserName,
-      status: 'pending',
+      status: "pending",
       timestamp: Date.now(),
     };
 
@@ -376,71 +422,87 @@ export class SocialService {
     if (!database) return;
 
     const requestRef = ref(database, `friend-requests/${requestId}`);
-    
-    onValue(requestRef, async (snapshot) => {
-      const request = snapshot.val() as FriendRequest;
-      if (request && request.status === 'pending') {
-        // Update request status
-        await update(requestRef, { status: 'accepted' });
-        
-        // Create friendship entries for both users
-        const friendship1: Friendship = {
-          userId: request.fromUserId,
-          friendId: request.toUserId,
-          friendName: request.toUserName,
-          since: Date.now(),
-        };
-        
-        const friendship2: Friendship = {
-          userId: request.toUserId,
-          friendId: request.fromUserId,
-          friendName: request.fromUserName,
-          since: Date.now(),
-        };
-        
-        await set(ref(database!, `friendships/${request.fromUserId}/${request.toUserId}`), friendship1);
-        await set(ref(database!, `friendships/${request.toUserId}/${request.fromUserId}`), friendship2);
-      }
-    }, { onlyOnce: true });
+
+    onValue(
+      requestRef,
+      async (snapshot) => {
+        const request = snapshot.val() as FriendRequest;
+        if (request && request.status === "pending") {
+          // Update request status
+          await update(requestRef, { status: "accepted" });
+
+          // Create friendship entries for both users
+          const friendship1: Friendship = {
+            userId: request.fromUserId,
+            friendId: request.toUserId,
+            friendName: request.toUserName,
+            since: Date.now(),
+          };
+
+          const friendship2: Friendship = {
+            userId: request.toUserId,
+            friendId: request.fromUserId,
+            friendName: request.fromUserName,
+            since: Date.now(),
+          };
+
+          await set(
+            ref(
+              database!,
+              `friendships/${request.fromUserId}/${request.toUserId}`,
+            ),
+            friendship1,
+          );
+          await set(
+            ref(
+              database!,
+              `friendships/${request.toUserId}/${request.fromUserId}`,
+            ),
+            friendship2,
+          );
+        }
+      },
+      { onlyOnce: true },
+    );
   }
 
   // Reject friend request
   static async rejectFriendRequest(requestId: string): Promise<void> {
     if (!database) return;
     const requestRef = ref(database, `friend-requests/${requestId}`);
-    await update(requestRef, { status: 'rejected' });
+    await update(requestRef, { status: "rejected" });
   }
 
   // Get pending friend requests for a user
   static subscribeToPendingRequests(
     userId: string,
-    callback: (requests: FriendRequest[]) => void
+    callback: (requests: FriendRequest[]) => void,
   ): () => void {
     if (!database) {
       callback([]);
       return () => {};
     }
 
-    const requestsRef = ref(database, 'friend-requests');
-    
+    const requestsRef = ref(database, "friend-requests");
+
     const unsubscribe = onValue(requestsRef, (snapshot) => {
       const requests: FriendRequest[] = [];
       snapshot.forEach((childSnapshot) => {
         const request = childSnapshot.val() as FriendRequest;
-        if (request.toUserId === userId && request.status === 'pending') {
+        if (request.toUserId === userId && request.status === "pending") {
           requests.push(request);
         }
       });
       callback(requests);
     });
 
-    return () => off(requestsRef, 'value', unsubscribe);
+    return () => off(requestsRef, "value", unsubscribe);
   }
 
   // Get user's friends
   static subscribeToFriends(
     userId: string,
-    callback: (friends: Friendship[]) => void
+    callback: (friends: Friendship[]) => void,
   ): () => void {
     if (!database) {
       callback([]);
@@ -448,7 +510,7 @@ export class SocialService {
     }
 
     const friendsRef = ref(database, `friendships/${userId}`);
-    
+
     const unsubscribe = onValue(friendsRef, (snapshot) => {
       const friends: Friendship[] = [];
       snapshot.forEach((childSnapshot) => {
@@ -457,7 +519,7 @@ export class SocialService {
       callback(friends);
     });
 
-    return () => off(friendsRef, 'value', unsubscribe);
+    return () => off(friendsRef, "value", unsubscribe);
   }
 
   // Remove friend
@@ -485,13 +547,13 @@ export class MessagingService {
     conversationId: string,
     senderId: string,
     senderName: string,
-    text: string
+    text: string,
   ): Promise<string> {
-    if (!database) throw new Error('Firebase not available');
+    if (!database) throw new Error("Firebase not available");
 
     const messagesRef = ref(database, `messages/${conversationId}`);
     const newMessageRef = push(messagesRef);
-    
+
     const message: Message = {
       id: newMessageRef.key!,
       conversationId,
@@ -509,7 +571,7 @@ export class MessagingService {
   // Subscribe to conversation messages
   static subscribeToMessages(
     conversationId: string,
-    callback: (messages: Message[]) => void
+    callback: (messages: Message[]) => void,
   ): () => void {
     if (!database) {
       callback([]);
@@ -517,7 +579,7 @@ export class MessagingService {
     }
 
     const messagesRef = ref(database, `messages/${conversationId}`);
-    
+
     const unsubscribe = onValue(messagesRef, (snapshot) => {
       const messages: Message[] = [];
       snapshot.forEach((childSnapshot) => {
@@ -527,11 +589,14 @@ export class MessagingService {
       callback(messages);
     });
 
-    return () => off(messagesRef, 'value', unsubscribe);
+    return () => off(messagesRef, "value", unsubscribe);
   }
 
   // Mark message as read
-  static async markAsRead(conversationId: string, messageId: string): Promise<void> {
+  static async markAsRead(
+    conversationId: string,
+    messageId: string,
+  ): Promise<void> {
     if (!database) return;
     const messageRef = ref(database, `messages/${conversationId}/${messageId}`);
     await update(messageRef, { read: true });
@@ -539,7 +604,7 @@ export class MessagingService {
 
   // Get conversation ID between two users
   static getConversationId(userId1: string, userId2: string): string {
-    return [userId1, userId2].sort().join('_');
+    return [userId1, userId2].sort().join("_");
   }
 }
 
@@ -555,27 +620,32 @@ export interface WeatherData {
 }
 
 export class WeatherService {
-  private static WEATHER_API_KEY = process.env.EXPO_PUBLIC_OPENWEATHER_API_KEY || '';
-  private static WEATHER_API_URL = 'https://api.openweathermap.org/data/2.5/weather';
+  private static WEATHER_API_KEY =
+    process.env.EXPO_PUBLIC_OPENWEATHER_API_KEY || "";
+  private static WEATHER_API_URL =
+    "https://api.openweathermap.org/data/2.5/weather";
 
   // Get weather for location
-  static async getWeather(latitude: number, longitude: number): Promise<WeatherData | null> {
+  static async getWeather(
+    latitude: number,
+    longitude: number,
+  ): Promise<WeatherData | null> {
     if (!this.WEATHER_API_KEY) {
-      console.log('Weather API key not configured');
+      console.log("Weather API key not configured");
       return null;
     }
 
     try {
       const response = await fetch(
-        `${this.WEATHER_API_URL}?lat=${latitude}&lon=${longitude}&appid=${this.WEATHER_API_KEY}&units=imperial`
+        `${this.WEATHER_API_URL}?lat=${latitude}&lon=${longitude}&appid=${this.WEATHER_API_KEY}&units=imperial`,
       );
-      
+
       if (!response.ok) {
-        throw new Error('Weather API request failed');
+        throw new Error("Weather API request failed");
       }
 
       const data = await response.json();
-      
+
       return {
         temperature: Math.round(data.main.temp),
         condition: data.weather[0].main,
@@ -586,7 +656,7 @@ export class WeatherService {
         timestamp: Date.now(),
       };
     } catch (error) {
-      console.error('Error fetching weather:', error);
+      console.error("Error fetching weather:", error);
       return null;
     }
   }

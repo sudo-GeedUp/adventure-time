@@ -29,8 +29,16 @@ export default function CategoryCard({ category, onPress }: CategoryCardProps) {
         <Feather name={category.icon as any} size={32} color={theme.primary} />
       </View>
       <View style={styles.content}>
-        <ThemedText style={[styles.title, Typography.h4]}>{category.title}</ThemedText>
-        <ThemedText style={[styles.count, Typography.small, { color: theme.tabIconDefault }]}>
+        <ThemedText style={[styles.title, Typography.h4]}>
+          {category.title}
+        </ThemedText>
+        <ThemedText
+          style={[
+            styles.count,
+            Typography.small,
+            { color: theme.tabIconDefault },
+          ]}
+        >
           {category.guideCount} guide{category.guideCount !== 1 ? "s" : ""}
         </ThemedText>
       </View>

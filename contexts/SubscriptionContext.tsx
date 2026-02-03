@@ -1,13 +1,19 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Platform } from 'react-native';
-import Purchases, { CustomerInfo } from 'react-native-purchases';
-import { 
-  initializeRevenueCat, 
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { Platform } from "react-native";
+import Purchases, { CustomerInfo } from "react-native-purchases";
+import {
+  initializeRevenueCat,
   checkPremiumStatus,
   purchaseMonthlySubscription,
   restorePurchases,
-  ENTITLEMENT_IDS 
-} from '@/config/revenuecat';
+  ENTITLEMENT_IDS,
+} from "@/config/revenuecat";
 
 interface SubscriptionContextType {
   isPremium: boolean;
@@ -18,26 +24,31 @@ interface SubscriptionContextType {
   refreshStatus: () => Promise<void>;
 }
 
-const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
+const SubscriptionContext = createContext<SubscriptionContextType | undefined>(
+  undefined,
+);
 
-export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [isPremium, setIsPremium] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
 
   const refreshStatus = async () => {
     try {
-      if (Platform.OS === 'web') {
+      if (Platform.OS === "web") {
         // Web users get free access (no IAP on web)
         setIsPremium(true);
         return;
       }
       const info = await Purchases.getCustomerInfo();
       setCustomerInfo(info);
-      const hasPremium = info.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined;
+      const hasPremium =
+        info.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined;
       setIsPremium(hasPremium);
     } catch (error) {
-      console.error('Error refreshing subscription status:', error);
+      console.error("Error refreshing subscription status:", error);
       setIsPremium(false);
     }
   };
@@ -45,7 +56,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
   useEffect(() => {
     const initSubscriptions = async () => {
       try {
-        if (Platform.OS === 'web') {
+        if (Platform.OS === "web") {
           // Web platform - no RevenueCat, grant free access
           setIsPremium(true);
           setIsLoading(false);
@@ -58,11 +69,11 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
           await refreshStatus();
         } else {
           // If RevenueCat fails to initialize, grant free access
-          console.warn('RevenueCat not initialized, granting free access');
+          console.warn("RevenueCat not initialized, granting free access");
           setIsPremium(true);
         }
       } catch (error) {
-        console.error('Error initializing subscriptions:', error);
+        console.error("Error initializing subscriptions:", error);
         // On error, grant free access to avoid blocking users
         setIsPremium(true);
       } finally {
@@ -81,7 +92,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
       }
       return success;
     } catch (error) {
-      console.error('Purchase failed:', error);
+      console.error("Purchase failed:", error);
       return false;
     }
   };
@@ -94,13 +105,13 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
       }
       return success;
     } catch (error) {
-      console.error('Restore failed:', error);
+      console.error("Restore failed:", error);
       return false;
     }
   };
 
   return (
-    <SubscriptionContext.Provider 
+    <SubscriptionContext.Provider
       value={{
         isPremium,
         isLoading,
@@ -118,7 +129,9 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
 export const useSubscription = () => {
   const context = useContext(SubscriptionContext);
   if (context === undefined) {
-    throw new Error('useSubscription must be used within a SubscriptionProvider');
+    throw new Error(
+      "useSubscription must be used within a SubscriptionProvider",
+    );
   }
   return context;
 };

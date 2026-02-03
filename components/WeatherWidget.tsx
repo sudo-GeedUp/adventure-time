@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, ActivityIndicator } from 'react-native';
-import { Feather } from '@expo/vector-icons';
-import ThemedText from './ThemedText';
-import { useTheme } from '@/hooks/useTheme';
-import { Spacing, BorderRadius, Typography } from '@/constants/theme';
-import { WeatherService, WeatherData } from '@/utils/firebase';
+import React, { useState, useEffect, useCallback } from "react";
+import { View, StyleSheet, Image, ActivityIndicator } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import ThemedText from "./ThemedText";
+import { useTheme } from "@/hooks/useTheme";
+import { Spacing, BorderRadius, Typography } from "@/constants/theme";
+import { WeatherService, WeatherData } from "@/utils/firebase";
 
 interface WeatherWidgetProps {
   latitude: number;
@@ -12,17 +12,17 @@ interface WeatherWidgetProps {
   compact?: boolean;
 }
 
-export default function WeatherWidget({ latitude, longitude, compact = false }: WeatherWidgetProps) {
+export default function WeatherWidget({
+  latitude,
+  longitude,
+  compact = false,
+}: WeatherWidgetProps) {
   const { theme } = useTheme();
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
-    loadWeather();
-  }, [latitude, longitude]);
-
-  const loadWeather = async () => {
+  const loadWeather = useCallback(async () => {
     setLoading(true);
     setError(false);
     try {
@@ -33,16 +33,26 @@ export default function WeatherWidget({ latitude, longitude, compact = false }: 
         setError(true);
       }
     } catch (err) {
-      console.error('Error loading weather:', err);
+      console.error("Error loading weather:", err);
       setError(true);
     } finally {
       setLoading(false);
     }
-  };
+  }, [latitude, longitude]);
+
+  useEffect(() => {
+    loadWeather();
+  }, [loadWeather]);
 
   if (loading) {
     return (
-      <View style={[styles.container, compact ? styles.compactContainer : {}, { backgroundColor: theme.backgroundDefault }]}>
+      <View
+        style={[
+          styles.container,
+          compact ? styles.compactContainer : {},
+          { backgroundColor: theme.backgroundDefault },
+        ]}
+      >
         <ActivityIndicator size="small" color={theme.primary} />
       </View>
     );
@@ -50,7 +60,13 @@ export default function WeatherWidget({ latitude, longitude, compact = false }: 
 
   if (error || !weather) {
     return (
-      <View style={[styles.container, compact ? styles.compactContainer : {}, { backgroundColor: theme.backgroundDefault }]}>
+      <View
+        style={[
+          styles.container,
+          compact ? styles.compactContainer : {},
+          { backgroundColor: theme.backgroundDefault },
+        ]}
+      >
         <Feather name="cloud-off" size={20} color={theme.tabIconDefault} />
         <ThemedText style={[styles.errorText, { color: theme.tabIconDefault }]}>
           Weather unavailable
@@ -61,7 +77,13 @@ export default function WeatherWidget({ latitude, longitude, compact = false }: 
 
   if (compact) {
     return (
-      <View style={[styles.container, styles.compactContainer, { backgroundColor: theme.backgroundDefault }]}>
+      <View
+        style={[
+          styles.container,
+          styles.compactContainer,
+          { backgroundColor: theme.backgroundDefault },
+        ]}
+      >
         <Image
           source={{ uri: WeatherService.getWeatherIconUrl(weather.icon) }}
           style={styles.compactIcon}
@@ -69,7 +91,9 @@ export default function WeatherWidget({ latitude, longitude, compact = false }: 
         <ThemedText style={[Typography.h4, { color: theme.text }]}>
           {weather.temperature}°F
         </ThemedText>
-        <ThemedText style={[styles.compactCondition, { color: theme.tabIconDefault }]}>
+        <ThemedText
+          style={[styles.compactCondition, { color: theme.tabIconDefault }]}
+        >
           {weather.condition}
         </ThemedText>
       </View>
@@ -77,7 +101,9 @@ export default function WeatherWidget({ latitude, longitude, compact = false }: 
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.backgroundDefault }]}>
+    <View
+      style={[styles.container, { backgroundColor: theme.backgroundDefault }]}
+    >
       <View style={styles.header}>
         <Feather name="cloud" size={20} color={theme.primary} />
         <ThemedText style={[Typography.h4, { marginLeft: Spacing.sm }]}>
@@ -97,7 +123,9 @@ export default function WeatherWidget({ latitude, longitude, compact = false }: 
           <ThemedText style={[styles.condition, { color: theme.text }]}>
             {weather.condition}
           </ThemedText>
-          <ThemedText style={[styles.description, { color: theme.tabIconDefault }]}>
+          <ThemedText
+            style={[styles.description, { color: theme.tabIconDefault }]}
+          >
             {weather.description}
           </ThemedText>
         </View>
@@ -106,7 +134,9 @@ export default function WeatherWidget({ latitude, longitude, compact = false }: 
       <View style={styles.details}>
         <View style={styles.detailItem}>
           <Feather name="droplet" size={16} color={theme.accent} />
-          <ThemedText style={[styles.detailLabel, { color: theme.tabIconDefault }]}>
+          <ThemedText
+            style={[styles.detailLabel, { color: theme.tabIconDefault }]}
+          >
             Humidity
           </ThemedText>
           <ThemedText style={[styles.detailValue, { color: theme.text }]}>
@@ -118,7 +148,9 @@ export default function WeatherWidget({ latitude, longitude, compact = false }: 
 
         <View style={styles.detailItem}>
           <Feather name="wind" size={16} color={theme.accent} />
-          <ThemedText style={[styles.detailLabel, { color: theme.tabIconDefault }]}>
+          <ThemedText
+            style={[styles.detailLabel, { color: theme.tabIconDefault }]}
+          >
             Wind
           </ThemedText>
           <ThemedText style={[styles.detailValue, { color: theme.text }]}>
@@ -134,26 +166,26 @@ const styles = StyleSheet.create({
   container: {
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   compactContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: Spacing.md,
     gap: Spacing.sm,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: Spacing.md,
   },
   mainWeather: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: Spacing.lg,
   },
   weatherIcon: {
@@ -170,42 +202,42 @@ const styles = StyleSheet.create({
   },
   temperature: {
     fontSize: 36,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: Spacing.xs,
   },
   condition: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: Spacing.xs,
   },
   description: {
     fontSize: 14,
-    textTransform: 'capitalize',
+    textTransform: "capitalize",
   },
   compactCondition: {
     fontSize: 12,
   },
   details: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingTop: Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
+    borderTopColor: "rgba(255,255,255,0.1)",
   },
   detailItem: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     gap: Spacing.xs,
   },
   detailDivider: {
     width: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: "rgba(255,255,255,0.1)",
   },
   detailLabel: {
     fontSize: 12,
   },
   detailValue: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   errorText: {
     fontSize: 12,

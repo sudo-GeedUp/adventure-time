@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -7,16 +7,16 @@ import {
   ScrollView,
   Alert,
   Platform,
-} from 'react-native';
-import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
-import { Feather } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
-import ThemedText from '@/components/ThemedText';
-import { ScreenScrollView } from '@/components/ScreenScrollView';
-import { useTheme } from '@/hooks/useTheme';
-import { Spacing, BorderRadius, Typography } from '@/constants/theme';
-import { TrailReviewManager } from '@/utils/trailReviews';
-import { storage } from '@/utils/storage';
+} from "react-native";
+import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
+import { Feather } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import ThemedText from "@/components/ThemedText";
+import { ScreenScrollView } from "@/components/ScreenScrollView";
+import { useTheme } from "@/hooks/useTheme";
+import { Spacing, BorderRadius, Typography } from "@/constants/theme";
+import { TrailReviewManager } from "@/utils/trailReviews";
+import { storage } from "@/utils/storage";
 
 type RouteParams = {
   TrailReview: {
@@ -26,21 +26,25 @@ type RouteParams = {
 };
 
 export default function TrailReviewScreen() {
-  const route = useRoute<RouteProp<RouteParams, 'TrailReview'>>();
+  const route = useRoute<RouteProp<RouteParams, "TrailReview">>();
   const navigation = useNavigation();
   const { theme } = useTheme();
   const { trailId, trailName } = route.params;
 
   const [rating, setRating] = useState(0);
-  const [difficulty, setDifficulty] = useState<'Easy' | 'Moderate' | 'Hard' | 'Expert'>('Moderate');
-  const [trailCondition, setTrailCondition] = useState<'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Dangerous'>('Good');
-  const [reviewText, setReviewText] = useState('');
+  const [difficulty, setDifficulty] = useState<
+    "Easy" | "Moderate" | "Hard" | "Expert"
+  >("Moderate");
+  const [trailCondition, setTrailCondition] = useState<
+    "Excellent" | "Good" | "Fair" | "Poor" | "Dangerous"
+  >("Good");
+  const [reviewText, setReviewText] = useState("");
   const [photos, setPhotos] = useState<string[]>([]);
   const [isCrowded, setIsCrowded] = useState(false);
-  const [weather, setWeather] = useState('');
-  const [requiredMods, setRequiredMods] = useState('');
-  const [hazards, setHazards] = useState('');
-  const [bestTime, setBestTime] = useState('');
+  const [weather, setWeather] = useState("");
+  const [requiredMods, setRequiredMods] = useState("");
+  const [hazards, setHazards] = useState("");
+  const [bestTime, setBestTime] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSelectPhoto = async () => {
@@ -52,15 +56,18 @@ export default function TrailReviewScreen() {
     });
 
     if (!result.canceled && result.assets) {
-      const newPhotos = result.assets.map(asset => asset.uri);
+      const newPhotos = result.assets.map((asset) => asset.uri);
       setPhotos([...photos, ...newPhotos].slice(0, 5));
     }
   };
 
   const handleTakePhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission Required', 'Camera permission is required to take photos');
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission Required",
+        "Camera permission is required to take photos",
+      );
       return;
     }
 
@@ -75,12 +82,12 @@ export default function TrailReviewScreen() {
 
   const handleSubmitReview = async () => {
     if (rating === 0) {
-      Alert.alert('Rating Required', 'Please select a star rating');
+      Alert.alert("Rating Required", "Please select a star rating");
       return;
     }
 
     if (!reviewText.trim()) {
-      Alert.alert('Review Required', 'Please write a review');
+      Alert.alert("Review Required", "Please write a review");
       return;
     }
 
@@ -88,32 +95,34 @@ export default function TrailReviewScreen() {
 
     try {
       const profile = await storage.getUserProfile();
-      
+
       await TrailReviewManager.addReview({
         trailId,
         trailName,
-        userId: profile?.id || 'user',
-        userName: profile?.name || 'Anonymous',
+        userId: profile?.id || "user",
+        userName: profile?.name || "Anonymous",
         rating,
         difficulty,
-        vehicleType: profile?.vehicleType || 'Unknown',
+        vehicleType: profile?.vehicleType || "Unknown",
         conditions: {
-          weather: weather || 'Unknown',
+          weather: weather || "Unknown",
           trailCondition,
           crowded: isCrowded,
         },
         review: reviewText,
         photos: photos.length > 0 ? photos : undefined,
         bestTimeToVisit: bestTime || undefined,
-        requiredMods: requiredMods ? requiredMods.split(',').map(m => m.trim()) : undefined,
-        hazards: hazards ? hazards.split(',').map(h => h.trim()) : undefined,
+        requiredMods: requiredMods
+          ? requiredMods.split(",").map((m) => m.trim())
+          : undefined,
+        hazards: hazards ? hazards.split(",").map((h) => h.trim()) : undefined,
       });
 
-      Alert.alert('Review Submitted', 'Thank you for your review!', [
-        { text: 'OK', onPress: () => navigation.goBack() }
+      Alert.alert("Review Submitted", "Thank you for your review!", [
+        { text: "OK", onPress: () => navigation.goBack() },
       ]);
     } catch (error) {
-      Alert.alert('Error', 'Failed to submit review. Please try again.');
+      Alert.alert("Error", "Failed to submit review. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -127,7 +136,7 @@ export default function TrailReviewScreen() {
             <Feather
               name="star"
               size={32}
-              color={star <= rating ? '#FFD700' : theme.tabIconDefault}
+              color={star <= rating ? "#FFD700" : theme.tabIconDefault}
               style={styles.star}
             />
           </Pressable>
@@ -158,22 +167,25 @@ export default function TrailReviewScreen() {
           Difficulty Level
         </ThemedText>
         <View style={styles.buttonGroup}>
-          {(['Easy', 'Moderate', 'Hard', 'Expert'] as const).map((level) => (
+          {(["Easy", "Moderate", "Hard", "Expert"] as const).map((level) => (
             <Pressable
               key={level}
               style={[
                 styles.difficultyButton,
-                { 
-                  backgroundColor: difficulty === level ? theme.primary : theme.backgroundDefault,
+                {
+                  backgroundColor:
+                    difficulty === level
+                      ? theme.primary
+                      : theme.backgroundDefault,
                   borderColor: theme.border,
-                }
+                },
               ]}
               onPress={() => setDifficulty(level)}
             >
               <ThemedText
                 style={[
                   styles.buttonText,
-                  { color: difficulty === level ? 'white' : theme.text }
+                  { color: difficulty === level ? "white" : theme.text },
                 ]}
               >
                 {level}
@@ -189,28 +201,36 @@ export default function TrailReviewScreen() {
           Trail Condition
         </ThemedText>
         <View style={styles.buttonGroup}>
-          {(['Excellent', 'Good', 'Fair', 'Poor', 'Dangerous'] as const).map((condition) => (
-            <Pressable
-              key={condition}
-              style={[
-                styles.conditionButton,
-                { 
-                  backgroundColor: trailCondition === condition ? theme.accent : theme.backgroundDefault,
-                  borderColor: theme.border,
-                }
-              ]}
-              onPress={() => setTrailCondition(condition)}
-            >
-              <ThemedText
+          {(["Excellent", "Good", "Fair", "Poor", "Dangerous"] as const).map(
+            (condition) => (
+              <Pressable
+                key={condition}
                 style={[
-                  styles.buttonText,
-                  { color: trailCondition === condition ? 'white' : theme.text }
+                  styles.conditionButton,
+                  {
+                    backgroundColor:
+                      trailCondition === condition
+                        ? theme.accent
+                        : theme.backgroundDefault,
+                    borderColor: theme.border,
+                  },
                 ]}
+                onPress={() => setTrailCondition(condition)}
               >
-                {condition}
-              </ThemedText>
-            </Pressable>
-          ))}
+                <ThemedText
+                  style={[
+                    styles.buttonText,
+                    {
+                      color:
+                        trailCondition === condition ? "white" : theme.text,
+                    },
+                  ]}
+                >
+                  {condition}
+                </ThemedText>
+              </Pressable>
+            ),
+          )}
         </View>
       </View>
 
@@ -220,7 +240,10 @@ export default function TrailReviewScreen() {
           Your Review
         </ThemedText>
         <TextInput
-          style={[styles.reviewInput, { backgroundColor: theme.backgroundDefault, color: theme.text }]}
+          style={[
+            styles.reviewInput,
+            { backgroundColor: theme.backgroundDefault, color: theme.text },
+          ]}
           placeholder="Share your experience on this trail..."
           placeholderTextColor={theme.tabIconDefault}
           value={reviewText}
@@ -239,12 +262,21 @@ export default function TrailReviewScreen() {
           <View style={styles.photosContainer}>
             {photos.map((photo, index) => (
               <View key={index} style={styles.photoWrapper}>
-                <View style={[styles.photo, { backgroundColor: theme.backgroundSecondary }]}>
-                  <ThemedText style={styles.photoText}>Photo {index + 1}</ThemedText>
+                <View
+                  style={[
+                    styles.photo,
+                    { backgroundColor: theme.backgroundSecondary },
+                  ]}
+                >
+                  <ThemedText style={styles.photoText}>
+                    Photo {index + 1}
+                  </ThemedText>
                 </View>
                 <Pressable
                   style={styles.removePhoto}
-                  onPress={() => setPhotos(photos.filter((_, i) => i !== index))}
+                  onPress={() =>
+                    setPhotos(photos.filter((_, i) => i !== index))
+                  }
                 >
                   <Feather name="x" size={16} color="white" />
                 </Pressable>
@@ -253,18 +285,28 @@ export default function TrailReviewScreen() {
             {photos.length < 5 && (
               <>
                 <Pressable
-                  style={[styles.addPhotoButton, { backgroundColor: theme.backgroundDefault }]}
+                  style={[
+                    styles.addPhotoButton,
+                    { backgroundColor: theme.backgroundDefault },
+                  ]}
                   onPress={handleTakePhoto}
                 >
                   <Feather name="camera" size={24} color={theme.primary} />
-                  <ThemedText style={styles.addPhotoText}>Take Photo</ThemedText>
+                  <ThemedText style={styles.addPhotoText}>
+                    Take Photo
+                  </ThemedText>
                 </Pressable>
                 <Pressable
-                  style={[styles.addPhotoButton, { backgroundColor: theme.backgroundDefault }]}
+                  style={[
+                    styles.addPhotoButton,
+                    { backgroundColor: theme.backgroundDefault },
+                  ]}
                   onPress={handleSelectPhoto}
                 >
                   <Feather name="image" size={24} color={theme.primary} />
-                  <ThemedText style={styles.addPhotoText}>Choose Photo</ThemedText>
+                  <ThemedText style={styles.addPhotoText}>
+                    Choose Photo
+                  </ThemedText>
                 </Pressable>
               </>
             )}
@@ -277,9 +319,12 @@ export default function TrailReviewScreen() {
         <ThemedText style={[Typography.h4, styles.sectionTitle]}>
           Additional Details (Optional)
         </ThemedText>
-        
+
         <TextInput
-          style={[styles.input, { backgroundColor: theme.backgroundDefault, color: theme.text }]}
+          style={[
+            styles.input,
+            { backgroundColor: theme.backgroundDefault, color: theme.text },
+          ]}
           placeholder="Weather conditions"
           placeholderTextColor={theme.tabIconDefault}
           value={weather}
@@ -287,7 +332,10 @@ export default function TrailReviewScreen() {
         />
 
         <TextInput
-          style={[styles.input, { backgroundColor: theme.backgroundDefault, color: theme.text }]}
+          style={[
+            styles.input,
+            { backgroundColor: theme.backgroundDefault, color: theme.text },
+          ]}
           placeholder="Required modifications (comma separated)"
           placeholderTextColor={theme.tabIconDefault}
           value={requiredMods}
@@ -295,7 +343,10 @@ export default function TrailReviewScreen() {
         />
 
         <TextInput
-          style={[styles.input, { backgroundColor: theme.backgroundDefault, color: theme.text }]}
+          style={[
+            styles.input,
+            { backgroundColor: theme.backgroundDefault, color: theme.text },
+          ]}
           placeholder="Hazards encountered (comma separated)"
           placeholderTextColor={theme.tabIconDefault}
           value={hazards}
@@ -303,7 +354,10 @@ export default function TrailReviewScreen() {
         />
 
         <TextInput
-          style={[styles.input, { backgroundColor: theme.backgroundDefault, color: theme.text }]}
+          style={[
+            styles.input,
+            { backgroundColor: theme.backgroundDefault, color: theme.text },
+          ]}
           placeholder="Best time to visit (e.g., Spring, Early morning)"
           placeholderTextColor={theme.tabIconDefault}
           value={bestTime}
@@ -315,10 +369,12 @@ export default function TrailReviewScreen() {
           <Pressable
             style={[
               styles.checkbox,
-              { 
-                backgroundColor: isCrowded ? theme.primary : theme.backgroundDefault,
+              {
+                backgroundColor: isCrowded
+                  ? theme.primary
+                  : theme.backgroundDefault,
                 borderColor: theme.border,
-              }
+              },
             ]}
             onPress={() => setIsCrowded(!isCrowded)}
           >
@@ -331,16 +387,18 @@ export default function TrailReviewScreen() {
       <Pressable
         style={[
           styles.submitButton,
-          { 
-            backgroundColor: isSubmitting ? theme.tabIconDefault : theme.primary,
+          {
+            backgroundColor: isSubmitting
+              ? theme.tabIconDefault
+              : theme.primary,
             opacity: isSubmitting ? 0.5 : 1,
-          }
+          },
         ]}
         onPress={handleSubmitReview}
         disabled={isSubmitting}
       >
         <ThemedText style={styles.submitButtonText}>
-          {isSubmitting ? 'Submitting...' : 'Submit Review'}
+          {isSubmitting ? "Submitting..." : "Submit Review"}
         </ThemedText>
       </Pressable>
     </ScreenScrollView>
@@ -352,25 +410,25 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   title: {
-    textAlign: 'center',
+    textAlign: "center",
   },
   section: {
-    marginBottom: Spacing['2xl'],
+    marginBottom: Spacing["2xl"],
   },
   sectionTitle: {
     marginBottom: Spacing.md,
   },
   starsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     gap: Spacing.sm,
   },
   star: {
     marginHorizontal: Spacing.xs,
   },
   buttonGroup: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: Spacing.sm,
   },
   difficultyButton: {
@@ -387,48 +445,48 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   reviewInput: {
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
     minHeight: 120,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   photosContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: Spacing.md,
   },
   photoWrapper: {
-    position: 'relative',
+    position: "relative",
   },
   photo: {
     width: 100,
     height: 100,
     borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   photoText: {
     fontSize: 12,
   },
   removePhoto: {
-    position: 'absolute',
+    position: "absolute",
     top: -8,
     right: -8,
-    backgroundColor: '#FF0000',
+    backgroundColor: "#FF0000",
     borderRadius: 12,
     width: 24,
     height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   addPhotoButton: {
     width: 100,
     height: 100,
     borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   addPhotoText: {
     fontSize: 12,
@@ -440,27 +498,27 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   crowdedContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   checkbox: {
     width: 24,
     height: 24,
     borderRadius: BorderRadius.sm,
     borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   submitButton: {
     padding: Spacing.lg,
     borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    marginBottom: Spacing['3xl'],
+    alignItems: "center",
+    marginBottom: Spacing["3xl"],
   },
   submitButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

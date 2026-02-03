@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   StyleSheet,
@@ -8,34 +8,34 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { Feather } from '@expo/vector-icons';
-import { ThemedView } from '@/components/ThemedView';
-import ThemedText from '@/components/ThemedText';
-import { useTheme } from '@/hooks/useTheme';
-import { authService } from '@/services/authService';
-import { Spacing, BorderRadius, Typography } from '@/constants/theme';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Feather } from "@expo/vector-icons";
+import { ThemedView } from "@/components/ThemedView";
+import ThemedText from "@/components/ThemedText";
+import { useTheme } from "@/hooks/useTheme";
+import { authService } from "@/services/authService";
+import { Spacing, BorderRadius, Typography } from "@/constants/theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ForgotPasswordScreen() {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
 
   const handleResetPassword = async () => {
     if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email address');
+      Alert.alert("Error", "Please enter your email address");
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      Alert.alert("Error", "Please enter a valid email address");
       return;
     }
 
@@ -44,7 +44,7 @@ export default function ForgotPasswordScreen() {
       await authService.sendPasswordReset(email);
       setEmailSent(true);
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      Alert.alert("Error", error.message);
     } finally {
       setLoading(false);
     }
@@ -59,24 +59,34 @@ export default function ForgotPasswordScreen() {
       <ThemedView style={styles.container}>
         <View style={[styles.content, { paddingTop: insets.top + Spacing.xl }]}>
           <View style={styles.successContainer}>
-            <View style={[styles.iconCircle, { backgroundColor: theme.success + '20' }]}>
+            <View
+              style={[
+                styles.iconCircle,
+                { backgroundColor: theme.success + "20" },
+              ]}
+            >
               <Feather name="check-circle" size={48} color={theme.success} />
             </View>
-            
+
             <ThemedText style={[Typography.h2, styles.successTitle]}>
               Check Your Email
             </ThemedText>
-            
-            <ThemedText style={[styles.successMessage, { color: theme.tabIconDefault }]}>
+
+            <ThemedText
+              style={[styles.successMessage, { color: theme.tabIconDefault }]}
+            >
               We've sent password reset instructions to:
             </ThemedText>
-            
+
             <ThemedText style={[styles.email, { color: theme.primary }]}>
               {email}
             </ThemedText>
-            
-            <ThemedText style={[styles.instructions, { color: theme.tabIconDefault }]}>
-              Click the link in the email to reset your password. If you don't see the email, check your spam folder.
+
+            <ThemedText
+              style={[styles.instructions, { color: theme.tabIconDefault }]}
+            >
+              Click the link in the email to reset your password. If you don't
+              see the email, check your spam folder.
             </ThemedText>
 
             <Pressable
@@ -107,7 +117,7 @@ export default function ForgotPasswordScreen() {
   return (
     <ThemedView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
       >
         <View style={[styles.content, { paddingTop: insets.top + Spacing.xl }]}>
@@ -116,13 +126,16 @@ export default function ForgotPasswordScreen() {
             <Pressable onPress={handleBackToLogin} style={styles.backButton}>
               <Feather name="arrow-left" size={24} color={theme.text} />
             </Pressable>
-            
+
             <ThemedText style={[Typography.h1, styles.title]}>
               Forgot Password?
             </ThemedText>
-            
-            <ThemedText style={[styles.subtitle, { color: theme.tabIconDefault }]}>
-              Enter your email address and we'll send you instructions to reset your password.
+
+            <ThemedText
+              style={[styles.subtitle, { color: theme.tabIconDefault }]}
+            >
+              Enter your email address and we'll send you instructions to reset
+              your password.
             </ThemedText>
           </View>
 
@@ -131,7 +144,12 @@ export default function ForgotPasswordScreen() {
             {/* Email Input */}
             <View style={styles.inputContainer}>
               <ThemedText style={styles.label}>Email Address</ThemedText>
-              <View style={[styles.inputWrapper, { backgroundColor: theme.backgroundSecondary }]}>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  { backgroundColor: theme.backgroundSecondary },
+                ]}
+              >
                 <Feather name="mail" size={20} color={theme.tabIconDefault} />
                 <TextInput
                   style={[styles.input, { color: theme.text }]}
@@ -162,7 +180,9 @@ export default function ForgotPasswordScreen() {
                 <ActivityIndicator color="white" />
               ) : (
                 <>
-                  <ThemedText style={styles.buttonText}>Send Reset Link</ThemedText>
+                  <ThemedText style={styles.buttonText}>
+                    Send Reset Link
+                  </ThemedText>
                   <Feather name="send" size={20} color="white" />
                 </>
               )}
@@ -184,10 +204,10 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: Spacing.xl,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   header: {
-    marginBottom: Spacing['2xl'],
+    marginBottom: Spacing["2xl"],
   },
   backButton: {
     marginBottom: Spacing.lg,
@@ -207,12 +227,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: Spacing.sm,
   },
   inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.md,
     height: 56,
@@ -221,12 +241,12 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    height: '100%',
+    height: "100%",
   },
   button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: Spacing.lg,
     borderRadius: BorderRadius.md,
     gap: Spacing.sm,
@@ -235,41 +255,41 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   successContainer: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   iconCircle: {
     width: 96,
     height: 96,
     borderRadius: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing['2xl'],
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing["2xl"],
   },
   successTitle: {
     marginBottom: Spacing.md,
-    textAlign: 'center',
+    textAlign: "center",
   },
   successMessage: {
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: Spacing.sm,
   },
   email: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: Spacing.lg,
-    textAlign: 'center',
+    textAlign: "center",
   },
   instructions: {
     fontSize: 14,
     lineHeight: 22,
-    textAlign: 'center',
-    marginBottom: Spacing['2xl'],
+    textAlign: "center",
+    marginBottom: Spacing["2xl"],
   },
   resendButton: {
     marginTop: Spacing.lg,
@@ -277,6 +297,6 @@ const styles = StyleSheet.create({
   },
   resendText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

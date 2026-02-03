@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, TextInput, Alert, ActivityIndicator } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  TextInput,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import ThemedText from "@/components/ThemedText";
@@ -20,7 +27,7 @@ export default function DonateScreen() {
 
   const handleDonate = async (amount: number) => {
     if (isProcessing) return;
-    
+
     setIsProcessing(true);
     try {
       // TODO: Implement Apple IAP purchase flow
@@ -28,11 +35,11 @@ export default function DonateScreen() {
       // 2. Present purchase UI
       // 3. Process purchase
       // 4. Deliver non-consumable tip
-      
+
       Alert.alert(
         "Coming Soon",
         "Tip jar will be available in the next update via Apple In-App Purchases. Thank you for your support!",
-        [{ text: "OK" }]
+        [{ text: "OK" }],
       );
     } catch (error) {
       Alert.alert("Error", "Failed to process donation. Please try again.");
@@ -44,13 +51,17 @@ export default function DonateScreen() {
 
   return (
     <ScreenScrollView style={{ backgroundColor: theme.backgroundDefault }}>
-      <View style={[styles.container, { backgroundColor: theme.backgroundDefault }]}>
+      <View
+        style={[styles.container, { backgroundColor: theme.backgroundDefault }]}
+      >
         <View style={styles.header}>
           <Feather name="heart" size={48} color={theme.primary} />
           <ThemedText style={[Typography.h1, styles.title]}>
             Support Adventure Time
           </ThemedText>
-          <ThemedText style={[styles.subtitle, { color: theme.tabIconDefault }]}>
+          <ThemedText
+            style={[styles.subtitle, { color: theme.tabIconDefault }]}
+          >
             Help us build the ultimate offroad recovery companion
           </ThemedText>
         </View>
@@ -58,14 +69,19 @@ export default function DonateScreen() {
         <View
           style={[
             styles.missionCard,
-            { backgroundColor: theme.primary + "10", borderColor: theme.primary },
+            {
+              backgroundColor: theme.primary + "10",
+              borderColor: theme.primary,
+            },
           ]}
         >
           <ThemedText style={[Typography.h3, styles.missionTitle]}>
             Our Mission
           </ThemedText>
           <ThemedText style={[styles.missionText, { color: theme.text }]}>
-            Adventure Time is dedicated to helping offroaders stay safe and recover quickly when things go wrong on the trail. Your support enables us to build better features and improve the app.
+            Adventure Time is dedicated to helping offroaders stay safe and
+            recover quickly when things go wrong on the trail. Your support
+            enables us to build better features and improve the app.
           </ThemedText>
         </View>
 
@@ -73,17 +89,26 @@ export default function DonateScreen() {
           <ThemedText style={[Typography.h2, styles.donationTitle]}>
             Enter Your Donation
           </ThemedText>
-          <ThemedText style={[styles.donationSubtitle, { color: theme.tabIconDefault }]}>
+          <ThemedText
+            style={[styles.donationSubtitle, { color: theme.tabIconDefault }]}
+          >
             Every contribution helps keep Adventure Time running
           </ThemedText>
-          
+
           <View
             style={[
               styles.amountInputWrapper,
-              { borderColor: theme.primary, backgroundColor: theme.backgroundSecondary },
+              {
+                borderColor: theme.primary,
+                backgroundColor: theme.backgroundSecondary,
+              },
             ]}
           >
-            <ThemedText style={[styles.currencySymbol, { color: theme.primary }]}>$</ThemedText>
+            <ThemedText
+              style={[styles.currencySymbol, { color: theme.primary }]}
+            >
+              $
+            </ThemedText>
             <TextInput
               style={[styles.amountInput, { color: theme.text }]}
               placeholder="0.00"
@@ -98,7 +123,10 @@ export default function DonateScreen() {
             style={[
               styles.donateButton,
               {
-                backgroundColor: isProcessing || !customAmount ? theme.tabIconDefault : theme.primary,
+                backgroundColor:
+                  isProcessing || !customAmount
+                    ? theme.tabIconDefault
+                    : theme.primary,
                 opacity: isProcessing ? 0.6 : 1,
               },
             ]}
@@ -109,7 +137,11 @@ export default function DonateScreen() {
               <ActivityIndicator color={theme.backgroundDefault} />
             ) : (
               <>
-                <Feather name="heart" size={20} color={theme.backgroundDefault} />
+                <Feather
+                  name="heart"
+                  size={20}
+                  color={theme.backgroundDefault}
+                />
                 <ThemedText
                   style={[
                     styles.donateButtonText,
@@ -173,14 +205,18 @@ function BenefitItem({
 }) {
   return (
     <View style={styles.benefitItem}>
-      <View style={[styles.benefitIcon, { backgroundColor: theme.primary + "20" }]}>
+      <View
+        style={[styles.benefitIcon, { backgroundColor: theme.primary + "20" }]}
+      >
         <Feather name={icon} size={20} color={theme.primary} />
       </View>
       <View style={styles.benefitContent}>
         <ThemedText style={[Typography.label, { fontWeight: "600" }]}>
           {title}
         </ThemedText>
-        <ThemedText style={[styles.benefitDescription, { color: theme.tabIconDefault }]}>
+        <ThemedText
+          style={[styles.benefitDescription, { color: theme.tabIconDefault }]}
+        >
           {description}
         </ThemedText>
       </View>

@@ -26,17 +26,17 @@ export default function App() {
   useEffect(() => {
     // Render app immediately for testing
     setIsInitialized(true);
-    
+
     // Initialize services in background (non-blocking)
     const init = async () => {
       try {
-        console.log('App initialization starting in background...');
-        
+        console.log("App initialization starting in background...");
+
         // Initialize Sentry for crash reporting (optional)
         try {
           sentryService.initialize();
         } catch (error) {
-          console.log('Sentry initialization skipped');
+          console.log("Sentry initialization skipped");
         }
 
         // Initialize Firebase (optional - app works without it)
@@ -46,14 +46,16 @@ export default function App() {
             await initializeAuth(firebaseServices.auth);
           }
         } catch (error) {
-          console.log('Firebase initialization skipped - app will use local storage');
+          console.log(
+            "Firebase initialization skipped - app will use local storage",
+          );
         }
 
         // Initialize Analytics (optional)
         try {
           analyticsService.initialize();
         } catch (error) {
-          console.log('Analytics initialization skipped');
+          console.log("Analytics initialization skipped");
         }
 
         // Initialize Notifications (optional)
@@ -61,14 +63,14 @@ export default function App() {
           await notificationService.initialize();
           notificationService.setupListeners(
             (notification) => {
-              console.log('Notification received:', notification);
+              console.log("Notification received:", notification);
             },
             (response) => {
-              console.log('Notification tapped:', response);
-            }
+              console.log("Notification tapped:", response);
+            },
           );
         } catch (error) {
-          console.log('Notifications initialization skipped');
+          console.log("Notifications initialization skipped");
         }
 
         // Check if special thanks has been shown
@@ -78,15 +80,15 @@ export default function App() {
             setShowSpecialThanks(true);
           }
         } catch (error) {
-          console.log('Special thanks check skipped');
+          console.log("Special thanks check skipped");
         }
-        
-        console.log('App initialization complete!');
+
+        console.log("App initialization complete!");
       } catch (error) {
-        console.error('Error during app initialization:', error);
+        console.error("Error during app initialization:", error);
       }
     };
-    
+
     init();
 
     return () => {
@@ -104,23 +106,26 @@ export default function App() {
   };
 
   return (
-  <ErrorBoundary>
-    <SafeAreaProvider>
-      <AuthProvider>
-        <SubscriptionProvider>
-          <GestureHandlerRootView style={styles.root}>
-            <KeyboardProvider>
-              <NavigationContainer>
-                <RootNavigator />
-              </NavigationContainer>
-              <StatusBar style="auto" />
-            </KeyboardProvider>
-          </GestureHandlerRootView>
-        </SubscriptionProvider>
-      </AuthProvider>
-    </SafeAreaProvider>
-    <SpecialThanksModal visible={showSpecialThanks} onClose={handleCloseThanks} />
-  </ErrorBoundary>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <SubscriptionProvider>
+            <GestureHandlerRootView style={styles.root}>
+              <KeyboardProvider>
+                <NavigationContainer>
+                  <RootNavigator />
+                </NavigationContainer>
+                <StatusBar style="auto" />
+              </KeyboardProvider>
+            </GestureHandlerRootView>
+          </SubscriptionProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
+      <SpecialThanksModal
+        visible={showSpecialThanks}
+        onClose={handleCloseThanks}
+      />
+    </ErrorBoundary>
   );
 }
 

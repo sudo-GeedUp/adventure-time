@@ -1,11 +1,11 @@
-import * as Speech from 'expo-speech';
-import { Trail } from './trails';
+import * as Speech from "expo-speech";
+import { Trail } from "./trails";
 
 function calculateDistance(
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number
+  lon2: number,
 ): number {
   const R = 6371e3;
   const φ1 = (lat1 * Math.PI) / 180;
@@ -25,7 +25,15 @@ export interface NavigationInstruction {
   id: string;
   text: string;
   distance: number; // meters to next instruction
-  action: 'start' | 'continue' | 'turn-left' | 'turn-right' | 'sharp-left' | 'sharp-right' | 'straight' | 'arrive';
+  action:
+    | "start"
+    | "continue"
+    | "turn-left"
+    | "turn-right"
+    | "sharp-left"
+    | "sharp-right"
+    | "straight"
+    | "arrive";
   location: {
     latitude: number;
     longitude: number;
@@ -46,7 +54,7 @@ class OfflineVoiceNavigationManager {
   private lastSpokenInstruction: number = -1;
   private voiceEnabled: boolean = true;
   private voiceSettings = {
-    language: 'en-US',
+    language: "en-US",
     pitch: 1.0,
     rate: 0.9,
   };
@@ -54,7 +62,7 @@ class OfflineVoiceNavigationManager {
   async startNavigation(trail: Trail): Promise<NavigationRoute> {
     // Generate turn-by-turn instructions from trail data
     const instructions = this.generateInstructions(trail);
-    
+
     this.currentRoute = {
       trail,
       instructions,
@@ -65,7 +73,7 @@ class OfflineVoiceNavigationManager {
 
     // Speak initial instruction
     await this.speakInstruction(instructions[0]);
-    
+
     return this.currentRoute;
   }
 
@@ -73,17 +81,20 @@ class OfflineVoiceNavigationManager {
     if (this.currentRoute) {
       this.currentRoute.isActive = false;
     }
-    
+
     await Speech.stop();
     this.currentRoute = null;
     this.lastSpokenInstruction = -1;
   }
 
-  async updatePosition(currentLocation: { latitude: number; longitude: number }): Promise<void> {
+  async updatePosition(currentLocation: {
+    latitude: number;
+    longitude: number;
+  }): Promise<void> {
     if (!this.currentRoute || !this.currentRoute.isActive) return;
 
     const { instructions, currentInstructionIndex } = this.currentRoute;
-    
+
     if (currentInstructionIndex >= instructions.length) {
       // Navigation complete
       await this.speakText("You have arrived at your destination");
@@ -99,34 +110,39 @@ class OfflineVoiceNavigationManager {
       currentLocation.latitude,
       currentLocation.longitude,
       currentInstruction.location.latitude,
-      currentInstruction.location.longitude
+      currentInstruction.location.longitude,
     );
 
     // Check if we've reached the instruction point (within 30 meters)
     if (distanceToNext < 30 && nextInstruction) {
       this.currentRoute.currentInstructionIndex++;
       await this.speakInstruction(nextInstruction);
-    } 
+    }
     // Provide distance updates at intervals
     else if (distanceToNext < 100 && !currentInstruction.spoken) {
       await this.speakDistanceUpdate(distanceToNext, currentInstruction);
       currentInstruction.spoken = true;
-    }
-    else if (distanceToNext < 500 && distanceToNext > 400 && this.lastSpokenInstruction !== currentInstructionIndex) {
-      await this.speakText(`In ${Math.round(distanceToNext)} meters, ${this.getActionText(currentInstruction.action)}`);
+    } else if (
+      distanceToNext < 500 &&
+      distanceToNext > 400 &&
+      this.lastSpokenInstruction !== currentInstructionIndex
+    ) {
+      await this.speakText(
+        `In ${Math.round(distanceToNext)} meters, ${this.getActionText(currentInstruction.action)}`,
+      );
       this.lastSpokenInstruction = currentInstructionIndex;
     }
   }
 
   private generateInstructions(trail: Trail): NavigationInstruction[] {
     const instructions: NavigationInstruction[] = [];
-    
+
     // Start instruction
     instructions.push({
       id: `inst_0`,
       text: `Starting navigation to ${trail.name}. Head out when ready.`,
       distance: 0,
-      action: 'start',
+      action: "start",
       location: trail.location,
       spoken: false,
     });
@@ -134,11 +150,11 @@ class OfflineVoiceNavigationManager {
     // Generate intermediate instructions based on trail features
     // In a real app, this would use actual trail waypoints and turn data
     const segments = Math.max(3, Math.floor(trail.distance)); // One instruction per mile minimum
-    
+
     for (let i = 1; i < segments; i++) {
       const progress = i / segments;
       const action = this.determineAction(i, segments);
-      
+
       instructions.push({
         id: `inst_${i}`,
         text: this.generateInstructionText(action, trail, progress),
@@ -158,7 +174,7 @@ class OfflineVoiceNavigationManager {
       id: `inst_${segments}`,
       text: `Arriving at ${trail.name}`,
       distance: 0,
-      action: 'arrive',
+      action: "arrive",
       location: trail.location,
       spoken: false,
     });
@@ -166,73 +182,98 @@ class OfflineVoiceNavigationManager {
     return instructions;
   }
 
-  private determineAction(index: number, total: number): NavigationInstruction['action'] {
+  private determineAction(
+    index: number,
+    total: number,
+  ): NavigationInstruction["action"] {
     // Simulate varied navigation actions
-    const actions: NavigationInstruction['action'][] = [
-      'continue', 'turn-left', 'turn-right', 'straight', 'sharp-left', 'sharp-right'
+    const actions: NavigationInstruction["action"][] = [
+      "continue",
+      "turn-left",
+      "turn-right",
+      "straight",
+      "sharp-left",
+      "sharp-right",
     ];
-    
-    if (index === 1) return 'continue';
-    if (index === total - 1) return 'straight';
-    
+
+    if (index === 1) return "continue";
+    if (index === total - 1) return "straight";
+
     // Random action for demo (in production, use actual trail geometry)
     return actions[Math.floor(Math.random() * actions.length)];
   }
 
   private generateInstructionText(
-    action: NavigationInstruction['action'],
+    action: NavigationInstruction["action"],
     trail: Trail,
-    progress: number
+    progress: number,
   ): string {
     const actionTexts = {
-      'start': `Head towards ${trail.name}`,
-      'continue': 'Continue on trail',
-      'turn-left': 'Turn left',
-      'turn-right': 'Turn right',
-      'sharp-left': 'Sharp left turn ahead',
-      'sharp-right': 'Sharp right turn ahead',
-      'straight': 'Continue straight',
-      'arrive': `Arriving at ${trail.name}`,
+      start: `Head towards ${trail.name}`,
+      continue: "Continue on trail",
+      "turn-left": "Turn left",
+      "turn-right": "Turn right",
+      "sharp-left": "Sharp left turn ahead",
+      "sharp-right": "Sharp right turn ahead",
+      straight: "Continue straight",
+      arrive: `Arriving at ${trail.name}`,
     };
 
     let text = actionTexts[action];
 
     // Add contextual information based on trail features
-    if (progress > 0.3 && progress < 0.4 && trail.features.includes('Water Crossing')) {
-      text += '. Water crossing ahead';
+    if (
+      progress > 0.3 &&
+      progress < 0.4 &&
+      trail.features.includes("Water Crossing")
+    ) {
+      text += ". Water crossing ahead";
     }
-    if (progress > 0.5 && progress < 0.6 && trail.features.includes('Steep Climbs')) {
-      text += '. Steep climb approaching';
+    if (
+      progress > 0.5 &&
+      progress < 0.6 &&
+      trail.features.includes("Steep Climbs")
+    ) {
+      text += ". Steep climb approaching";
     }
-    if (progress > 0.7 && progress < 0.8 && trail.features.includes('Technical Rocks')) {
-      text += '. Technical rock section ahead';
+    if (
+      progress > 0.7 &&
+      progress < 0.8 &&
+      trail.features.includes("Technical Rocks")
+    ) {
+      text += ". Technical rock section ahead";
     }
 
     return text;
   }
 
-  private getActionText(action: NavigationInstruction['action']): string {
+  private getActionText(action: NavigationInstruction["action"]): string {
     const actionTexts = {
-      'start': 'start your journey',
-      'continue': 'continue',
-      'turn-left': 'turn left',
-      'turn-right': 'turn right',
-      'sharp-left': 'make a sharp left',
-      'sharp-right': 'make a sharp right',
-      'straight': 'continue straight',
-      'arrive': 'arrive at destination',
+      start: "start your journey",
+      continue: "continue",
+      "turn-left": "turn left",
+      "turn-right": "turn right",
+      "sharp-left": "make a sharp left",
+      "sharp-right": "make a sharp right",
+      straight: "continue straight",
+      arrive: "arrive at destination",
     };
-    
+
     return actionTexts[action];
   }
 
-  private async speakInstruction(instruction: NavigationInstruction): Promise<void> {
+  private async speakInstruction(
+    instruction: NavigationInstruction,
+  ): Promise<void> {
     if (!this.voiceEnabled) return;
-    
+
     await this.speakText(instruction.text);
   }
 
-  private async speakDistanceUpdate(distance: number, instruction: NavigationInstruction): Promise<void> {
+  private async speakDistanceUpdate(
+    distance: number,
+    instruction: NavigationInstruction,
+  ): Promise<void> {
     if (!this.voiceEnabled) return;
 
     let distanceText: string;
@@ -254,10 +295,10 @@ class OfflineVoiceNavigationManager {
       if (isSpeaking) {
         await Speech.stop();
       }
-      
+
       await Speech.speak(text, this.voiceSettings);
     } catch (error) {
-      console.error('Error speaking text:', error);
+      console.error("Error speaking text:", error);
     }
   }
 
@@ -268,16 +309,18 @@ class OfflineVoiceNavigationManager {
     }
   }
 
-  async setVoiceSettings(settings: Partial<typeof this.voiceSettings>): Promise<void> {
+  async setVoiceSettings(
+    settings: Partial<typeof this.voiceSettings>,
+  ): Promise<void> {
     this.voiceSettings = { ...this.voiceSettings, ...settings };
   }
 
   async preloadVoice(): Promise<void> {
     // Preload voice engine
     try {
-      await Speech.speak('', { ...this.voiceSettings, volume: 0 });
+      await Speech.speak("", { ...this.voiceSettings, volume: 0 });
     } catch (error) {
-      console.error('Error preloading voice:', error);
+      console.error("Error preloading voice:", error);
     }
   }
 
@@ -286,29 +329,45 @@ class OfflineVoiceNavigationManager {
   }
 
   async repeatLastInstruction(): Promise<void> {
-    if (!this.currentRoute || this.currentRoute.currentInstructionIndex >= this.currentRoute.instructions.length) {
+    if (
+      !this.currentRoute ||
+      this.currentRoute.currentInstructionIndex >=
+        this.currentRoute.instructions.length
+    ) {
       return;
     }
 
-    const currentInstruction = this.currentRoute.instructions[this.currentRoute.currentInstructionIndex];
+    const currentInstruction =
+      this.currentRoute.instructions[this.currentRoute.currentInstructionIndex];
     await this.speakInstruction(currentInstruction);
   }
 
   async getNextInstruction(): Promise<NavigationInstruction | null> {
-    if (!this.currentRoute || this.currentRoute.currentInstructionIndex >= this.currentRoute.instructions.length - 1) {
+    if (
+      !this.currentRoute ||
+      this.currentRoute.currentInstructionIndex >=
+        this.currentRoute.instructions.length - 1
+    ) {
       return null;
     }
 
-    return this.currentRoute.instructions[this.currentRoute.currentInstructionIndex + 1];
+    return this.currentRoute.instructions[
+      this.currentRoute.currentInstructionIndex + 1
+    ];
   }
 
   async skipToNextInstruction(): Promise<void> {
-    if (!this.currentRoute || this.currentRoute.currentInstructionIndex >= this.currentRoute.instructions.length - 1) {
+    if (
+      !this.currentRoute ||
+      this.currentRoute.currentInstructionIndex >=
+        this.currentRoute.instructions.length - 1
+    ) {
       return;
     }
 
     this.currentRoute.currentInstructionIndex++;
-    const nextInstruction = this.currentRoute.instructions[this.currentRoute.currentInstructionIndex];
+    const nextInstruction =
+      this.currentRoute.instructions[this.currentRoute.currentInstructionIndex];
     await this.speakInstruction(nextInstruction);
   }
 }

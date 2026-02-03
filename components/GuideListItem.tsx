@@ -12,15 +12,19 @@ interface GuideListItemProps {
   isSaved?: boolean;
 }
 
-export default function GuideListItem({ guide, onPress, isSaved }: GuideListItemProps) {
+export default function GuideListItem({
+  guide,
+  onPress,
+  isSaved,
+}: GuideListItemProps) {
   const { theme } = useTheme();
 
   const difficultyColor =
     guide.difficulty === "Easy"
       ? theme.success
       : guide.difficulty === "Moderate"
-      ? theme.warning
-      : theme.error;
+        ? theme.warning
+        : theme.error;
 
   return (
     <Pressable
@@ -30,18 +34,24 @@ export default function GuideListItem({ guide, onPress, isSaved }: GuideListItem
     >
       <View style={styles.content}>
         <View style={styles.header}>
-          <ThemedText style={[styles.title, Typography.h4]}>{guide.title}</ThemedText>
+          <ThemedText style={[styles.title, Typography.h4]}>
+            {guide.title}
+          </ThemedText>
           {isSaved ? (
             <Feather name="bookmark" size={20} color={theme.primary} />
           ) : null}
         </View>
         <View style={styles.meta}>
-          <View style={[styles.badge, { backgroundColor: difficultyColor + "20" }]}>
+          <View
+            style={[styles.badge, { backgroundColor: difficultyColor + "20" }]}
+          >
             <ThemedText style={[styles.badgeText, { color: difficultyColor }]}>
               {guide.difficulty}
             </ThemedText>
           </View>
-          <ThemedText style={[styles.equipment, { color: theme.tabIconDefault }]}>
+          <ThemedText
+            style={[styles.equipment, { color: theme.tabIconDefault }]}
+          >
             {guide.equipment.length} items needed
           </ThemedText>
         </View>

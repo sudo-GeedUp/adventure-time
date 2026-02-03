@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -9,34 +9,40 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { Feather } from '@expo/vector-icons';
-import * as Location from 'expo-location';
-import ThemedText from '@/components/ThemedText';
-import { ScreenScrollView } from '@/components/ScreenScrollView';
-import { useTheme } from '@/hooks/useTheme';
-import { Spacing, BorderRadius, Typography } from '@/constants/theme';
-import { EmergencySOS, EmergencyContact } from '@/utils/emergencySOS';
-import { storage } from '@/utils/storage';
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Feather } from "@expo/vector-icons";
+import * as Location from "expo-location";
+import ThemedText from "@/components/ThemedText";
+import { ScreenScrollView } from "@/components/ScreenScrollView";
+import { useTheme } from "@/hooks/useTheme";
+import { Spacing, BorderRadius, Typography } from "@/constants/theme";
+import { EmergencySOS, EmergencyContact } from "@/utils/emergencySOS";
+import { storage } from "@/utils/storage";
 
 export default function EmergencySOSScreen() {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
-  const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([]);
+  const [emergencyContacts, setEmergencyContacts] = useState<
+    EmergencyContact[]
+  >([]);
   const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [showSOSModal, setShowSOSModal] = useState(false);
   const [showLocationShareModal, setShowLocationShareModal] = useState(false);
-  const [sosMessage, setSOSMessage] = useState('');
-  const [locationMessage, setLocationMessage] = useState('');
+  const [sosMessage, setSOSMessage] = useState("");
+  const [locationMessage, setLocationMessage] = useState("");
   const [currentLocation, setCurrentLocation] = useState<any>(null);
-  const [trailName, setTrailName] = useState('');
+  const [trailName, setTrailName] = useState("");
   const [isTrackingRoute, setIsTrackingRoute] = useState(false);
-  const [routeStats, setRouteStats] = useState({ distance: 0, duration: 0, points: 0 });
+  const [routeStats, setRouteStats] = useState({
+    distance: 0,
+    duration: 0,
+    points: 0,
+  });
   const [newContact, setNewContact] = useState({
-    name: '',
-    phone: '',
-    relationship: '',
+    name: "",
+    phone: "",
+    relationship: "",
   });
 
   useEffect(() => {
@@ -47,7 +53,7 @@ export default function EmergencySOSScreen() {
 
   useEffect(() => {
     let locationSubscription: any;
-    
+
     if (isTrackingRoute) {
       // Update location every 30 seconds while tracking
       const startTracking = async () => {
@@ -60,7 +66,7 @@ export default function EmergencySOSScreen() {
           async (location) => {
             await EmergencySOS.addRoutePoint(location);
             await updateRouteStats();
-          }
+          },
         );
       };
       startTracking();
@@ -81,12 +87,12 @@ export default function EmergencySOSScreen() {
   const getCurrentLocation = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted') {
+      if (status === "granted") {
         const location = await Location.getCurrentPositionAsync({});
         setCurrentLocation(location);
       }
     } catch (error) {
-      console.error('Error getting location:', error);
+      console.error("Error getting location:", error);
     }
   };
 
@@ -109,7 +115,7 @@ export default function EmergencySOSScreen() {
         route[i - 1].latitude,
         route[i - 1].longitude,
         route[i].latitude,
-        route[i].longitude
+        route[i].longitude,
       );
     }
 
@@ -120,71 +126,70 @@ export default function EmergencySOSScreen() {
   const handleStartTracking = async () => {
     await EmergencySOS.startRouteTracking();
     setIsTrackingRoute(true);
-    Alert.alert('Route Tracking Started', 'Your route is now being tracked');
+    Alert.alert("Route Tracking Started", "Your route is now being tracked");
   };
 
   const handleStopTracking = async () => {
     await EmergencySOS.stopRouteTracking();
     setIsTrackingRoute(false);
     setRouteStats({ distance: 0, duration: 0, points: 0 });
-    Alert.alert('Route Tracking Stopped', 'Route tracking has been stopped');
+    Alert.alert("Route Tracking Stopped", "Route tracking has been stopped");
   };
 
   const handleShareLocation = async () => {
     Alert.alert(
-      '📍 Share Location & Route?',
-      'This will send your current location and the route you took to your contacts.',
+      "📍 Share Location & Route?",
+      "This will send your current location and the route you took to your contacts.",
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Share',
+          text: "Share",
           onPress: async () => {
-            await EmergencySOS.shareLocationWithRoute(locationMessage, trailName);
+            await EmergencySOS.shareLocationWithRoute(
+              locationMessage,
+              trailName,
+            );
             setShowLocationShareModal(false);
-            setLocationMessage('');
+            setLocationMessage("");
           },
         },
-      ]
+      ],
     );
   };
 
   const handleSendSOS = async () => {
     Alert.alert(
-      '🆘 Send Emergency Alert?',
-      'This will send your location and emergency message to all your emergency contacts.',
+      "🆘 Send Emergency Alert?",
+      "This will send your location and emergency message to all your emergency contacts.",
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Send SOS',
-          style: 'destructive',
+          text: "Send SOS",
+          style: "destructive",
           onPress: async () => {
             await EmergencySOS.sendSOSAlert(sosMessage, trailName);
             setShowSOSModal(false);
-            setSOSMessage('');
+            setSOSMessage("");
           },
         },
-      ]
+      ],
     );
   };
 
   const handleCall911 = () => {
-    Alert.alert(
-      'Call Emergency Services',
-      'This will dial 911. Continue?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Call 911',
-          style: 'destructive',
-          onPress: () => EmergencySOS.call911(),
-        },
-      ]
-    );
+    Alert.alert("Call Emergency Services", "This will dial 911. Continue?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Call 911",
+        style: "destructive",
+        onPress: () => EmergencySOS.call911(),
+      },
+    ]);
   };
 
   const handleAddContact = async () => {
     if (!newContact.name || !newContact.phone) {
-      Alert.alert('Error', 'Please fill in all required fields');
+      Alert.alert("Error", "Please fill in all required fields");
       return;
     }
 
@@ -199,24 +204,24 @@ export default function EmergencySOSScreen() {
     await EmergencySOS.addEmergencyContact(contact);
     await loadEmergencyContacts();
     setShowAddContactModal(false);
-    setNewContact({ name: '', phone: '', relationship: '' });
+    setNewContact({ name: "", phone: "", relationship: "" });
   };
 
   const handleDeleteContact = async (contactId: string) => {
     Alert.alert(
-      'Delete Contact',
-      'Are you sure you want to remove this emergency contact?',
+      "Delete Contact",
+      "Are you sure you want to remove this emergency contact?",
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: "Cancel", style: "cancel" },
         {
-          text: 'Delete',
-          style: 'destructive',
+          text: "Delete",
+          style: "destructive",
           onPress: async () => {
             await EmergencySOS.removeEmergencyContact(contactId);
             await loadEmergencyContacts();
           },
         },
-      ]
+      ],
     );
   };
 
@@ -227,20 +232,25 @@ export default function EmergencySOSScreen() {
         <ThemedText style={[Typography.h3, styles.sectionTitle]}>
           Location Sharing
         </ThemedText>
-        
+
         {/* Route Tracking Card */}
-        <View style={[styles.trackingCard, { backgroundColor: theme.backgroundDefault }]}>
+        <View
+          style={[
+            styles.trackingCard,
+            { backgroundColor: theme.backgroundDefault },
+          ]}
+        >
           <View style={styles.trackingHeader}>
-            <Feather 
-              name={isTrackingRoute ? "navigation" : "map"} 
-              size={24} 
-              color={isTrackingRoute ? theme.success : theme.tabIconDefault} 
+            <Feather
+              name={isTrackingRoute ? "navigation" : "map"}
+              size={24}
+              color={isTrackingRoute ? theme.success : theme.tabIconDefault}
             />
             <ThemedText style={[Typography.h4, { marginLeft: Spacing.sm }]}>
-              {isTrackingRoute ? 'Tracking Route' : 'Route Tracking'}
+              {isTrackingRoute ? "Tracking Route" : "Route Tracking"}
             </ThemedText>
           </View>
-          
+
           {isTrackingRoute && (
             <View style={styles.routeStats}>
               <View style={styles.statItem}>
@@ -263,20 +273,23 @@ export default function EmergencySOSScreen() {
               </View>
             </View>
           )}
-          
+
           <Pressable
-            style={[styles.trackingButton, { 
-              backgroundColor: isTrackingRoute ? theme.error : theme.success 
-            }]}
+            style={[
+              styles.trackingButton,
+              {
+                backgroundColor: isTrackingRoute ? theme.error : theme.success,
+              },
+            ]}
             onPress={isTrackingRoute ? handleStopTracking : handleStartTracking}
           >
-            <Feather 
-              name={isTrackingRoute ? "stop-circle" : "play-circle"} 
-              size={20} 
-              color="white" 
+            <Feather
+              name={isTrackingRoute ? "stop-circle" : "play-circle"}
+              size={20}
+              color="white"
             />
             <ThemedText style={styles.trackingButtonText}>
-              {isTrackingRoute ? 'Stop Tracking' : 'Start Tracking'}
+              {isTrackingRoute ? "Stop Tracking" : "Start Tracking"}
             </ThemedText>
           </Pressable>
         </View>
@@ -291,18 +304,27 @@ export default function EmergencySOSScreen() {
             Share My Location
           </ThemedText>
           <ThemedText style={styles.shareButtonSubtext}>
-            Send location {isTrackingRoute ? 'and route' : ''} to contacts
+            Send location {isTrackingRoute ? "and route" : ""} to contacts
           </ThemedText>
         </Pressable>
 
         {/* Emergency Actions */}
-        <ThemedText style={[Typography.h4, styles.sectionTitle, { marginTop: Spacing.xl }]}>
+        <ThemedText
+          style={[
+            Typography.h4,
+            styles.sectionTitle,
+            { marginTop: Spacing.xl },
+          ]}
+        >
           Emergency
         </ThemedText>
-        
+
         <View style={styles.quickActions}>
           <Pressable
-            style={[styles.quickActionButton, { backgroundColor: theme.backgroundDefault }]}
+            style={[
+              styles.quickActionButton,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
             onPress={handleCall911}
           >
             <Feather name="phone" size={24} color={theme.error} />
@@ -310,7 +332,10 @@ export default function EmergencySOSScreen() {
           </Pressable>
 
           <Pressable
-            style={[styles.quickActionButton, { backgroundColor: theme.backgroundDefault }]}
+            style={[
+              styles.quickActionButton,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
             onPress={() => setShowSOSModal(true)}
           >
             <Feather name="alert-triangle" size={24} color={theme.error} />
@@ -321,7 +346,12 @@ export default function EmergencySOSScreen() {
 
       {/* Current Location */}
       {currentLocation && (
-        <View style={[styles.locationCard, { backgroundColor: theme.backgroundDefault }]}>
+        <View
+          style={[
+            styles.locationCard,
+            { backgroundColor: theme.backgroundDefault },
+          ]}
+        >
           <View style={styles.locationHeader}>
             <Feather name="navigation" size={20} color={theme.success} />
             <ThemedText style={[Typography.h4, { marginLeft: Spacing.sm }]}>
@@ -329,11 +359,13 @@ export default function EmergencySOSScreen() {
             </ThemedText>
           </View>
           <ThemedText style={styles.coordinates}>
-            {currentLocation.coords.latitude.toFixed(6)}, {currentLocation.coords.longitude.toFixed(6)}
+            {currentLocation.coords.latitude.toFixed(6)},{" "}
+            {currentLocation.coords.longitude.toFixed(6)}
           </ThemedText>
           {currentLocation.coords.altitude && (
             <ThemedText style={styles.altitude}>
-              Altitude: {Math.round(currentLocation.coords.altitude * 3.28084)} ft
+              Altitude: {Math.round(currentLocation.coords.altitude * 3.28084)}{" "}
+              ft
             </ThemedText>
           )}
         </View>
@@ -354,12 +386,21 @@ export default function EmergencySOSScreen() {
         </View>
 
         {emergencyContacts.length === 0 ? (
-          <View style={[styles.emptyState, { backgroundColor: theme.backgroundDefault }]}>
+          <View
+            style={[
+              styles.emptyState,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
             <Feather name="users" size={48} color={theme.tabIconDefault} />
-            <ThemedText style={[styles.emptyText, { color: theme.tabIconDefault }]}>
+            <ThemedText
+              style={[styles.emptyText, { color: theme.tabIconDefault }]}
+            >
               No emergency contacts added
             </ThemedText>
-            <ThemedText style={[styles.emptySubtext, { color: theme.tabIconDefault }]}>
+            <ThemedText
+              style={[styles.emptySubtext, { color: theme.tabIconDefault }]}
+            >
               Add contacts to receive SOS alerts
             </ThemedText>
           </View>
@@ -367,13 +408,18 @@ export default function EmergencySOSScreen() {
           emergencyContacts.map((contact) => (
             <View
               key={contact.id}
-              style={[styles.contactCard, { backgroundColor: theme.backgroundDefault }]}
+              style={[
+                styles.contactCard,
+                { backgroundColor: theme.backgroundDefault },
+              ]}
             >
               <View style={styles.contactInfo}>
                 <ThemedText style={[Typography.h4, styles.contactName]}>
                   {contact.name}
                 </ThemedText>
-                <ThemedText style={styles.contactPhone}>{contact.phone}</ThemedText>
+                <ThemedText style={styles.contactPhone}>
+                  {contact.phone}
+                </ThemedText>
                 {contact.relationship && (
                   <ThemedText style={styles.contactRelation}>
                     {contact.relationship}
@@ -399,10 +445,15 @@ export default function EmergencySOSScreen() {
         onRequestClose={() => setShowAddContactModal(false)}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalContainer}
         >
-          <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
             <View style={styles.modalHeader}>
               <ThemedText style={[Typography.h3, styles.modalTitle]}>
                 Add Emergency Contact
@@ -413,35 +464,52 @@ export default function EmergencySOSScreen() {
             </View>
 
             <TextInput
-              style={[styles.input, { backgroundColor: theme.backgroundRoot, color: theme.text }]}
+              style={[
+                styles.input,
+                { backgroundColor: theme.backgroundRoot, color: theme.text },
+              ]}
               placeholder="Name"
               placeholderTextColor={theme.tabIconDefault}
               value={newContact.name}
-              onChangeText={(text) => setNewContact({ ...newContact, name: text })}
+              onChangeText={(text) =>
+                setNewContact({ ...newContact, name: text })
+              }
             />
 
             <TextInput
-              style={[styles.input, { backgroundColor: theme.backgroundRoot, color: theme.text }]}
+              style={[
+                styles.input,
+                { backgroundColor: theme.backgroundRoot, color: theme.text },
+              ]}
               placeholder="Phone Number"
               placeholderTextColor={theme.tabIconDefault}
               value={newContact.phone}
-              onChangeText={(text) => setNewContact({ ...newContact, phone: text })}
+              onChangeText={(text) =>
+                setNewContact({ ...newContact, phone: text })
+              }
               keyboardType="phone-pad"
             />
 
             <TextInput
-              style={[styles.input, { backgroundColor: theme.backgroundRoot, color: theme.text }]}
+              style={[
+                styles.input,
+                { backgroundColor: theme.backgroundRoot, color: theme.text },
+              ]}
               placeholder="Relationship (optional)"
               placeholderTextColor={theme.tabIconDefault}
               value={newContact.relationship}
-              onChangeText={(text) => setNewContact({ ...newContact, relationship: text })}
+              onChangeText={(text) =>
+                setNewContact({ ...newContact, relationship: text })
+              }
             />
 
             <Pressable
               style={[styles.modalButton, { backgroundColor: theme.primary }]}
               onPress={handleAddContact}
             >
-              <ThemedText style={styles.modalButtonText}>Add Contact</ThemedText>
+              <ThemedText style={styles.modalButtonText}>
+                Add Contact
+              </ThemedText>
             </Pressable>
           </View>
         </KeyboardAvoidingView>
@@ -455,10 +523,15 @@ export default function EmergencySOSScreen() {
         onRequestClose={() => setShowLocationShareModal(false)}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalContainer}
         >
-          <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
             <View style={styles.modalHeader}>
               <ThemedText style={[Typography.h3, styles.modalTitle]}>
                 📍 Share Location
@@ -469,11 +542,15 @@ export default function EmergencySOSScreen() {
             </View>
 
             <ThemedText style={styles.modalDescription}>
-              Share your current location{isTrackingRoute ? ' and route' : ''} with your contacts
+              Share your current location{isTrackingRoute ? " and route" : ""}{" "}
+              with your contacts
             </ThemedText>
 
             <TextInput
-              style={[styles.input, { backgroundColor: theme.backgroundRoot, color: theme.text }]}
+              style={[
+                styles.input,
+                { backgroundColor: theme.backgroundRoot, color: theme.text },
+              ]}
               placeholder="Trail name (optional)"
               placeholderTextColor={theme.tabIconDefault}
               value={trailName}
@@ -498,7 +575,9 @@ export default function EmergencySOSScreen() {
               onPress={handleShareLocation}
             >
               <Feather name="send" size={20} color="white" />
-              <ThemedText style={styles.modalButtonText}>Share Location</ThemedText>
+              <ThemedText style={styles.modalButtonText}>
+                Share Location
+              </ThemedText>
             </Pressable>
           </View>
         </KeyboardAvoidingView>
@@ -512,12 +591,23 @@ export default function EmergencySOSScreen() {
         onRequestClose={() => setShowSOSModal(false)}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalContainer}
         >
-          <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
             <View style={styles.modalHeader}>
-              <ThemedText style={[Typography.h3, styles.modalTitle, { color: theme.error }]}>
+              <ThemedText
+                style={[
+                  Typography.h3,
+                  styles.modalTitle,
+                  { color: theme.error },
+                ]}
+              >
                 🆘 Emergency SOS
               </ThemedText>
               <Pressable onPress={() => setShowSOSModal(false)}>
@@ -525,12 +615,18 @@ export default function EmergencySOSScreen() {
               </Pressable>
             </View>
 
-            <ThemedText style={[styles.modalDescription, { color: theme.error }]}>
-              ⚠️ Use only for true emergencies. This sends an urgent alert to all contacts.
+            <ThemedText
+              style={[styles.modalDescription, { color: theme.error }]}
+            >
+              ⚠️ Use only for true emergencies. This sends an urgent alert to
+              all contacts.
             </ThemedText>
 
             <TextInput
-              style={[styles.input, { backgroundColor: theme.backgroundRoot, color: theme.text }]}
+              style={[
+                styles.input,
+                { backgroundColor: theme.backgroundRoot, color: theme.text },
+              ]}
               placeholder="Trail name (optional)"
               placeholderTextColor={theme.tabIconDefault}
               value={trailName}
@@ -555,7 +651,9 @@ export default function EmergencySOSScreen() {
               onPress={handleSendSOS}
             >
               <Feather name="alert-triangle" size={20} color="white" />
-              <ThemedText style={styles.modalButtonText}>Send Emergency SOS</ThemedText>
+              <ThemedText style={styles.modalButtonText}>
+                Send Emergency SOS
+              </ThemedText>
             </Pressable>
           </View>
         </KeyboardAvoidingView>
@@ -574,32 +672,32 @@ const styles = StyleSheet.create({
   sosButton: {
     padding: Spacing["2xl"],
     borderRadius: BorderRadius.lg,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: Spacing.lg,
   },
   sosButtonText: {
-    color: 'white',
+    color: "white",
     marginTop: Spacing.md,
   },
   sosButtonSubtext: {
-    color: 'rgba(255,255,255,0.8)',
+    color: "rgba(255,255,255,0.8)",
     fontSize: 14,
     marginTop: Spacing.xs,
   },
   quickActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: Spacing.md,
   },
   quickActionButton: {
     flex: 1,
     padding: Spacing.lg,
     borderRadius: BorderRadius.md,
-    alignItems: 'center',
+    alignItems: "center",
   },
   quickActionText: {
     marginTop: Spacing.sm,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   locationCard: {
     padding: Spacing.lg,
@@ -607,13 +705,13 @@ const styles = StyleSheet.create({
     marginBottom: Spacing["2xl"],
   },
   locationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: Spacing.md,
   },
   coordinates: {
     fontSize: 16,
-    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace' }),
+    fontFamily: Platform.select({ ios: "Menlo", android: "monospace" }),
     marginBottom: Spacing.xs,
   },
   altitude: {
@@ -624,34 +722,34 @@ const styles = StyleSheet.create({
     marginBottom: Spacing["3xl"],
   },
   contactsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: Spacing.lg,
   },
   addButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   emptyState: {
     padding: Spacing["3xl"],
     borderRadius: BorderRadius.md,
-    alignItems: 'center',
+    alignItems: "center",
   },
   emptyText: {
     marginTop: Spacing.lg,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   emptySubtext: {
     marginTop: Spacing.xs,
     fontSize: 14,
   },
   contactCard: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: Spacing.lg,
     borderRadius: BorderRadius.md,
     marginBottom: Spacing.md,
@@ -676,19 +774,19 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
     padding: Spacing.xl,
   },
   modalContent: {
     borderRadius: BorderRadius.lg,
     padding: Spacing.xl,
-    maxHeight: '80%',
+    maxHeight: "80%",
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: Spacing.xl,
   },
   modalTitle: {
@@ -711,20 +809,20 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
     fontSize: 16,
     minHeight: 100,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   modalButton: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: Spacing.lg,
     borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     gap: Spacing.sm,
   },
   modalButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   trackingCard: {
     padding: Spacing.lg,
@@ -732,18 +830,18 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   trackingHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: Spacing.md,
   },
   routeStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     marginBottom: Spacing.md,
     paddingVertical: Spacing.md,
   },
   statItem: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   statLabel: {
     fontSize: 12,
@@ -752,33 +850,33 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   trackingButton: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     gap: Spacing.sm,
   },
   trackingButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   shareButton: {
     padding: Spacing.xl,
     borderRadius: BorderRadius.lg,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: Spacing.lg,
   },
   shareButtonText: {
-    color: 'white',
+    color: "white",
     marginTop: Spacing.md,
   },
   shareButtonSubtext: {
-    color: 'rgba(255,255,255,0.8)',
+    color: "rgba(255,255,255,0.8)",
     fontSize: 14,
     marginTop: Spacing.xs,
   },

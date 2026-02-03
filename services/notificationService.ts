@@ -1,6 +1,6 @@
-import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
-import { storage } from '@/utils/storage';
+import * as Notifications from "expo-notifications";
+import { Platform } from "react-native";
+import { storage } from "@/utils/storage";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -13,7 +13,14 @@ Notifications.setNotificationHandler({
 });
 
 export interface NotificationData {
-  type: 'friend_request' | 'trail_alert' | 'adventure_invite' | 'sos_alert' | 'message' | 'achievement' | 'trail_update';
+  type:
+    | "friend_request"
+    | "trail_alert"
+    | "adventure_invite"
+    | "sos_alert"
+    | "message"
+    | "achievement"
+    | "trail_update";
   title: string;
   body: string;
   data?: any;
@@ -26,45 +33,53 @@ class NotificationService {
 
   async initialize() {
     try {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
 
-      if (existingStatus !== 'granted') {
+      if (existingStatus !== "granted") {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
 
-      if (finalStatus !== 'granted') {
-        console.log('Push notification permission not granted');
+      if (finalStatus !== "granted") {
+        console.log("Push notification permission not granted");
         return null;
       }
 
       // Skip push token for now - requires Expo project configuration
-      console.log('Push notifications initialized (token generation skipped - requires Expo project setup)');
+      console.log(
+        "Push notifications initialized (token generation skipped - requires Expo project setup)",
+      );
       return null;
     } catch (error) {
-      console.log('Notifications not available on this platform');
+      console.log("Notifications not available on this platform");
       return null;
     }
   }
 
   setupListeners(
     onNotificationReceived?: (notification: Notifications.Notification) => void,
-    onNotificationResponse?: (response: Notifications.NotificationResponse) => void
+    onNotificationResponse?: (
+      response: Notifications.NotificationResponse,
+    ) => void,
   ) {
-    this.notificationListener = Notifications.addNotificationReceivedListener(notification => {
-      console.log('Notification received:', notification);
-      if (onNotificationReceived) {
-        onNotificationReceived(notification);
-      }
-    });
+    this.notificationListener = Notifications.addNotificationReceivedListener(
+      (notification) => {
+        console.log("Notification received:", notification);
+        if (onNotificationReceived) {
+          onNotificationReceived(notification);
+        }
+      },
+    );
 
-    this.responseListener = Notifications.addNotificationResponseReceivedListener(response => {
-      console.log('Notification response:', response);
-      if (onNotificationResponse) {
-        onNotificationResponse(response);
-      }
-    });
+    this.responseListener =
+      Notifications.addNotificationResponseReceivedListener((response) => {
+        console.log("Notification response:", response);
+        if (onNotificationResponse) {
+          onNotificationResponse(response);
+        }
+      });
   }
 
   removeListeners() {
@@ -76,7 +91,10 @@ class NotificationService {
     }
   }
 
-  async scheduleLocalNotification(notification: NotificationData, seconds: number = 0) {
+  async scheduleLocalNotification(
+    notification: NotificationData,
+    seconds: number = 0,
+  ) {
     try {
       const trigger = seconds > 0 ? { seconds, repeats: false } : null;
       const id = await Notifications.scheduleNotificationAsync({
@@ -90,23 +108,27 @@ class NotificationService {
       });
       return id;
     } catch (error) {
-      console.error('Error scheduling notification:', error);
+      console.error("Error scheduling notification:", error);
       return null;
     }
   }
 
   async sendFriendRequestNotification(friendName: string, friendId: string) {
     return this.scheduleLocalNotification({
-      type: 'friend_request',
-      title: 'New Friend Request',
+      type: "friend_request",
+      title: "New Friend Request",
       body: `${friendName} wants to connect with you!`,
       data: { friendId },
     });
   }
 
-  async sendTrailAlertNotification(trailName: string, alertType: string, severity: string) {
+  async sendTrailAlertNotification(
+    trailName: string,
+    alertType: string,
+    severity: string,
+  ) {
     return this.scheduleLocalNotification({
-      type: 'trail_alert',
+      type: "trail_alert",
       title: `Trail Alert: ${trailName}`,
       body: `${alertType} - ${severity}`,
       data: { trailName, alertType, severity },
@@ -115,8 +137,8 @@ class NotificationService {
 
   async sendAdventureInviteNotification(friendName: string, trailName: string) {
     return this.scheduleLocalNotification({
-      type: 'adventure_invite',
-      title: 'Adventure Invitation',
+      type: "adventure_invite",
+      title: "Adventure Invitation",
       body: `${friendName} invited you to explore ${trailName}`,
       data: { friendName, trailName },
     });
@@ -124,8 +146,8 @@ class NotificationService {
 
   async sendSOSAlertNotification(friendName: string, location: string) {
     return this.scheduleLocalNotification({
-      type: 'sos_alert',
-      title: '🚨 Emergency SOS Alert',
+      type: "sos_alert",
+      title: "🚨 Emergency SOS Alert",
       body: `${friendName} needs help at ${location}`,
       data: { friendName, location },
     });
@@ -133,17 +155,20 @@ class NotificationService {
 
   async sendMessageNotification(senderName: string, messagePreview: string) {
     return this.scheduleLocalNotification({
-      type: 'message',
+      type: "message",
       title: `Message from ${senderName}`,
       body: messagePreview,
       data: { senderName },
     });
   }
 
-  async sendAchievementNotification(achievementName: string, description: string) {
+  async sendAchievementNotification(
+    achievementName: string,
+    description: string,
+  ) {
     return this.scheduleLocalNotification({
-      type: 'achievement',
-      title: '🏆 Achievement Unlocked!',
+      type: "achievement",
+      title: "🏆 Achievement Unlocked!",
       body: `${achievementName}: ${description}`,
       data: { achievementName },
     });
@@ -151,7 +176,7 @@ class NotificationService {
 
   async sendTrailUpdateNotification(trailName: string, updateType: string) {
     return this.scheduleLocalNotification({
-      type: 'trail_update',
+      type: "trail_update",
       title: `Trail Update: ${trailName}`,
       body: updateType,
       data: { trailName, updateType },

@@ -26,12 +26,18 @@ export default function WelcomeScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.backgroundDefault }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.backgroundDefault }]}
+    >
       <ThemedView style={styles.content}>
         <View style={styles.header}>
           <Feather name="compass" size={64} color={theme.primary} />
-          <ThemedText style={[Typography.h1, styles.title]}>Adventure Time</ThemedText>
-          <ThemedText style={[styles.subtitle, { color: theme.tabIconDefault }]}>
+          <ThemedText style={[Typography.h1, styles.title]}>
+            Adventure Time
+          </ThemedText>
+          <ThemedText
+            style={[styles.subtitle, { color: theme.tabIconDefault }]}
+          >
             Offroad Recovery Assistance
           </ThemedText>
         </View>
@@ -68,10 +74,16 @@ export default function WelcomeScreen() {
           onPress={handleGetStarted}
           android_ripple={{ color: theme.secondary }}
         >
-          <ThemedText style={[styles.buttonText, { color: theme.backgroundDefault }]}>
+          <ThemedText
+            style={[styles.buttonText, { color: theme.backgroundDefault }]}
+          >
             Get Started
           </ThemedText>
-          <Feather name="arrow-right" size={20} color={theme.backgroundDefault} />
+          <Feather
+            name="arrow-right"
+            size={20}
+            color={theme.backgroundDefault}
+          />
         </Pressable>
       </ThemedView>
     </SafeAreaView>
@@ -88,12 +100,18 @@ interface FeatureItemProps {
 function FeatureItem({ icon, title, description, theme }: FeatureItemProps) {
   return (
     <View style={styles.featureItem}>
-      <View style={[styles.featureIcon, { backgroundColor: theme.primary + "20" }]}>
+      <View
+        style={[styles.featureIcon, { backgroundColor: theme.primary + "20" }]}
+      >
         <Feather name={icon} size={24} color={theme.primary} />
       </View>
       <View style={styles.featureContent}>
-        <ThemedText style={[Typography.label, { fontWeight: "600" }]}>{title}</ThemedText>
-        <ThemedText style={[styles.featureDescription, { color: theme.tabIconDefault }]}>
+        <ThemedText style={[Typography.label, { fontWeight: "600" }]}>
+          {title}
+        </ThemedText>
+        <ThemedText
+          style={[styles.featureDescription, { color: theme.tabIconDefault }]}
+        >
           {description}
         </ThemedText>
       </View>

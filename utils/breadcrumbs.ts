@@ -8,7 +8,7 @@ export interface Breadcrumb {
   timestamp: number;
   altitude?: number;
   note?: string;
-  type: 'auto' | 'manual' | 'waypoint';
+  type: "auto" | "manual" | "waypoint";
   icon?: string;
 }
 
@@ -21,7 +21,7 @@ export interface BreadcrumbTrail {
   isActive: boolean;
 }
 
-const STORAGE_KEY = '@adventure-time/breadcrumb_trails';
+const STORAGE_KEY = "@adventure-time/breadcrumb_trails";
 const AUTO_DROP_INTERVAL = 30000; // Drop breadcrumb every 30 seconds
 const MIN_DISTANCE_METERS = 50; // Only drop if moved 50+ meters
 
@@ -43,7 +43,7 @@ class BreadcrumbManager {
     this.activeTrail = trail;
     this.startAutoDropping();
     await this.saveTrail(trail);
-    
+
     return trail;
   }
 
@@ -52,7 +52,7 @@ class BreadcrumbManager {
       this.activeTrail.isActive = false;
       await this.saveTrail(this.activeTrail);
     }
-    
+
     this.stopAutoDropping();
     this.activeTrail = null;
     this.lastPosition = null;
@@ -85,7 +85,7 @@ class BreadcrumbManager {
           this.lastPosition.latitude,
           this.lastPosition.longitude,
           latitude,
-          longitude
+          longitude,
         );
 
         if (distance < MIN_DISTANCE_METERS) {
@@ -97,12 +97,12 @@ class BreadcrumbManager {
         latitude,
         longitude,
         altitude: altitude || undefined,
-        type: 'auto',
+        type: "auto",
       });
 
       this.lastPosition = { latitude, longitude };
     } catch (error) {
-      console.error('Error dropping auto breadcrumb:', error);
+      console.error("Error dropping auto breadcrumb:", error);
     }
   }
 
@@ -111,11 +111,11 @@ class BreadcrumbManager {
     longitude: number;
     altitude?: number;
     note?: string;
-    type?: 'auto' | 'manual' | 'waypoint';
+    type?: "auto" | "manual" | "waypoint";
     icon?: string;
   }): Promise<Breadcrumb | null> {
     if (!this.activeTrail) {
-      console.warn('No active trail to drop breadcrumb on');
+      console.warn("No active trail to drop breadcrumb on");
       return null;
     }
 
@@ -126,15 +126,15 @@ class BreadcrumbManager {
       timestamp: Date.now(),
       altitude: params.altitude,
       note: params.note,
-      type: params.type || 'manual',
+      type: params.type || "manual",
       icon: params.icon,
     };
 
     this.activeTrail.breadcrumbs.push(breadcrumb);
     this.activeTrail.lastUpdate = Date.now();
-    
+
     await this.saveTrail(this.activeTrail);
-    
+
     return breadcrumb;
   }
 
@@ -147,45 +147,47 @@ class BreadcrumbManager {
       const data = await AsyncStorage.getItem(STORAGE_KEY);
       return data ? JSON.parse(data) : [];
     } catch (error) {
-      console.error('Error loading breadcrumb trails:', error);
+      console.error("Error loading breadcrumb trails:", error);
       return [];
     }
   }
 
   async getTrailById(trailId: string): Promise<BreadcrumbTrail | null> {
     const trails = await this.getAllTrails();
-    return trails.find(t => t.id === trailId) || null;
+    return trails.find((t) => t.id === trailId) || null;
   }
 
-  async getTrailByAdventureId(adventureId: string): Promise<BreadcrumbTrail | null> {
+  async getTrailByAdventureId(
+    adventureId: string,
+  ): Promise<BreadcrumbTrail | null> {
     const trails = await this.getAllTrails();
-    return trails.find(t => t.adventureId === adventureId) || null;
+    return trails.find((t) => t.adventureId === adventureId) || null;
   }
 
   private async saveTrail(trail: BreadcrumbTrail): Promise<void> {
     try {
       const trails = await this.getAllTrails();
-      const index = trails.findIndex(t => t.id === trail.id);
-      
+      const index = trails.findIndex((t) => t.id === trail.id);
+
       if (index >= 0) {
         trails[index] = trail;
       } else {
         trails.push(trail);
       }
-      
+
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(trails));
     } catch (error) {
-      console.error('Error saving breadcrumb trail:', error);
+      console.error("Error saving breadcrumb trail:", error);
     }
   }
 
   async deleteTrail(trailId: string): Promise<void> {
     try {
       const trails = await this.getAllTrails();
-      const filtered = trails.filter(t => t.id !== trailId);
+      const filtered = trails.filter((t) => t.id !== trailId);
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
     } catch (error) {
-      console.error('Error deleting breadcrumb trail:', error);
+      console.error("Error deleting breadcrumb trail:", error);
     }
   }
 
@@ -193,7 +195,7 @@ class BreadcrumbManager {
     if (!this.activeTrail) {
       return [];
     }
-    
+
     // Return breadcrumbs in reverse order for backtracking
     return [...this.activeTrail.breadcrumbs].reverse();
   }
@@ -209,15 +211,15 @@ class BreadcrumbManager {
       });
 
       const startBreadcrumb = this.activeTrail.breadcrumbs[0];
-      
+
       return this.calculateDistance(
         location.coords.latitude,
         location.coords.longitude,
         startBreadcrumb.latitude,
-        startBreadcrumb.longitude
+        startBreadcrumb.longitude,
       );
     } catch (error) {
-      console.error('Error calculating distance to start:', error);
+      console.error("Error calculating distance to start:", error);
       return null;
     }
   }
@@ -226,7 +228,7 @@ class BreadcrumbManager {
     lat1: number,
     lon1: number,
     lat2: number,
-    lon2: number
+    lon2: number,
   ): number {
     const R = 6371e3; // Earth's radius in meters
     const φ1 = (lat1 * Math.PI) / 180;
@@ -245,7 +247,7 @@ class BreadcrumbManager {
   async exportToGPX(trailId: string): Promise<string> {
     const trail = await this.getTrailById(trailId);
     if (!trail) {
-      throw new Error('Trail not found');
+      throw new Error("Trail not found");
     }
 
     const gpxHeader = `<?xml version="1.0" encoding="UTF-8"?>
@@ -262,12 +264,12 @@ class BreadcrumbManager {
       .map(
         (b) => `
       <trkpt lat="${b.latitude}" lon="${b.longitude}">
-        ${b.altitude ? `<ele>${b.altitude}</ele>` : ''}
+        ${b.altitude ? `<ele>${b.altitude}</ele>` : ""}
         <time>${new Date(b.timestamp).toISOString()}</time>
-        ${b.note ? `<name>${b.note}</name>` : ''}
-      </trkpt>`
+        ${b.note ? `<name>${b.note}</name>` : ""}
+      </trkpt>`,
       )
-      .join('');
+      .join("");
 
     const gpxFooter = `
     </trkseg>

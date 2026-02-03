@@ -1,5 +1,10 @@
-import { getAnalytics, logEvent as firebaseLogEvent, setUserId, setUserProperties } from 'firebase/analytics';
-import { getApp } from 'firebase/app';
+import {
+  getAnalytics,
+  logEvent as firebaseLogEvent,
+  setUserId,
+  setUserProperties,
+} from "firebase/analytics";
+import { getApp } from "firebase/app";
 
 class AnalyticsService {
   private analytics: any = null;
@@ -7,200 +12,200 @@ class AnalyticsService {
 
   initialize() {
     try {
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         try {
           const app = getApp();
           this.analytics = getAnalytics(app);
           this.isInitialized = true;
-          console.log('Analytics initialized successfully');
+          console.log("Analytics initialized successfully");
         } catch (appError) {
-          console.log('Analytics skipped - Firebase not configured');
+          console.log("Analytics skipped - Firebase not configured");
         }
       }
     } catch (error) {
-      console.log('Analytics not available on this platform');
+      console.log("Analytics not available on this platform");
     }
   }
 
   logScreenView(screenName: string, screenClass?: string) {
     if (!this.isInitialized) return;
     try {
-      firebaseLogEvent(this.analytics, 'screen_view' as any, {
+      firebaseLogEvent(this.analytics, "screen_view" as any, {
         screen_name: screenName,
         screen_class: screenClass || screenName,
       });
     } catch (error) {
-      console.error('Error logging screen view:', error);
+      console.error("Error logging screen view:", error);
     }
   }
 
   logTrailView(trailId: string, trailName: string, difficulty: string) {
     if (!this.isInitialized) return;
     try {
-      firebaseLogEvent(this.analytics, 'view_item' as any, {
+      firebaseLogEvent(this.analytics, "view_item" as any, {
         item_id: trailId,
         item_name: trailName,
-        item_category: 'trail',
+        item_category: "trail",
         difficulty,
       });
     } catch (error) {
-      console.error('Error logging trail view:', error);
+      console.error("Error logging trail view:", error);
     }
   }
 
   logAdventureStart(trailId: string, trailName: string, difficulty: string) {
     if (!this.isInitialized) return;
     try {
-      firebaseLogEvent(this.analytics, 'adventure_start', {
+      firebaseLogEvent(this.analytics, "adventure_start", {
         trail_id: trailId,
         trail_name: trailName,
         difficulty,
         timestamp: Date.now(),
       });
     } catch (error) {
-      console.error('Error logging adventure start:', error);
+      console.error("Error logging adventure start:", error);
     }
   }
 
   logAdventureComplete(trailId: string, duration: number, distance: number) {
     if (!this.isInitialized) return;
     try {
-      firebaseLogEvent(this.analytics, 'adventure_complete', {
+      firebaseLogEvent(this.analytics, "adventure_complete", {
         trail_id: trailId,
         duration_minutes: Math.round(duration / 60000),
         distance_miles: distance,
         timestamp: Date.now(),
       });
     } catch (error) {
-      console.error('Error logging adventure complete:', error);
+      console.error("Error logging adventure complete:", error);
     }
   }
 
   logAIGuideQuery(queryType: string, queryLength: number) {
     if (!this.isInitialized) return;
     try {
-      firebaseLogEvent(this.analytics, 'ai_guide_query', {
+      firebaseLogEvent(this.analytics, "ai_guide_query", {
         query_type: queryType,
         query_length: queryLength,
         timestamp: Date.now(),
       });
     } catch (error) {
-      console.error('Error logging AI guide query:', error);
+      console.error("Error logging AI guide query:", error);
     }
   }
 
   logAIScanUsage(scanType: string, isPremium: boolean) {
     if (!this.isInitialized) return;
     try {
-      firebaseLogEvent(this.analytics, 'ai_scan_usage', {
+      firebaseLogEvent(this.analytics, "ai_scan_usage", {
         scan_type: scanType,
         is_premium: isPremium,
         timestamp: Date.now(),
       });
     } catch (error) {
-      console.error('Error logging AI scan usage:', error);
+      console.error("Error logging AI scan usage:", error);
     }
   }
 
   logSubscriptionView() {
     if (!this.isInitialized) return;
     try {
-      firebaseLogEvent(this.analytics, 'subscription_view', {
+      firebaseLogEvent(this.analytics, "subscription_view", {
         timestamp: Date.now(),
       });
     } catch (error) {
-      console.error('Error logging subscription view:', error);
+      console.error("Error logging subscription view:", error);
     }
   }
 
   logSubscriptionPurchase(productId: string, price: number) {
     if (!this.isInitialized) return;
     try {
-      firebaseLogEvent(this.analytics, 'purchase', {
+      firebaseLogEvent(this.analytics, "purchase", {
         transaction_id: Date.now().toString(),
         value: price,
-        currency: 'USD',
-        items: [{ item_id: productId, item_name: 'Premium Subscription' }],
+        currency: "USD",
+        items: [{ item_id: productId, item_name: "Premium Subscription" }],
       });
     } catch (error) {
-      console.error('Error logging subscription purchase:', error);
+      console.error("Error logging subscription purchase:", error);
     }
   }
 
   logSOSActivation(location: { latitude: number; longitude: number }) {
     if (!this.isInitialized) return;
     try {
-      firebaseLogEvent(this.analytics, 'sos_activation', {
+      firebaseLogEvent(this.analytics, "sos_activation", {
         latitude: location.latitude,
         longitude: location.longitude,
         timestamp: Date.now(),
       });
     } catch (error) {
-      console.error('Error logging SOS activation:', error);
+      console.error("Error logging SOS activation:", error);
     }
   }
 
-  logFriendRequest(action: 'sent' | 'accepted' | 'declined') {
+  logFriendRequest(action: "sent" | "accepted" | "declined") {
     if (!this.isInitialized) return;
     try {
-      firebaseLogEvent(this.analytics, 'friend_request', {
+      firebaseLogEvent(this.analytics, "friend_request", {
         action,
         timestamp: Date.now(),
       });
     } catch (error) {
-      console.error('Error logging friend request:', error);
+      console.error("Error logging friend request:", error);
     }
   }
 
   logTrailEvent(eventType: string, severity: string, trailId: string) {
     if (!this.isInitialized) return;
     try {
-      firebaseLogEvent(this.analytics, 'trail_event', {
+      firebaseLogEvent(this.analytics, "trail_event", {
         event_type: eventType,
         severity,
         trail_id: trailId,
         timestamp: Date.now(),
       });
     } catch (error) {
-      console.error('Error logging trail event:', error);
+      console.error("Error logging trail event:", error);
     }
   }
 
   logSearch(searchTerm: string, resultCount: number) {
     if (!this.isInitialized) return;
     try {
-      firebaseLogEvent(this.analytics, 'search', {
+      firebaseLogEvent(this.analytics, "search", {
         search_term: searchTerm,
         result_count: resultCount,
       });
     } catch (error) {
-      console.error('Error logging search:', error);
+      console.error("Error logging search:", error);
     }
   }
 
   logShare(contentType: string, itemId: string) {
     if (!this.isInitialized) return;
     try {
-      firebaseLogEvent(this.analytics, 'share', {
+      firebaseLogEvent(this.analytics, "share", {
         content_type: contentType,
         item_id: itemId,
       });
     } catch (error) {
-      console.error('Error logging share:', error);
+      console.error("Error logging share:", error);
     }
   }
 
   logError(errorType: string, errorMessage: string, screen?: string) {
     if (!this.isInitialized) return;
     try {
-      firebaseLogEvent(this.analytics, 'app_error', {
+      firebaseLogEvent(this.analytics, "app_error", {
         error_type: errorType,
         error_message: errorMessage,
-        screen: screen || 'unknown',
+        screen: screen || "unknown",
         timestamp: Date.now(),
       });
     } catch (error) {
-      console.error('Error logging error:', error);
+      console.error("Error logging error:", error);
     }
   }
 
@@ -212,7 +217,7 @@ class AnalyticsService {
         setUserProperties(this.analytics, properties);
       }
     } catch (error) {
-      console.error('Error setting user:', error);
+      console.error("Error setting user:", error);
     }
   }
 
@@ -221,7 +226,7 @@ class AnalyticsService {
     try {
       setUserProperties(this.analytics, { [property]: value });
     } catch (error) {
-      console.error('Error setting user property:', error);
+      console.error("Error setting user property:", error);
     }
   }
 
@@ -230,7 +235,7 @@ class AnalyticsService {
     try {
       firebaseLogEvent(this.analytics, eventName as any, params);
     } catch (error) {
-      console.error('Error logging custom event:', error);
+      console.error("Error logging custom event:", error);
     }
   }
 }

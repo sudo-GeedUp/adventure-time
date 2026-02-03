@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -10,31 +10,37 @@ import {
   Platform,
   ScrollView,
   FlatList,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { Feather } from '@expo/vector-icons';
-import ThemedText from '@/components/ThemedText';
-import { ScreenScrollView } from '@/components/ScreenScrollView';
-import { useTheme } from '@/hooks/useTheme';
-import { Spacing, BorderRadius, Typography } from '@/constants/theme';
-import { MaintenanceTracker, MaintenanceItem, MaintenanceSchedule } from '@/utils/vehicleMaintenance';
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Feather } from "@expo/vector-icons";
+import ThemedText from "@/components/ThemedText";
+import { ScreenScrollView } from "@/components/ScreenScrollView";
+import { useTheme } from "@/hooks/useTheme";
+import { Spacing, BorderRadius, Typography } from "@/constants/theme";
+import {
+  MaintenanceTracker,
+  MaintenanceItem,
+  MaintenanceSchedule,
+} from "@/utils/vehicleMaintenance";
 
 export default function VehicleMaintenanceScreen() {
   const navigation = useNavigation();
   const { theme } = useTheme();
   const [maintenanceLog, setMaintenanceLog] = useState<MaintenanceItem[]>([]);
   const [schedule, setSchedule] = useState<MaintenanceSchedule[]>([]);
-  const [dueMaintenance, setDueMaintenance] = useState<MaintenanceSchedule[]>([]);
+  const [dueMaintenance, setDueMaintenance] = useState<MaintenanceSchedule[]>(
+    [],
+  );
   const [showAddModal, setShowAddModal] = useState(false);
   const [costAnalysis, setCostAnalysis] = useState<any>(null);
   const [newMaintenance, setNewMaintenance] = useState({
-    type: 'Oil Change',
-    customType: '',
-    mileage: '',
-    trailMiles: '',
-    cost: '',
-    notes: '',
-    shop: '',
+    type: "Oil Change",
+    customType: "",
+    mileage: "",
+    trailMiles: "",
+    cost: "",
+    notes: "",
+    shop: "",
   });
 
   useEffect(() => {
@@ -59,14 +65,14 @@ export default function VehicleMaintenanceScreen() {
   const setupScheduleIfNeeded = async () => {
     const sched = await MaintenanceTracker.getMaintenanceSchedule();
     if (sched.length === 0) {
-      await MaintenanceTracker.setupMaintenanceSchedule('Default');
+      await MaintenanceTracker.setupMaintenanceSchedule("Default");
       loadMaintenanceData();
     }
   };
 
   const handleAddMaintenance = async () => {
     if (!newMaintenance.cost || !newMaintenance.mileage) {
-      Alert.alert('Missing Information', 'Please fill in cost and mileage');
+      Alert.alert("Missing Information", "Please fill in cost and mileage");
       return;
     }
 
@@ -83,13 +89,13 @@ export default function VehicleMaintenanceScreen() {
 
     setShowAddModal(false);
     setNewMaintenance({
-      type: 'Oil Change',
-      customType: '',
-      mileage: '',
-      trailMiles: '',
-      cost: '',
-      notes: '',
-      shop: '',
+      type: "Oil Change",
+      customType: "",
+      mileage: "",
+      trailMiles: "",
+      cost: "",
+      notes: "",
+      shop: "",
     });
     loadMaintenanceData();
   };
@@ -99,30 +105,40 @@ export default function VehicleMaintenanceScreen() {
   };
 
   const renderMaintenanceItem = ({ item }: { item: MaintenanceItem }) => (
-    <View style={[styles.logItem, { backgroundColor: theme.backgroundDefault }]}>
+    <View
+      style={[styles.logItem, { backgroundColor: theme.backgroundDefault }]}
+    >
       <View style={styles.logHeader}>
         <View style={styles.logTypeContainer}>
           <Feather name="tool" size={20} color={theme.primary} />
           <ThemedText style={[Typography.h4, styles.logType]}>
-            {item.type === 'Custom' ? item.customType : item.type}
+            {item.type === "Custom" ? item.customType : item.type}
           </ThemedText>
         </View>
-        <ThemedText style={styles.logDate}>{formatDate(item.performedAt)}</ThemedText>
+        <ThemedText style={styles.logDate}>
+          {formatDate(item.performedAt)}
+        </ThemedText>
       </View>
       <View style={styles.logDetails}>
         <View style={styles.logDetailRow}>
           <ThemedText style={styles.logLabel}>Mileage:</ThemedText>
-          <ThemedText style={styles.logValue}>{item.mileage.toLocaleString()} mi</ThemedText>
+          <ThemedText style={styles.logValue}>
+            {item.mileage.toLocaleString()} mi
+          </ThemedText>
         </View>
         {item.trailMiles > 0 && (
           <View style={styles.logDetailRow}>
             <ThemedText style={styles.logLabel}>Trail Miles:</ThemedText>
-            <ThemedText style={styles.logValue}>{item.trailMiles} mi</ThemedText>
+            <ThemedText style={styles.logValue}>
+              {item.trailMiles} mi
+            </ThemedText>
           </View>
         )}
         <View style={styles.logDetailRow}>
           <ThemedText style={styles.logLabel}>Cost:</ThemedText>
-          <ThemedText style={[styles.logValue, { color: theme.success }]}>${item.cost.toFixed(2)}</ThemedText>
+          <ThemedText style={[styles.logValue, { color: theme.success }]}>
+            ${item.cost.toFixed(2)}
+          </ThemedText>
         </View>
         {item.shop && (
           <View style={styles.logDetailRow}>
@@ -138,15 +154,17 @@ export default function VehicleMaintenanceScreen() {
   );
 
   const renderScheduleItem = ({ item }: { item: MaintenanceSchedule }) => {
-    const isDue = dueMaintenance.some(d => d.id === item.id);
+    const isDue = dueMaintenance.some((d) => d.id === item.id);
     return (
-      <View style={[
-        styles.scheduleItem,
-        { 
-          backgroundColor: theme.backgroundDefault,
-          borderLeftColor: isDue ? theme.error : theme.primary,
-        }
-      ]}>
+      <View
+        style={[
+          styles.scheduleItem,
+          {
+            backgroundColor: theme.backgroundDefault,
+            borderLeftColor: isDue ? theme.error : theme.primary,
+          },
+        ]}
+      >
         <View style={styles.scheduleHeader}>
           <ThemedText style={[Typography.h4, styles.scheduleType]}>
             {item.type}
@@ -159,7 +177,8 @@ export default function VehicleMaintenanceScreen() {
         </View>
         <View style={styles.scheduleDetails}>
           <ThemedText style={styles.scheduleInterval}>
-            Every {item.intervalMiles.toLocaleString()} miles or {item.intervalMonths} months
+            Every {item.intervalMiles.toLocaleString()} miles or{" "}
+            {item.intervalMonths} months
           </ThemedText>
           {item.lastPerformed && (
             <ThemedText style={styles.lastPerformed}>
@@ -167,7 +186,8 @@ export default function VehicleMaintenanceScreen() {
             </ThemedText>
           )}
           <ThemedText style={styles.nextDue}>
-            Next: {item.nextDueMiles.toLocaleString()} mi or {formatDate(item.nextDueDate)}
+            Next: {item.nextDueMiles.toLocaleString()} mi or{" "}
+            {formatDate(item.nextDueDate)}
           </ThemedText>
         </View>
       </View>
@@ -179,8 +199,12 @@ export default function VehicleMaintenanceScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Cost Analysis Card */}
         {costAnalysis && (
-          <View style={[styles.costCard, { backgroundColor: theme.primary + '15' }]}>
-            <ThemedText style={[Typography.h4, styles.costTitle]}>Cost Analysis</ThemedText>
+          <View
+            style={[styles.costCard, { backgroundColor: theme.primary + "15" }]}
+          >
+            <ThemedText style={[Typography.h4, styles.costTitle]}>
+              Cost Analysis
+            </ThemedText>
             <View style={styles.costRow}>
               <ThemedText style={styles.costLabel}>Total Spent:</ThemedText>
               <ThemedText style={[styles.costValue, { color: theme.primary }]}>
@@ -189,7 +213,9 @@ export default function VehicleMaintenanceScreen() {
             </View>
             <View style={styles.costRow}>
               <ThemedText style={styles.costLabel}>Adventures:</ThemedText>
-              <ThemedText style={styles.costValue}>{costAnalysis.adventureCount}</ThemedText>
+              <ThemedText style={styles.costValue}>
+                {costAnalysis.adventureCount}
+              </ThemedText>
             </View>
             <View style={styles.costRow}>
               <ThemedText style={styles.costLabel}>Per Adventure:</ThemedText>
@@ -220,12 +246,15 @@ export default function VehicleMaintenanceScreen() {
         )}
 
         {/* Maintenance Schedule */}
-        {schedule.filter(s => !dueMaintenance.some(d => d.id === s.id)).length > 0 && (
+        {schedule.filter((s) => !dueMaintenance.some((d) => d.id === s.id))
+          .length > 0 && (
           <View style={styles.section}>
             <ThemedText style={[Typography.h4, styles.sectionHeader]}>
               Maintenance Schedule
             </ThemedText>
-            {schedule.filter(s => !dueMaintenance.some(d => d.id === s.id)).map((item) => renderScheduleItem({ item }))}
+            {schedule
+              .filter((s) => !dueMaintenance.some((d) => d.id === s.id))
+              .map((item) => renderScheduleItem({ item }))}
           </View>
         )}
 
@@ -235,7 +264,9 @@ export default function VehicleMaintenanceScreen() {
             <ThemedText style={[Typography.h4, styles.sectionHeader]}>
               Maintenance History
             </ThemedText>
-            {maintenanceLog.slice(0, 10).map((item) => renderMaintenanceItem({ item }))}
+            {maintenanceLog
+              .slice(0, 10)
+              .map((item) => renderMaintenanceItem({ item }))}
           </View>
         )}
       </ScrollView>
@@ -248,7 +279,12 @@ export default function VehicleMaintenanceScreen() {
         onRequestClose={() => setShowAddModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: theme.backgroundDefault }]}>
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
             <View style={styles.modalHeader}>
               <ThemedText style={[Typography.h3, styles.modalTitle]}>
                 Log Maintenance
@@ -261,22 +297,36 @@ export default function VehicleMaintenanceScreen() {
             <ScrollView>
               <ThemedText style={styles.inputLabel}>Type</ThemedText>
               <View style={styles.typeButtons}>
-                {['Oil Change', 'Tire Rotation', 'Air Filter', 'Brake Service', 'Custom'].map((type) => (
+                {[
+                  "Oil Change",
+                  "Tire Rotation",
+                  "Air Filter",
+                  "Brake Service",
+                  "Custom",
+                ].map((type) => (
                   <Pressable
                     key={type}
                     style={[
                       styles.typeButton,
                       {
-                        backgroundColor: newMaintenance.type === type ? theme.primary : theme.backgroundRoot,
+                        backgroundColor:
+                          newMaintenance.type === type
+                            ? theme.primary
+                            : theme.backgroundRoot,
                         borderColor: theme.border,
-                      }
+                      },
                     ]}
-                    onPress={() => setNewMaintenance({ ...newMaintenance, type })}
+                    onPress={() =>
+                      setNewMaintenance({ ...newMaintenance, type })
+                    }
                   >
                     <ThemedText
                       style={[
                         styles.typeButtonText,
-                        { color: newMaintenance.type === type ? 'white' : theme.text }
+                        {
+                          color:
+                            newMaintenance.type === type ? "white" : theme.text,
+                        },
                       ]}
                     >
                       {type}
@@ -285,73 +335,119 @@ export default function VehicleMaintenanceScreen() {
                 ))}
               </View>
 
-              {newMaintenance.type === 'Custom' && (
+              {newMaintenance.type === "Custom" && (
                 <>
                   <ThemedText style={styles.inputLabel}>Custom Type</ThemedText>
                   <TextInput
-                    style={[styles.input, { backgroundColor: theme.backgroundRoot, color: theme.text }]}
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: theme.backgroundRoot,
+                        color: theme.text,
+                      },
+                    ]}
                     placeholder="Enter maintenance type"
                     placeholderTextColor={theme.tabIconDefault}
                     value={newMaintenance.customType}
-                    onChangeText={(text) => setNewMaintenance({ ...newMaintenance, customType: text })}
+                    onChangeText={(text) =>
+                      setNewMaintenance({ ...newMaintenance, customType: text })
+                    }
                   />
                 </>
               )}
 
               <ThemedText style={styles.inputLabel}>Current Mileage</ThemedText>
               <TextInput
-                style={[styles.input, { backgroundColor: theme.backgroundRoot, color: theme.text }]}
+                style={[
+                  styles.input,
+                  { backgroundColor: theme.backgroundRoot, color: theme.text },
+                ]}
                 placeholder="Enter current mileage"
                 placeholderTextColor={theme.tabIconDefault}
                 value={newMaintenance.mileage}
-                onChangeText={(text) => setNewMaintenance({ ...newMaintenance, mileage: text })}
+                onChangeText={(text) =>
+                  setNewMaintenance({ ...newMaintenance, mileage: text })
+                }
                 keyboardType="numeric"
               />
 
-              <ThemedText style={styles.inputLabel}>Trail Miles Since Last Service</ThemedText>
+              <ThemedText style={styles.inputLabel}>
+                Trail Miles Since Last Service
+              </ThemedText>
               <TextInput
-                style={[styles.input, { backgroundColor: theme.backgroundRoot, color: theme.text }]}
+                style={[
+                  styles.input,
+                  { backgroundColor: theme.backgroundRoot, color: theme.text },
+                ]}
                 placeholder="Enter trail miles (optional)"
                 placeholderTextColor={theme.tabIconDefault}
                 value={newMaintenance.trailMiles}
-                onChangeText={(text) => setNewMaintenance({ ...newMaintenance, trailMiles: text })}
+                onChangeText={(text) =>
+                  setNewMaintenance({ ...newMaintenance, trailMiles: text })
+                }
                 keyboardType="numeric"
               />
 
               <ThemedText style={styles.inputLabel}>Cost</ThemedText>
               <TextInput
-                style={[styles.input, { backgroundColor: theme.backgroundRoot, color: theme.text }]}
+                style={[
+                  styles.input,
+                  { backgroundColor: theme.backgroundRoot, color: theme.text },
+                ]}
                 placeholder="Enter cost"
                 placeholderTextColor={theme.tabIconDefault}
                 value={newMaintenance.cost}
-                onChangeText={(text) => setNewMaintenance({ ...newMaintenance, cost: text })}
+                onChangeText={(text) =>
+                  setNewMaintenance({ ...newMaintenance, cost: text })
+                }
                 keyboardType="decimal-pad"
               />
 
               <ThemedText style={styles.inputLabel}>Shop (Optional)</ThemedText>
               <TextInput
-                style={[styles.input, { backgroundColor: theme.backgroundRoot, color: theme.text }]}
+                style={[
+                  styles.input,
+                  { backgroundColor: theme.backgroundRoot, color: theme.text },
+                ]}
                 placeholder="Enter shop name"
                 placeholderTextColor={theme.tabIconDefault}
                 value={newMaintenance.shop}
-                onChangeText={(text) => setNewMaintenance({ ...newMaintenance, shop: text })}
+                onChangeText={(text) =>
+                  setNewMaintenance({ ...newMaintenance, shop: text })
+                }
               />
 
-              <ThemedText style={styles.inputLabel}>Notes (Optional)</ThemedText>
+              <ThemedText style={styles.inputLabel}>
+                Notes (Optional)
+              </ThemedText>
               <TextInput
-                style={[styles.input, { backgroundColor: theme.backgroundRoot, color: theme.text, minHeight: 80 }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: theme.backgroundRoot,
+                    color: theme.text,
+                    minHeight: 80,
+                  },
+                ]}
                 placeholder="Enter notes"
                 placeholderTextColor={theme.tabIconDefault}
                 value={newMaintenance.notes}
-                onChangeText={(text) => setNewMaintenance({ ...newMaintenance, notes: text })}
+                onChangeText={(text) =>
+                  setNewMaintenance({ ...newMaintenance, notes: text })
+                }
                 multiline
               />
 
               <Pressable
-                style={[styles.submitButton, { backgroundColor: theme.primary }]}
+                style={[
+                  styles.submitButton,
+                  { backgroundColor: theme.primary },
+                ]}
                 onPress={handleAddMaintenance}
               >
-                <ThemedText style={styles.submitButtonText}>Add Maintenance</ThemedText>
+                <ThemedText style={styles.submitButtonText}>
+                  Add Maintenance
+                </ThemedText>
               </Pressable>
             </ScrollView>
           </View>
@@ -366,7 +462,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: Spacing['3xl'],
+    paddingBottom: Spacing["3xl"],
   },
   section: {
     paddingHorizontal: Spacing.lg,
@@ -380,8 +476,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   costRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: Spacing.xs,
   },
   costLabel: {
@@ -390,25 +486,25 @@ const styles = StyleSheet.create({
   },
   costValue: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     margin: Spacing.lg,
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
     gap: Spacing.sm,
   },
   addButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   listContent: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing['3xl'],
+    paddingBottom: Spacing["3xl"],
   },
   sectionHeader: {
     marginTop: Spacing.xl,
@@ -420,13 +516,13 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   logHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: Spacing.sm,
   },
   logTypeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.sm,
   },
   logType: {
@@ -440,8 +536,8 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.lg + 20,
   },
   logDetailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: Spacing.xs,
   },
   logLabel: {
@@ -450,7 +546,7 @@ const styles = StyleSheet.create({
   },
   logValue: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   logNotes: {
     fontSize: 12,
@@ -464,9 +560,9 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
   },
   scheduleHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: Spacing.sm,
   },
   scheduleType: {},
@@ -476,9 +572,9 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
   },
   dueBadgeText: {
-    color: 'white',
+    color: "white",
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   scheduleDetails: {},
   scheduleInterval: {
@@ -492,29 +588,29 @@ const styles = StyleSheet.create({
   },
   nextDue: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
   },
   modalContent: {
     borderTopLeftRadius: BorderRadius.lg,
     borderTopRightRadius: BorderRadius.lg,
     padding: Spacing.xl,
-    maxHeight: '80%',
+    maxHeight: "80%",
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: Spacing.xl,
   },
   modalTitle: {},
   inputLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: Spacing.sm,
     marginTop: Spacing.md,
   },
@@ -524,8 +620,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   typeButtons: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: Spacing.sm,
   },
   typeButton: {
@@ -536,18 +632,18 @@ const styles = StyleSheet.create({
   },
   typeButtonText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   submitButton: {
     padding: Spacing.lg,
     borderRadius: BorderRadius.md,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: Spacing.xl,
     marginBottom: Spacing.xl,
   },
   submitButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

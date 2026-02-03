@@ -32,31 +32,40 @@ export default function RootNavigator() {
   useEffect(() => {
     const checkFirstLaunch = async () => {
       const hasLaunched = await storage.getFirstLaunchDone();
-      console.log('RootNavigator: First launch check:', !hasLaunched);
+      console.log("RootNavigator: First launch check:", !hasLaunched);
       setIsFirstLaunch(!hasLaunched);
     };
     checkFirstLaunch();
   }, []);
 
-  console.log('RootNavigator: Rendering with state:', {
+  console.log("RootNavigator: Rendering with state:", {
     isFirstLaunch,
     authLoading,
-    isAuthenticated
+    isAuthenticated,
   });
 
   if (authLoading) {
-    console.log('RootNavigator: Showing loading indicator');
+    console.log("RootNavigator: Showing loading indicator");
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: theme.backgroundDefault }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: theme.backgroundDefault,
+        }}
+      >
         <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
 
-  console.log('RootNavigator: Rendering navigator - going directly to MainTabs');
+  console.log(
+    "RootNavigator: Rendering navigator - going directly to MainTabs",
+  );
 
   return (
-    <Stack.Navigator 
+    <Stack.Navigator
       initialRouteName="MainTabs"
       screenOptions={{ headerShown: false }}
     >
@@ -73,7 +82,7 @@ export default function RootNavigator() {
         name="Paywall"
         component={PaywallScreen}
         options={{
-          presentation: 'modal',
+          presentation: "modal",
           headerShown: false,
         }}
       />

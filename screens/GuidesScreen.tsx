@@ -14,7 +14,10 @@ import { RootStackParamList } from "@/navigation/RootNavigator";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage } from "@/utils/storage";
 
-type GuidesScreenNavigationProp = NativeStackNavigationProp<GuidesStackParamList, "Guides">;
+type GuidesScreenNavigationProp = NativeStackNavigationProp<
+  GuidesStackParamList,
+  "Guides"
+>;
 
 export default function GuidesScreen() {
   const navigation = useNavigation<any>();
@@ -46,13 +49,18 @@ export default function GuidesScreen() {
 
   const searchedGuides = searchQuery
     ? filteredGuides.filter((guide) =>
-        guide.title.toLowerCase().includes(searchQuery.toLowerCase())
+        guide.title.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : filteredGuides;
 
   return (
     <ScreenScrollView>
-      <View style={[styles.searchContainer, { backgroundColor: theme.backgroundDefault }]}>
+      <View
+        style={[
+          styles.searchContainer,
+          { backgroundColor: theme.backgroundDefault },
+        ]}
+      >
         <Feather name="search" size={20} color={theme.tabIconDefault} />
         <TextInput
           style={[styles.searchInput, { color: theme.text }]}
@@ -64,15 +72,25 @@ export default function GuidesScreen() {
       </View>
 
       <Pressable
-        style={[styles.communityTipsCard, { backgroundColor: theme.primary + "15" }]}
+        style={[
+          styles.communityTipsCard,
+          { backgroundColor: theme.primary + "15" },
+        ]}
         onPress={() => navigation.navigate("CommunityTips")}
       >
         <View style={styles.communityTipsContent}>
-          <View style={[styles.communityTipsIcon, { backgroundColor: theme.primary }]}>
+          <View
+            style={[
+              styles.communityTipsIcon,
+              { backgroundColor: theme.primary },
+            ]}
+          >
             <Feather name="users" size={24} color="white" />
           </View>
           <View style={styles.communityTipsText}>
-            <ThemedText style={styles.communityTipsTitle}>Community Tips</ThemedText>
+            <ThemedText style={styles.communityTipsTitle}>
+              Community Tips
+            </ThemedText>
             <ThemedText style={styles.communityTipsSubtitle}>
               Share recovery tips and trail conditions
             </ThemedText>

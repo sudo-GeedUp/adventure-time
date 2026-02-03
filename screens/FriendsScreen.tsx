@@ -13,7 +13,10 @@ import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { storage, StatusUpdate } from "@/utils/storage";
 import { Spacing, Typography, BorderRadius } from "@/constants/theme";
-import { subscribeToFriends, saveFriendToFirebase } from "@/utils/firebaseHelpers";
+import {
+  subscribeToFriends,
+  saveFriendToFirebase,
+} from "@/utils/firebaseHelpers";
 
 let MapView: any = null;
 let Marker: any = null;
@@ -86,10 +89,14 @@ export default function FriendsScreen() {
         const user = getCurrentUser();
         if (user) {
           const { subscribeToFriends } = require("@/utils/firebaseHelpers");
-          const unsubscribeFn = subscribeToFriends(db, user.uid, (friendsData: Friend[]) => {
-            setFriends(friendsData);
-            setUseFirebase(true);
-          });
+          const unsubscribeFn = subscribeToFriends(
+            db,
+            user.uid,
+            (friendsData: Friend[]) => {
+              setFriends(friendsData);
+              setUseFirebase(true);
+            },
+          );
           setUnsubscribe(() => unsubscribeFn);
           return;
         }
@@ -112,7 +119,7 @@ export default function FriendsScreen() {
       Alert.alert(
         "Firebase Not Configured",
         "Add your Firebase credentials to .env to enable real-time friends. For now, using local storage.",
-        [{ text: "OK" }]
+        [{ text: "OK" }],
       );
     }
     const sampleFriends: Friend[] = [
@@ -219,7 +226,12 @@ export default function FriendsScreen() {
   const StatusUpdateCard = ({ update }: { update: StatusUpdate }) => {
     const { icon, color } = getStatusIcon(update.status);
     return (
-      <View style={[styles.updateCard, { backgroundColor: theme.backgroundDefault }]}>
+      <View
+        style={[
+          styles.updateCard,
+          { backgroundColor: theme.backgroundDefault },
+        ]}
+      >
         <View style={[styles.updateIcon, { backgroundColor: color + "20" }]}>
           <Feather name={icon as any} size={20} color={color} />
         </View>
@@ -240,8 +252,8 @@ export default function FriendsScreen() {
             {update.status === "mobile"
               ? "is mobile again"
               : update.status === "recovering"
-              ? "is recovering"
-              : "is stuck"}
+                ? "is recovering"
+                : "is stuck"}
             {update.location ? ` • ${update.location}` : ""}
           </ThemedText>
         </View>
@@ -253,7 +265,9 @@ export default function FriendsScreen() {
   };
 
   const FriendCard = ({ friend }: { friend: Friend }) => (
-    <View style={[styles.friendCard, { backgroundColor: theme.backgroundDefault }]}>
+    <View
+      style={[styles.friendCard, { backgroundColor: theme.backgroundDefault }]}
+    >
       <View style={styles.friendHeader}>
         <View style={styles.friendInfo}>
           <ThemedText style={[Typography.h4, { marginBottom: Spacing.xs }]}>
@@ -294,7 +308,10 @@ export default function FriendsScreen() {
                   {adventure.title}
                 </ThemedText>
                 <ThemedText
-                  style={[Typography.small, { color: theme.text, opacity: 0.7 }]}
+                  style={[
+                    Typography.small,
+                    { color: theme.text, opacity: 0.7 },
+                  ]}
                 >
                   {adventure.location}
                 </ThemedText>
@@ -362,9 +379,7 @@ export default function FriendsScreen() {
   }
 
   return (
-    <ScreenScrollView
-      contentContainerStyle={{ paddingBottom: Spacing.xl }}
-    >
+    <ScreenScrollView contentContainerStyle={{ paddingBottom: Spacing.xl }}>
       <View style={styles.header}>
         <View>
           <ThemedText style={[Typography.h3, { marginBottom: Spacing.xs }]}>
@@ -377,10 +392,7 @@ export default function FriendsScreen() {
         {mapsAvailable && (
           <Pressable
             onPress={() => setMapView(true)}
-            style={[
-              styles.mapButton,
-              { backgroundColor: theme.primary },
-            ]}
+            style={[styles.mapButton, { backgroundColor: theme.primary }]}
           >
             <Feather name="map" size={18} color="#fff" />
           </Pressable>

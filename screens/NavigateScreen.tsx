@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, FlatList, Alert, TextInput, ScrollView, Linking, Platform } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  FlatList,
+  Alert,
+  TextInput,
+  ScrollView,
+  Linking,
+  Platform,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
@@ -34,14 +44,17 @@ export default function NavigateScreen() {
   const [location, setLocation] = useState<any>(null);
   const [trails, setTrails] = useState<Trail[]>([]);
   const [filteredTrails, setFilteredTrails] = useState<Trail[]>([]);
-  const [difficultyFilter, setDifficultyFilter] = useState<DifficultyFilter>("All");
+  const [difficultyFilter, setDifficultyFilter] =
+    useState<DifficultyFilter>("All");
   const [landTypeFilter, setLandTypeFilter] = useState<LandTypeFilter>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [downloadingTrails, setDownloadingTrails] = useState<Set<string>>(new Set());
+  const [downloadingTrails, setDownloadingTrails] = useState<Set<string>>(
+    new Set(),
+  );
   const [cachedTrails, setCachedTrails] = useState<Set<string>>(new Set());
   const [communityTrails, setCommunityTrails] = useState<Trail[]>([]);
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
+  const [viewMode, setViewMode] = useState<"map" | "list">("list");
   const [showRandomPicker, setShowRandomPicker] = useState(false);
 
   useEffect(() => {
@@ -64,7 +77,10 @@ export default function NavigateScreen() {
           description: `Community trail by ${adv.userName || "Unknown"}`,
           difficulty: adv.difficulty || "Moderate",
           distance: adv.totalDistance || 0,
-          duration: adv.endTime && adv.startTime ? Math.round((adv.endTime - adv.startTime) / 1000 / 60) : 0,
+          duration:
+            adv.endTime && adv.startTime
+              ? Math.round((adv.endTime - adv.startTime) / 1000 / 60)
+              : 0,
           safetyRating: 7,
           landType: "public" as const,
           features: [],
@@ -134,12 +150,16 @@ export default function NavigateScreen() {
   const handleRandomAdventure = () => {
     const allTrails = [...trails, ...communityTrails];
     if (allTrails.length === 0) {
-      Alert.alert('No Adventures Available', 'Please wait while we load nearby trails.');
+      Alert.alert(
+        "No Adventures Available",
+        "Please wait while we load nearby trails.",
+      );
       return;
     }
 
     const result = pickSmartRandomAdventure(allTrails, {
-      difficulty: difficultyFilter !== 'All' ? difficultyFilter as any : undefined,
+      difficulty:
+        difficultyFilter !== "All" ? (difficultyFilter as any) : undefined,
     });
 
     if (result) {
@@ -147,13 +167,14 @@ export default function NavigateScreen() {
         `${result.emoji} ${result.reason}`,
         `We've picked "${result.trail.name}" for you!\n\nDifficulty: ${result.trail.difficulty}\nDistance: ${result.trail.distance.toFixed(1)} miles\n\nReady to start this adventure?`,
         [
-          { text: 'Pick Another', onPress: handleRandomAdventure },
-          { text: 'Cancel', style: 'cancel' },
+          { text: "Pick Another", onPress: handleRandomAdventure },
+          { text: "Cancel", style: "cancel" },
           {
-            text: 'Start Adventure',
-            onPress: () => navigation.navigate('ActiveAdventure', { trail: result.trail }),
+            text: "Start Adventure",
+            onPress: () =>
+              navigation.navigate("ActiveAdventure", { trail: result.trail }),
           },
-        ]
+        ],
       );
     }
   };
@@ -161,14 +182,14 @@ export default function NavigateScreen() {
   const openGPSNavigation = (trail: Trail) => {
     const { latitude, longitude } = trail.location;
     const label = encodeURIComponent(trail.name);
-    
-    let url = '';
-    if (Platform.OS === 'ios') {
+
+    let url = "";
+    if (Platform.OS === "ios") {
       url = `maps://app?daddr=${latitude},${longitude}&q=${label}`;
     } else {
       url = `google.navigation:q=${latitude},${longitude}`;
     }
-    
+
     Linking.canOpenURL(url)
       .then((supported) => {
         if (supported) {
@@ -179,8 +200,8 @@ export default function NavigateScreen() {
         }
       })
       .catch((err) => {
-        Alert.alert('Error', 'Unable to open GPS navigation');
-        console.error('Navigation error:', err);
+        Alert.alert("Error", "Unable to open GPS navigation");
+        console.error("Navigation error:", err);
       });
   };
 
@@ -195,17 +216,24 @@ export default function NavigateScreen() {
           trail.name.toLowerCase().includes(query) ||
           trail.description.toLowerCase().includes(query) ||
           // Search by location coordinates (for city/region searches)
-          `${trail.location.latitude},${trail.location.longitude}`.includes(query) ||
+          `${trail.location.latitude},${trail.location.longitude}`.includes(
+            query,
+          ) ||
           // Search by features (rock crawling, scenic, etc.)
-          trail.features.some(feature => feature.toLowerCase().includes(query)) ||
+          trail.features.some((feature) =>
+            feature.toLowerCase().includes(query),
+          ) ||
           // Search by vehicle types
-          trail.vehicleTypes.some(type => type.toLowerCase().includes(query))
+          trail.vehicleTypes.some((type) => type.toLowerCase().includes(query)),
       );
     }
 
     // Difficulty filter
     if (difficultyFilter !== "All") {
-      filtered = filterTrailsByDifficulty(filtered, difficultyFilter as "Easy" | "Moderate" | "Hard" | "Expert");
+      filtered = filterTrailsByDifficulty(
+        filtered,
+        difficultyFilter as "Easy" | "Moderate" | "Hard" | "Expert",
+      );
     }
 
     // Land type filter
@@ -230,15 +258,15 @@ export default function NavigateScreen() {
   };
 
   const downloadTrailForOffline = async (trail: Trail) => {
-    setDownloadingTrails(prev => new Set(prev).add(trail.id));
+    setDownloadingTrails((prev) => new Set(prev).add(trail.id));
     try {
       await OfflineMapsManager.cacheTrail(trail);
-      setCachedTrails(prev => new Set(prev).add(trail.id));
+      setCachedTrails((prev) => new Set(prev).add(trail.id));
       Alert.alert("Success", `"${trail.name}" downloaded for offline use!`);
     } catch (error) {
       Alert.alert("Error", "Failed to download trail for offline use");
     } finally {
-      setDownloadingTrails(prev => {
+      setDownloadingTrails((prev) => {
         const newSet = new Set(prev);
         newSet.delete(trail.id);
         return newSet;
@@ -292,43 +320,62 @@ export default function NavigateScreen() {
             </ThemedText>
             <View style={styles.trailMeta}>
               <Feather name="map-pin" size={14} color={theme.accent} />
-              <ThemedText style={[styles.metaText, { color: theme.tabIconDefault }]}>
+              <ThemedText
+                style={[styles.metaText, { color: theme.tabIconDefault }]}
+              >
                 {distance.toFixed(1)} miles away
               </ThemedText>
             </View>
           </View>
-          <View style={[styles.difficultyBadge, { backgroundColor: getRiskColor(item.difficulty) }]}>
-            <ThemedText style={styles.difficultyText}>{item.difficulty}</ThemedText>
+          <View
+            style={[
+              styles.difficultyBadge,
+              { backgroundColor: getRiskColor(item.difficulty) },
+            ]}
+          >
+            <ThemedText style={styles.difficultyText}>
+              {item.difficulty}
+            </ThemedText>
           </View>
         </View>
 
-        <ThemedText style={[styles.description, { color: theme.tabIconDefault }]}>
+        <ThemedText
+          style={[styles.description, { color: theme.tabIconDefault }]}
+        >
           {item.description}
         </ThemedText>
 
         <View style={styles.statsRow}>
           <View style={styles.stat}>
             <Feather name="navigation" size={16} color={theme.primary} />
-            <ThemedText style={[styles.statText, { color: theme.tabIconDefault }]}>
+            <ThemedText
+              style={[styles.statText, { color: theme.tabIconDefault }]}
+            >
               {item.distance.toFixed(1)} mi
             </ThemedText>
           </View>
           <View style={styles.stat}>
             <Feather name="clock" size={16} color={theme.primary} />
-            <ThemedText style={[styles.statText, { color: theme.tabIconDefault }]}>
+            <ThemedText
+              style={[styles.statText, { color: theme.tabIconDefault }]}
+            >
               {Math.round(item.duration / 60)}h
             </ThemedText>
           </View>
           <View style={styles.stat}>
             <Feather name="star" size={16} color={theme.primary} />
-            <ThemedText style={[styles.statText, { color: theme.tabIconDefault }]}>
+            <ThemedText
+              style={[styles.statText, { color: theme.tabIconDefault }]}
+            >
               {item.safetyRating.toFixed(1)}/10
             </ThemedText>
           </View>
         </View>
 
         <View style={styles.landTypeRow}>
-          <ThemedText style={[styles.landTypeLabel, { color: theme.tabIconDefault }]}>
+          <ThemedText
+            style={[styles.landTypeLabel, { color: theme.tabIconDefault }]}
+          >
             Land:
           </ThemedText>
           <ThemedText style={[styles.landTypeValue]}>
@@ -345,13 +392,17 @@ export default function NavigateScreen() {
                 { backgroundColor: theme.backgroundSecondary },
               ]}
             >
-              <ThemedText style={[styles.featureText, { color: theme.tabIconDefault }]}>
+              <ThemedText
+                style={[styles.featureText, { color: theme.tabIconDefault }]}
+              >
                 {feature}
               </ThemedText>
             </View>
           ))}
           {item.features.length > 2 && (
-            <ThemedText style={[styles.moreFeatures, { color: theme.tabIconDefault }]}>
+            <ThemedText
+              style={[styles.moreFeatures, { color: theme.tabIconDefault }]}
+            >
               +{item.features.length - 2}
             </ThemedText>
           )}
@@ -360,7 +411,9 @@ export default function NavigateScreen() {
         <View style={styles.actionButtons}>
           <Pressable
             style={[styles.startButton, { backgroundColor: theme.primary }]}
-            onPress={() => navigation.navigate("ActiveAdventure", { trail: item })}
+            onPress={() =>
+              navigation.navigate("ActiveAdventure", { trail: item })
+            }
             android_ripple={{ color: theme.secondary }}
           >
             <Feather name="play" size={20} color="white" />
@@ -374,19 +427,24 @@ export default function NavigateScreen() {
             android_ripple={{ color: "rgba(255,255,255,0.2)" }}
           >
             <Feather name="navigation" size={18} color="white" />
-            <ThemedText style={[styles.navigationButtonText, { color: "white" }]}>
+            <ThemedText
+              style={[styles.navigationButtonText, { color: "white" }]}
+            >
               Take Me There
             </ThemedText>
           </Pressable>
           <Pressable
-            style={[styles.offlineButton, { backgroundColor: theme.backgroundSecondary }]}
+            style={[
+              styles.offlineButton,
+              { backgroundColor: theme.backgroundSecondary },
+            ]}
             onPress={() => downloadTrailForOffline(item)}
             android_ripple={{ color: theme.primary }}
           >
-            <Feather 
-              name={cachedTrails.has(item.id) ? "check-circle" : "download"} 
-              size={18} 
-              color={cachedTrails.has(item.id) ? theme.success : theme.primary} 
+            <Feather
+              name={cachedTrails.has(item.id) ? "check-circle" : "download"}
+              size={18}
+              color={cachedTrails.has(item.id) ? theme.success : theme.primary}
             />
           </Pressable>
         </View>
@@ -396,27 +454,49 @@ export default function NavigateScreen() {
           {cachedTrails.has(item.id) ? (
             <View style={styles.offlineStatus}>
               <Feather name="download" size={16} color={theme.success} />
-              <ThemedText style={[styles.offlineText, { color: theme.success, marginLeft: Spacing.xs }]}>
+              <ThemedText
+                style={[
+                  styles.offlineText,
+                  { color: theme.success, marginLeft: Spacing.xs },
+                ]}
+              >
                 Available Offline
               </ThemedText>
             </View>
           ) : (
             <Pressable
-              style={[styles.downloadButton, { backgroundColor: theme.backgroundSecondary }]}
+              style={[
+                styles.downloadButton,
+                { backgroundColor: theme.backgroundSecondary },
+              ]}
               onPress={() => downloadTrailForOffline(item)}
               disabled={downloadingTrails.has(item.id)}
             >
               {downloadingTrails.has(item.id) ? (
                 <>
-                  <Feather name="loader" size={16} color={theme.tabIconDefault} />
-                  <ThemedText style={[styles.downloadButtonText, { color: theme.tabIconDefault }]}>
+                  <Feather
+                    name="loader"
+                    size={16}
+                    color={theme.tabIconDefault}
+                  />
+                  <ThemedText
+                    style={[
+                      styles.downloadButtonText,
+                      { color: theme.tabIconDefault },
+                    ]}
+                  >
                     Downloading...
                   </ThemedText>
                 </>
               ) : (
                 <>
                   <Feather name="download" size={16} color={theme.primary} />
-                  <ThemedText style={[styles.downloadButtonText, { color: theme.primary }]}>
+                  <ThemedText
+                    style={[
+                      styles.downloadButtonText,
+                      { color: theme.primary },
+                    ]}
+                  >
                     Download for Offline
                   </ThemedText>
                 </>
@@ -428,7 +508,11 @@ export default function NavigateScreen() {
     );
   };
 
-  const renderFilterButton = (label: string, isActive: boolean, onPress: () => void) => (
+  const renderFilterButton = (
+    label: string,
+    isActive: boolean,
+    onPress: () => void,
+  ) => (
     <Pressable
       style={[
         styles.filterButton,
@@ -450,20 +534,20 @@ export default function NavigateScreen() {
   );
 
   // If map view is selected, show the map screen
-  if (viewMode === 'map') {
+  if (viewMode === "map") {
     return (
       <View style={{ flex: 1 }}>
         <ExploreMapScreen />
         <Pressable
           style={[
             styles.viewToggleButton,
-            { 
+            {
               top: insets.top + 70,
               right: Spacing.md,
-              backgroundColor: theme.backgroundDefault 
-            }
+              backgroundColor: theme.backgroundDefault,
+            },
           ]}
-          onPress={() => setViewMode('list')}
+          onPress={() => setViewMode("list")}
         >
           <Feather name="list" size={20} color={theme.primary} />
         </Pressable>
@@ -473,10 +557,7 @@ export default function NavigateScreen() {
 
   return (
     <ScrollView
-      style={[
-        styles.container,
-        { backgroundColor: theme.backgroundRoot }
-      ]}
+      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
       contentContainerStyle={{
         paddingTop: insets.top + Spacing.xl,
         paddingBottom: tabBarHeight + Spacing.xl + Spacing.xl,
@@ -489,7 +570,7 @@ export default function NavigateScreen() {
           Navigate Trails
         </ThemedText>
         <Pressable
-          onPress={() => setViewMode('map')}
+          onPress={() => setViewMode("map")}
           style={styles.viewToggleHeaderButton}
         >
           <Feather name="map" size={24} color={theme.primary} />
@@ -505,20 +586,22 @@ export default function NavigateScreen() {
       {/* Adventure Time - Hero Feature */}
       <Pressable
         style={[styles.adventureTimeHero, { backgroundColor: theme.primary }]}
-        onPress={() => navigation.navigate("ActiveAdventure", { 
-          trail: { 
-            name: "Adventure Time", 
-            difficulty: "Moderate" as const,
-            id: `adventure_${Date.now()}`,
-            description: "Live GPS tracking with community data",
-            distance: 0,
-            duration: 0,
-            safetyRating: 0,
-            landType: "public" as const,
-            features: [],
-            coordinates: { latitude: 0, longitude: 0 }
-          } 
-        })}
+        onPress={() =>
+          navigation.navigate("ActiveAdventure", {
+            trail: {
+              name: "Adventure Time",
+              difficulty: "Moderate" as const,
+              id: `adventure_${Date.now()}`,
+              description: "Live GPS tracking with community data",
+              distance: 0,
+              duration: 0,
+              safetyRating: 0,
+              landType: "public" as const,
+              features: [],
+              coordinates: { latitude: 0, longitude: 0 },
+            },
+          })
+        }
       >
         <View style={styles.heroContent}>
           <View style={styles.heroIconContainer}>
@@ -528,10 +611,17 @@ export default function NavigateScreen() {
             <ThemedText style={[styles.heroTitle, { color: "white" }]}>
               🏁 Adventure Time
             </ThemedText>
-            <ThemedText style={[styles.heroSubtitle, { color: "rgba(255,255,255,0.95)" }]}>
+            <ThemedText
+              style={[styles.heroSubtitle, { color: "rgba(255,255,255,0.95)" }]}
+            >
               Live GPS tracking with rally navigator
             </ThemedText>
-            <ThemedText style={[styles.heroDescription, { color: "rgba(255,255,255,0.8)" }]}>
+            <ThemedText
+              style={[
+                styles.heroDescription,
+                { color: "rgba(255,255,255,0.8)" },
+              ]}
+            >
               Real-time callouts • Community data • Route tracking
             </ThemedText>
           </View>
@@ -539,7 +629,15 @@ export default function NavigateScreen() {
         </View>
       </Pressable>
 
-      <View style={[styles.searchBar, { backgroundColor: theme.backgroundDefault, borderColor: theme.primary }]}>
+      <View
+        style={[
+          styles.searchBar,
+          {
+            backgroundColor: theme.backgroundDefault,
+            borderColor: theme.primary,
+          },
+        ]}
+      >
         <Feather name="search" size={18} color={theme.tabIconDefault} />
         <TextInput
           style={[styles.searchInput, { color: theme.tabIconDefault }]}
@@ -556,37 +654,46 @@ export default function NavigateScreen() {
       </View>
 
       <View style={styles.filterSection}>
-        <ThemedText style={[Typography.label, styles.filterLabel]}>Difficulty:</ThemedText>
+        <ThemedText style={[Typography.label, styles.filterLabel]}>
+          Difficulty:
+        </ThemedText>
         <View style={styles.filterRow}>
-          {(["All", "Easy", "Moderate", "Hard", "Expert"] as DifficultyFilter[]).map(
-            (difficulty) => (
-              <View key={difficulty}>
-                {renderFilterButton(difficulty, difficultyFilter === difficulty, () =>
-                  setDifficultyFilter(difficulty)
-                )}
-              </View>
-            )
-          )}
-        </View>
-      </View>
-
-      <View style={styles.filterSection}>
-        <ThemedText style={[Typography.label, styles.filterLabel]}>Land Type:</ThemedText>
-        <View style={styles.filterRow}>
-          {(["All", "Public", "Private"] as LandTypeFilter[]).map((landType) => (
-            <View key={landType}>
-              {renderFilterButton(landType, landTypeFilter === landType, () =>
-                setLandTypeFilter(landType)
+          {(
+            ["All", "Easy", "Moderate", "Hard", "Expert"] as DifficultyFilter[]
+          ).map((difficulty) => (
+            <View key={difficulty}>
+              {renderFilterButton(
+                difficulty,
+                difficultyFilter === difficulty,
+                () => setDifficultyFilter(difficulty),
               )}
             </View>
           ))}
         </View>
       </View>
 
+      <View style={styles.filterSection}>
+        <ThemedText style={[Typography.label, styles.filterLabel]}>
+          Land Type:
+        </ThemedText>
+        <View style={styles.filterRow}>
+          {(["All", "Public", "Private"] as LandTypeFilter[]).map(
+            (landType) => (
+              <View key={landType}>
+                {renderFilterButton(landType, landTypeFilter === landType, () =>
+                  setLandTypeFilter(landType),
+                )}
+              </View>
+            ),
+          )}
+        </View>
+      </View>
+
       {filteredTrails.length > 0 ? (
         <>
           <ThemedText style={[Typography.label, styles.resultCount]}>
-            {filteredTrails.length} trail{filteredTrails.length !== 1 ? "s" : ""} found
+            {filteredTrails.length} trail
+            {filteredTrails.length !== 1 ? "s" : ""} found
           </ThemedText>
           <View style={{ gap: Spacing.md }}>
             {filteredTrails.map((trail) => (
@@ -597,8 +704,12 @@ export default function NavigateScreen() {
       ) : (
         <View style={styles.emptyState}>
           <Feather name="search" size={48} color={theme.tabIconDefault} />
-          <ThemedText style={[styles.emptyText, { color: theme.tabIconDefault }]}>
-            {trails.length === 0 ? "Loading trails..." : "No trails match your filters or search."}
+          <ThemedText
+            style={[styles.emptyText, { color: theme.tabIconDefault }]}
+          >
+            {trails.length === 0
+              ? "Loading trails..."
+              : "No trails match your filters or search."}
           </ThemedText>
         </View>
       )}
@@ -926,13 +1037,13 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   viewToggleButton: {
-    position: 'absolute',
+    position: "absolute",
     width: 48,
     height: 48,
     borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,

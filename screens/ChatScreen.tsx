@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, Pressable, TextInput, FlatList, KeyboardAvoidingView, Platform, Alert } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  TextInput,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import ThemedText from "@/components/ThemedText";
@@ -15,9 +24,9 @@ export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
   const mountedRef = useRef(true);
-  
+
   const { participantId, participantName, participantVehicle } = route.params;
-  
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [messageText, setMessageText] = useState("");
   const [currentUserId, setCurrentUserId] = useState("");
@@ -26,7 +35,7 @@ export default function ChatScreen() {
   useEffect(() => {
     mountedRef.current = true;
     loadUserProfile();
-    
+
     return () => {
       mountedRef.current = false;
     };
@@ -34,7 +43,7 @@ export default function ChatScreen() {
 
   useEffect(() => {
     if (!currentUserId) return;
-    
+
     loadConversation();
   }, [participantId, currentUserId]);
 
@@ -48,19 +57,19 @@ export default function ChatScreen() {
 
   const loadConversation = async () => {
     let conversation = await storage.getConversation(participantId);
-    
+
     if (!conversation) {
       conversation = await storage.createOrUpdateConversation(
         participantId,
         participantName,
-        participantVehicle
+        participantVehicle,
       );
     }
-    
+
     if (!mountedRef.current) return;
-    
+
     setMessages(conversation.messages);
-    
+
     if (currentUserId) {
       await storage.markMessagesAsRead(participantId, currentUserId);
     }
@@ -68,7 +77,7 @@ export default function ChatScreen() {
 
   const handleSendMessage = async () => {
     if (!messageText.trim()) return;
-    
+
     if (!currentUserId || !currentUserName) {
       Alert.alert("Error", "Unable to send message. Please try again.");
       return;
@@ -81,20 +90,17 @@ export default function ChatScreen() {
         participantVehicle,
         currentUserId,
         currentUserName,
-        messageText.trim()
+        messageText.trim(),
       );
       setMessageText("");
       loadConversation();
-      
+
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
 
       setTimeout(async () => {
-        await storage.sendSimulatedResponse(
-          participantId,
-          participantName
-        );
+        await storage.sendSimulatedResponse(participantId, participantName);
         loadConversation();
         setTimeout(() => {
           flatListRef.current?.scrollToEnd({ animated: true });
@@ -129,17 +135,14 @@ export default function ChatScreen() {
           style={[
             styles.messageBubble,
             {
-              backgroundColor: isOwnMessage ? theme.primary : theme.backgroundDefault,
+              backgroundColor: isOwnMessage
+                ? theme.primary
+                : theme.backgroundDefault,
             },
           ]}
         >
           {!isOwnMessage ? (
-            <ThemedText
-              style={[
-                styles.senderName,
-                { color: theme.primary },
-              ]}
-            >
+            <ThemedText style={[styles.senderName, { color: theme.primary }]}>
               {item.senderName}
             </ThemedText>
           ) : null}
@@ -154,7 +157,11 @@ export default function ChatScreen() {
           <ThemedText
             style={[
               styles.messageTime,
-              { color: isOwnMessage ? "rgba(255,255,255,0.7)" : theme.tabIconDefault },
+              {
+                color: isOwnMessage
+                  ? "rgba(255,255,255,0.7)"
+                  : theme.tabIconDefault,
+              },
             ]}
           >
             {formatTime(item.timestamp)}
@@ -184,20 +191,30 @@ export default function ChatScreen() {
         ]}
         ListHeaderComponent={
           <View style={[styles.demoBanner, { backgroundColor: theme.warning }]}>
-            <Feather name="info" size={20} color="#000" style={styles.demoBannerIcon} />
+            <Feather
+              name="info"
+              size={20}
+              color="#000"
+              style={styles.demoBannerIcon}
+            />
             <View style={styles.demoBannerTextContainer}>
               <ThemedText style={[styles.demoBannerTitle, { color: "#000" }]}>
                 Demo Mode - Simulated Responses
               </ThemedText>
               <ThemedText style={[styles.demoBannerSubtext, { color: "#000" }]}>
-                This chat feature demonstrates the UI. Responses are automatically generated.
+                This chat feature demonstrates the UI. Responses are
+                automatically generated.
               </ThemedText>
             </View>
           </View>
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Feather name="message-circle" size={48} color={theme.tabIconDefault} />
+            <Feather
+              name="message-circle"
+              size={48}
+              color={theme.tabIconDefault}
+            />
             <ThemedText style={styles.emptyText}>No messages yet</ThemedText>
             <ThemedText style={styles.emptySubtext}>
               Start the conversation with {participantName}
@@ -241,7 +258,9 @@ export default function ChatScreen() {
           style={[
             styles.sendButton,
             {
-              backgroundColor: messageText.trim() ? theme.primary : theme.border,
+              backgroundColor: messageText.trim()
+                ? theme.primary
+                : theme.border,
             },
           ]}
           onPress={handleSendMessage}

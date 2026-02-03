@@ -1,9 +1,15 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
-import { Feather } from '@expo/vector-icons';
-import { useTheme } from '@/hooks/useTheme';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React from "react";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Text,
+} from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { useTheme } from "@/hooks/useTheme";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 type MiniGamesStackParamList = {
   MiniGamesHome: undefined;
@@ -29,7 +35,9 @@ export default function MiniGamesScreen() {
   const navigation = useNavigation<NavigationProp>();
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
+    >
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.text }]}>Mini Games</Text>
         <Text style={[styles.subtitle, { color: theme.tabIconDefault }]}>
@@ -41,15 +49,27 @@ export default function MiniGamesScreen() {
         {games.map((game) => (
           <TouchableOpacity
             key={game.id}
-            style={[styles.gameCard, { backgroundColor: theme.backgroundDefault }]}
+            style={[
+              styles.gameCard,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
             onPress={() => navigation.navigate(game.screen)}
             activeOpacity={0.7}
           >
-            <View style={[styles.iconContainer, { backgroundColor: theme.primary + '20' }]}>
+            <View
+              style={[
+                styles.iconContainer,
+                { backgroundColor: theme.primary + "20" },
+              ]}
+            >
               <Feather name={game.icon} size={32} color={theme.primary} />
             </View>
-            <Text style={[styles.gameTitle, { color: theme.text }]}>{game.title}</Text>
-            <Text style={[styles.gameDescription, { color: theme.tabIconDefault }]}>
+            <Text style={[styles.gameTitle, { color: theme.text }]}>
+              {game.title}
+            </Text>
+            <Text
+              style={[styles.gameDescription, { color: theme.tabIconDefault }]}
+            >
               {game.description}
             </Text>
           </TouchableOpacity>
@@ -69,7 +89,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
   },
   subtitle: {
@@ -82,8 +102,8 @@ const styles = StyleSheet.create({
   gameCard: {
     borderRadius: 16,
     padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -93,17 +113,17 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 16,
   },
   gameTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
   },
   gameDescription: {
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

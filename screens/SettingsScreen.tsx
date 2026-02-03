@@ -20,10 +20,13 @@ export default function SettingsScreen() {
           text: "Clear",
           style: "destructive",
           onPress: () => {
-            Alert.alert("Cache Cleared", "Offline guide cache has been cleared.");
+            Alert.alert(
+              "Cache Cleared",
+              "Offline guide cache has been cleared.",
+            );
           },
         },
-      ]
+      ],
     );
   };
 
@@ -41,7 +44,7 @@ export default function SettingsScreen() {
             Alert.alert("Data Cleared", "All app data has been deleted.");
           },
         },
-      ]
+      ],
     );
   };
 
@@ -52,7 +55,10 @@ export default function SettingsScreen() {
           Offline Content
         </ThemedText>
         <Pressable
-          style={[styles.menuItem, { backgroundColor: theme.backgroundDefault }]}
+          style={[
+            styles.menuItem,
+            { backgroundColor: theme.backgroundDefault },
+          ]}
           onPress={handleClearCache}
           android_ripple={{ color: theme.backgroundSecondary }}
         >
@@ -60,24 +66,37 @@ export default function SettingsScreen() {
             <Feather name="download" size={24} color={theme.primary} />
             <View style={styles.menuItemText}>
               <ThemedText style={Typography.label}>Download Guides</ThemedText>
-              <ThemedText style={[styles.description, { color: theme.tabIconDefault }]}>
+              <ThemedText
+                style={[styles.description, { color: theme.tabIconDefault }]}
+              >
                 Save guides for offline access
               </ThemedText>
             </View>
           </View>
-          <Feather name="chevron-right" size={24} color={theme.tabIconDefault} />
+          <Feather
+            name="chevron-right"
+            size={24}
+            color={theme.tabIconDefault}
+          />
         </Pressable>
 
         <Pressable
-          style={[styles.menuItem, { backgroundColor: theme.backgroundDefault }]}
+          style={[
+            styles.menuItem,
+            { backgroundColor: theme.backgroundDefault },
+          ]}
           onPress={handleClearCache}
           android_ripple={{ color: theme.backgroundSecondary }}
         >
           <View style={styles.menuItemContent}>
             <Feather name="trash-2" size={24} color={theme.warning} />
             <View style={styles.menuItemText}>
-              <ThemedText style={Typography.label}>Clear Offline Guides</ThemedText>
-              <ThemedText style={[styles.description, { color: theme.tabIconDefault }]}>
+              <ThemedText style={Typography.label}>
+                Clear Offline Guides
+              </ThemedText>
+              <ThemedText
+                style={[styles.description, { color: theme.tabIconDefault }]}
+              >
                 Free up storage space
               </ThemedText>
             </View>
@@ -89,10 +108,17 @@ export default function SettingsScreen() {
         <ThemedText style={[Typography.h4, styles.sectionTitle]}>
           Permissions
         </ThemedText>
-        <View style={[styles.infoCard, { backgroundColor: theme.backgroundDefault }]}>
+        <View
+          style={[
+            styles.infoCard,
+            { backgroundColor: theme.backgroundDefault },
+          ]}
+        >
           <View style={styles.permissionRow}>
             <Feather name="map-pin" size={20} color={theme.success} />
-            <ThemedText style={styles.permissionText}>Location Access</ThemedText>
+            <ThemedText style={styles.permissionText}>
+              Location Access
+            </ThemedText>
           </View>
           <View style={styles.permissionRow}>
             <Feather name="camera" size={20} color={theme.success} />
@@ -100,21 +126,32 @@ export default function SettingsScreen() {
           </View>
           <View style={styles.permissionRow}>
             <Feather name="image" size={20} color={theme.success} />
-            <ThemedText style={styles.permissionText}>Photo Library Access</ThemedText>
+            <ThemedText style={styles.permissionText}>
+              Photo Library Access
+            </ThemedText>
           </View>
         </View>
       </View>
 
       <View style={styles.section}>
-        <ThemedText style={[Typography.h4, styles.sectionTitle]}>About</ThemedText>
-        <View style={[styles.infoCard, { backgroundColor: theme.backgroundDefault }]}>
+        <ThemedText style={[Typography.h4, styles.sectionTitle]}>
+          About
+        </ThemedText>
+        <View
+          style={[
+            styles.infoCard,
+            { backgroundColor: theme.backgroundDefault },
+          ]}
+        >
           <ThemedText style={styles.infoLabel}>App Version</ThemedText>
           <ThemedText style={styles.infoValue}>1.0.0</ThemedText>
         </View>
       </View>
 
       <View style={styles.section}>
-        <ThemedText style={[Typography.h4, styles.sectionTitle]}>Data</ThemedText>
+        <ThemedText style={[Typography.h4, styles.sectionTitle]}>
+          Data
+        </ThemedText>
         <Pressable
           style={[styles.dangerButton, { borderColor: theme.error }]}
           onPress={handleClearData}

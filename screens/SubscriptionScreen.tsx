@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { 
-  View, 
-  StyleSheet, 
-  Pressable, 
-  Alert, 
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  Alert,
   ActivityIndicator,
-  ScrollView 
+  ScrollView,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { PurchasesPackage } from "react-native-purchases";
@@ -18,9 +18,12 @@ import { getOfferings } from "@/config/revenuecat";
 
 export default function SubscriptionScreen() {
   const { theme } = useTheme();
-  const { isPremium, purchaseSubscription, restore, isLoading } = useSubscription();
+  const { isPremium, purchaseSubscription, restore, isLoading } =
+    useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [monthlyPackage, setMonthlyPackage] = useState<PurchasesPackage | null>(null);
+  const [monthlyPackage, setMonthlyPackage] = useState<PurchasesPackage | null>(
+    null,
+  );
   const [loadingOfferings, setLoadingOfferings] = useState(true);
 
   useEffect(() => {
@@ -33,13 +36,14 @@ export default function SubscriptionScreen() {
       const offerings = await getOfferings();
       if (offerings) {
         const monthly = offerings.availablePackages.find(
-          pkg => pkg.packageType === 'MONTHLY' || 
-                 pkg.product.identifier === 'com.adventuretime.premium.monthly'
+          (pkg) =>
+            pkg.packageType === "MONTHLY" ||
+            pkg.product.identifier === "com.adventuretime.premium.monthly",
         );
         setMonthlyPackage(monthly || null);
       }
     } catch (error) {
-      console.error('Error loading offerings:', error);
+      console.error("Error loading offerings:", error);
     } finally {
       setLoadingOfferings(false);
     }
@@ -47,21 +51,21 @@ export default function SubscriptionScreen() {
 
   const handlePurchase = async () => {
     if (isProcessing) return;
-    
+
     setIsProcessing(true);
     try {
       const success = await purchaseSubscription();
       if (success) {
         Alert.alert(
           "Welcome to Premium!",
-          "You now have access to all premium features including AI Scan, trail updates, and more!"
+          "You now have access to all premium features including AI Scan, trail updates, and more!",
         );
       }
     } catch (error: any) {
       if (!error.userCancelled) {
         Alert.alert(
           "Purchase Failed",
-          error.message || "Unable to complete purchase. Please try again."
+          error.message || "Unable to complete purchase. Please try again.",
         );
       }
     } finally {
@@ -71,25 +75,25 @@ export default function SubscriptionScreen() {
 
   const handleRestore = async () => {
     if (isProcessing) return;
-    
+
     setIsProcessing(true);
     try {
       const success = await restore();
       if (success) {
         Alert.alert(
           "Subscription Restored!",
-          "Your premium subscription has been restored successfully."
+          "Your premium subscription has been restored successfully.",
         );
       } else {
         Alert.alert(
           "No Subscription Found",
-          "No active subscription found for this account."
+          "No active subscription found for this account.",
         );
       }
     } catch (error) {
       Alert.alert(
         "Restore Failed",
-        "Unable to restore purchases. Please try again."
+        "Unable to restore purchases. Please try again.",
       );
     } finally {
       setIsProcessing(false);
@@ -98,7 +102,12 @@ export default function SubscriptionScreen() {
 
   if (isLoading || loadingOfferings) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: theme.backgroundDefault }]}>
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: theme.backgroundDefault },
+        ]}
+      >
         <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
@@ -107,36 +116,80 @@ export default function SubscriptionScreen() {
   if (isPremium) {
     return (
       <ScreenScrollView style={{ backgroundColor: theme.backgroundDefault }}>
-        <View style={[styles.container, { backgroundColor: theme.backgroundDefault }]}>
+        <View
+          style={[
+            styles.container,
+            { backgroundColor: theme.backgroundDefault },
+          ]}
+        >
           <View style={styles.header}>
             <Feather name="star" size={48} color={theme.primary} />
             <ThemedText style={[Typography.h1, styles.title]}>
               Premium Member
             </ThemedText>
-            <ThemedText style={[styles.subtitle, { color: theme.tabIconDefault }]}>
+            <ThemedText
+              style={[styles.subtitle, { color: theme.tabIconDefault }]}
+            >
               Thank you for supporting Adventure Time!
             </ThemedText>
           </View>
 
-          <View style={[styles.premiumCard, { backgroundColor: theme.primary + "10", borderColor: theme.primary }]}>
+          <View
+            style={[
+              styles.premiumCard,
+              {
+                backgroundColor: theme.primary + "10",
+                borderColor: theme.primary,
+              },
+            ]}
+          >
             <ThemedText style={[Typography.h3, styles.premiumTitle]}>
               Your Premium Benefits
             </ThemedText>
-            <BenefitItem icon="camera" text="AI Recovery Scan" active theme={theme} />
-            <BenefitItem icon="save" text="Save & View Past Adventures" active theme={theme} />
-            <BenefitItem icon="map-pin" text="Trail Updates & Conditions" active theme={theme} />
-            <BenefitItem icon="alert-circle" text="Post Trail Warnings & Events" active theme={theme} />
-            <BenefitItem icon="users" text="Priority Support" active theme={theme} />
+            <BenefitItem
+              icon="camera"
+              text="AI Recovery Scan"
+              active
+              theme={theme}
+            />
+            <BenefitItem
+              icon="save"
+              text="Save & View Past Adventures"
+              active
+              theme={theme}
+            />
+            <BenefitItem
+              icon="map-pin"
+              text="Trail Updates & Conditions"
+              active
+              theme={theme}
+            />
+            <BenefitItem
+              icon="alert-circle"
+              text="Post Trail Warnings & Events"
+              active
+              theme={theme}
+            />
+            <BenefitItem
+              icon="users"
+              text="Priority Support"
+              active
+              theme={theme}
+            />
           </View>
 
           <Pressable
             style={[styles.manageButton, { borderColor: theme.primary }]}
-            onPress={() => Alert.alert(
-              "Manage Subscription",
-              "To manage your subscription, go to Settings > [Your Name] > Subscriptions on your device."
-            )}
+            onPress={() =>
+              Alert.alert(
+                "Manage Subscription",
+                "To manage your subscription, go to Settings > [Your Name] > Subscriptions on your device.",
+              )
+            }
           >
-            <ThemedText style={[styles.manageButtonText, { color: theme.primary }]}>
+            <ThemedText
+              style={[styles.manageButtonText, { color: theme.primary }]}
+            >
               Manage Subscription
             </ThemedText>
           </Pressable>
@@ -149,51 +202,60 @@ export default function SubscriptionScreen() {
 
   return (
     <ScreenScrollView style={{ backgroundColor: theme.backgroundDefault }}>
-      <View style={[styles.container, { backgroundColor: theme.backgroundDefault }]}>
+      <View
+        style={[styles.container, { backgroundColor: theme.backgroundDefault }]}
+      >
         <View style={styles.header}>
           <Feather name="star" size={48} color={theme.primary} />
           <ThemedText style={[Typography.h1, styles.title]}>
             Adventure Time Premium
           </ThemedText>
-          <ThemedText style={[styles.subtitle, { color: theme.tabIconDefault }]}>
+          <ThemedText
+            style={[styles.subtitle, { color: theme.tabIconDefault }]}
+          >
             Unlock all features and support development
           </ThemedText>
         </View>
 
-        <View style={[styles.featuresCard, { backgroundColor: theme.backgroundSecondary }]}>
+        <View
+          style={[
+            styles.featuresCard,
+            { backgroundColor: theme.backgroundSecondary },
+          ]}
+        >
           <ThemedText style={[Typography.h3, styles.featuresTitle]}>
             Premium Features
           </ThemedText>
-          
-          <BenefitItem 
-            icon="camera" 
-            text="AI Recovery Scan" 
+
+          <BenefitItem
+            icon="camera"
+            text="AI Recovery Scan"
             description="Analyze recovery points and get equipment suggestions"
-            theme={theme} 
+            theme={theme}
           />
-          <BenefitItem 
-            icon="save" 
-            text="Save Adventures" 
+          <BenefitItem
+            icon="save"
+            text="Save Adventures"
             description="Store and review your past trail adventures"
-            theme={theme} 
+            theme={theme}
           />
-          <BenefitItem 
-            icon="map-pin" 
-            text="Trail Updates" 
+          <BenefitItem
+            icon="map-pin"
+            text="Trail Updates"
             description="Real-time trail conditions and updates"
-            theme={theme} 
+            theme={theme}
           />
-          <BenefitItem 
-            icon="alert-circle" 
-            text="Trail Events" 
+          <BenefitItem
+            icon="alert-circle"
+            text="Trail Events"
             description="View and post warnings, hazards, and events"
-            theme={theme} 
+            theme={theme}
           />
-          <BenefitItem 
-            icon="users" 
-            text="Community Features" 
+          <BenefitItem
+            icon="users"
+            text="Community Features"
             description="Connect with other offroaders"
-            theme={theme} 
+            theme={theme}
           />
         </View>
 
@@ -201,7 +263,9 @@ export default function SubscriptionScreen() {
           <ThemedText style={[Typography.h2, styles.priceText]}>
             {priceString}
           </ThemedText>
-          <ThemedText style={[styles.priceSubtext, { color: theme.tabIconDefault }]}>
+          <ThemedText
+            style={[styles.priceSubtext, { color: theme.tabIconDefault }]}
+          >
             Cancel anytime in Settings
           </ThemedText>
         </View>
@@ -210,7 +274,9 @@ export default function SubscriptionScreen() {
           style={[
             styles.subscribeButton,
             {
-              backgroundColor: isProcessing ? theme.tabIconDefault : theme.primary,
+              backgroundColor: isProcessing
+                ? theme.tabIconDefault
+                : theme.primary,
               opacity: isProcessing ? 0.6 : 1,
             },
           ]}
@@ -222,7 +288,12 @@ export default function SubscriptionScreen() {
           ) : (
             <>
               <Feather name="star" size={20} color={theme.backgroundDefault} />
-              <ThemedText style={[styles.subscribeButtonText, { color: theme.backgroundDefault }]}>
+              <ThemedText
+                style={[
+                  styles.subscribeButtonText,
+                  { color: theme.backgroundDefault },
+                ]}
+              >
                 Subscribe Now
               </ThemedText>
             </>
@@ -234,18 +305,25 @@ export default function SubscriptionScreen() {
           onPress={handleRestore}
           disabled={isProcessing}
         >
-          <ThemedText style={[styles.restoreButtonText, { color: theme.primary }]}>
+          <ThemedText
+            style={[styles.restoreButtonText, { color: theme.primary }]}
+          >
             Restore Purchases
           </ThemedText>
         </Pressable>
 
         <View style={styles.termsContainer}>
-          <ThemedText style={[styles.termsText, { color: theme.tabIconDefault }]}>
-            By subscribing, you agree to our Terms of Service and Privacy Policy.
-            {'\n\n'}
-            Subscription automatically renews monthly unless cancelled at least 24 hours before the end of the current period. 
-            Your account will be charged for renewal within 24 hours prior to the end of the current period. 
-            You can manage and cancel your subscriptions in your device's Settings.
+          <ThemedText
+            style={[styles.termsText, { color: theme.tabIconDefault }]}
+          >
+            By subscribing, you agree to our Terms of Service and Privacy
+            Policy.
+            {"\n\n"}
+            Subscription automatically renews monthly unless cancelled at least
+            24 hours before the end of the current period. Your account will be
+            charged for renewal within 24 hours prior to the end of the current
+            period. You can manage and cancel your subscriptions in your
+            device's Settings.
           </ThemedText>
         </View>
       </View>
@@ -268,14 +346,16 @@ function BenefitItem({
 }) {
   return (
     <View style={styles.benefitItem}>
-      <View style={[
-        styles.benefitIcon, 
-        { backgroundColor: active ? theme.primary : theme.primary + "20" }
-      ]}>
-        <Feather 
-          name={icon} 
-          size={20} 
-          color={active ? theme.backgroundDefault : theme.primary} 
+      <View
+        style={[
+          styles.benefitIcon,
+          { backgroundColor: active ? theme.primary : theme.primary + "20" },
+        ]}
+      >
+        <Feather
+          name={icon}
+          size={20}
+          color={active ? theme.backgroundDefault : theme.primary}
         />
       </View>
       <View style={styles.benefitContent}>
@@ -283,7 +363,9 @@ function BenefitItem({
           {text}
         </ThemedText>
         {description && (
-          <ThemedText style={[styles.benefitDescription, { color: theme.tabIconDefault }]}>
+          <ThemedText
+            style={[styles.benefitDescription, { color: theme.tabIconDefault }]}
+          >
             {description}
           </ThemedText>
         )}

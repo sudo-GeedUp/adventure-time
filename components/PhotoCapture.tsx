@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Pressable, Image, Alert } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { Feather } from '@expo/vector-icons';
-import ThemedText from './ThemedText';
-import { useTheme } from '@/hooks/useTheme';
-import { Spacing, BorderRadius } from '@/constants/theme';
+import React, { useState } from "react";
+import { View, StyleSheet, Pressable, Image, Alert } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { Feather } from "@expo/vector-icons";
+import ThemedText from "./ThemedText";
+import { useTheme } from "@/hooks/useTheme";
+import { Spacing, BorderRadius } from "@/constants/theme";
 
 interface PhotoCaptureProps {
   onPhotoSelected: (uri: string) => void;
@@ -12,18 +12,24 @@ interface PhotoCaptureProps {
   photos?: string[];
 }
 
-export default function PhotoCapture({ onPhotoSelected, maxPhotos = 5, photos = [] }: PhotoCaptureProps) {
+export default function PhotoCapture({
+  onPhotoSelected,
+  maxPhotos = 5,
+  photos = [],
+}: PhotoCaptureProps) {
   const { theme } = useTheme();
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>(photos);
 
   const requestPermissions = async () => {
-    const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
-    const { status: libraryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
-    if (cameraStatus !== 'granted' || libraryStatus !== 'granted') {
+    const { status: cameraStatus } =
+      await ImagePicker.requestCameraPermissionsAsync();
+    const { status: libraryStatus } =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (cameraStatus !== "granted" || libraryStatus !== "granted") {
       Alert.alert(
-        'Permissions Required',
-        'Please grant camera and photo library permissions to add photos.'
+        "Permissions Required",
+        "Please grant camera and photo library permissions to add photos.",
       );
       return false;
     }
@@ -35,7 +41,10 @@ export default function PhotoCapture({ onPhotoSelected, maxPhotos = 5, photos = 
     if (!hasPermission) return;
 
     if (selectedPhotos.length >= maxPhotos) {
-      Alert.alert('Maximum Photos', `You can only add up to ${maxPhotos} photos.`);
+      Alert.alert(
+        "Maximum Photos",
+        `You can only add up to ${maxPhotos} photos.`,
+      );
       return;
     }
 
@@ -53,8 +62,8 @@ export default function PhotoCapture({ onPhotoSelected, maxPhotos = 5, photos = 
         onPhotoSelected(uri);
       }
     } catch (error) {
-      console.error('Error taking photo:', error);
-      Alert.alert('Error', 'Failed to take photo. Please try again.');
+      console.error("Error taking photo:", error);
+      Alert.alert("Error", "Failed to take photo. Please try again.");
     }
   };
 
@@ -63,7 +72,10 @@ export default function PhotoCapture({ onPhotoSelected, maxPhotos = 5, photos = 
     if (!hasPermission) return;
 
     if (selectedPhotos.length >= maxPhotos) {
-      Alert.alert('Maximum Photos', `You can only add up to ${maxPhotos} photos.`);
+      Alert.alert(
+        "Maximum Photos",
+        `You can only add up to ${maxPhotos} photos.`,
+      );
       return;
     }
 
@@ -82,8 +94,8 @@ export default function PhotoCapture({ onPhotoSelected, maxPhotos = 5, photos = 
         onPhotoSelected(uri);
       }
     } catch (error) {
-      console.error('Error picking photo:', error);
-      Alert.alert('Error', 'Failed to select photo. Please try again.');
+      console.error("Error picking photo:", error);
+      Alert.alert("Error", "Failed to select photo. Please try again.");
     }
   };
 
@@ -127,13 +139,17 @@ export default function PhotoCapture({ onPhotoSelected, maxPhotos = 5, photos = 
             onPress={pickPhoto}
           >
             <Feather name="image" size={20} color="white" />
-            <ThemedText style={styles.actionButtonText}>Choose Photo</ThemedText>
+            <ThemedText style={styles.actionButtonText}>
+              Choose Photo
+            </ThemedText>
           </Pressable>
         </View>
       )}
 
       {selectedPhotos.length > 0 && (
-        <ThemedText style={[styles.photoCount, { color: theme.tabIconDefault }]}>
+        <ThemedText
+          style={[styles.photoCount, { color: theme.tabIconDefault }]}
+        >
           {selectedPhotos.length} / {maxPhotos} photos
         </ThemedText>
       )}
@@ -146,57 +162,57 @@ const styles = StyleSheet.create({
     marginVertical: Spacing.md,
   },
   photoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: Spacing.sm,
     marginBottom: Spacing.md,
   },
   photoContainer: {
-    position: 'relative',
+    position: "relative",
     width: 100,
     height: 100,
   },
   photo: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     borderRadius: BorderRadius.md,
   },
   removeButton: {
-    position: 'absolute',
+    position: "absolute",
     top: -8,
     right: -8,
     width: 24,
     height: 24,
     borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
   },
   actions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: Spacing.md,
   },
   actionButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     gap: Spacing.sm,
   },
   actionButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   photoCount: {
     fontSize: 12,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: Spacing.sm,
   },
 });

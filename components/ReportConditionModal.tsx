@@ -102,17 +102,23 @@ export default function ReportConditionModal({
         "Posting trail conditions and warnings is a premium feature. Subscribe to help keep the community safe!",
         [
           { text: "Cancel", style: "cancel" },
-          { text: "Subscribe", onPress: () => {
-            onClose();
-            // Navigation would need to be passed as prop or use navigation hook
-          }}
-        ]
+          {
+            text: "Subscribe",
+            onPress: () => {
+              onClose();
+              // Navigation would need to be passed as prop or use navigation hook
+            },
+          },
+        ],
       );
       return;
     }
 
     if (!selectedWarning || !userLocation) {
-      Alert.alert("Error", "Please select a warning type and ensure location is available");
+      Alert.alert(
+        "Error",
+        "Please select a warning type and ensure location is available",
+      );
       return;
     }
 
@@ -122,7 +128,7 @@ export default function ReportConditionModal({
     if (!warningType) return;
 
     const speedValue = suggestedSpeed ? parseFloat(suggestedSpeed) : undefined;
-    
+
     const tip: CommunityTip = {
       id: `tip_${Date.now()}`,
       title: warningType.label,
@@ -143,7 +149,10 @@ export default function ReportConditionModal({
 
     try {
       await storage.saveCommunityTip(tip);
-      Alert.alert("Success", "Thank you! Your report helps other offroaders stay safe.");
+      Alert.alert(
+        "Success",
+        "Thank you! Your report helps other offroaders stay safe.",
+      );
       setSelectedWarning(null);
       setSuggestedSpeed("");
       onReportSubmitted();
@@ -165,10 +174,7 @@ export default function ReportConditionModal({
     >
       <View style={[styles.container, { backgroundColor: "rgba(0,0,0,0.5)" }]}>
         <View
-          style={[
-            styles.content,
-            { backgroundColor: theme.backgroundDefault },
-          ]}
+          style={[styles.content, { backgroundColor: theme.backgroundDefault }]}
         >
           <View style={styles.header}>
             <ThemedText style={[Typography.h3, styles.title]}>
@@ -179,13 +185,18 @@ export default function ReportConditionModal({
             </Pressable>
           </View>
 
-          <ThemedText style={[styles.subtitle, { color: theme.tabIconDefault }]}>
-            {isPremium 
+          <ThemedText
+            style={[styles.subtitle, { color: theme.tabIconDefault }]}
+          >
+            {isPremium
               ? "Alert other offroaders about what you've encountered"
               : "Premium feature: Subscribe to post trail warnings and conditions"}
           </ThemedText>
 
-          <ScrollView style={styles.warningList} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.warningList}
+            showsVerticalScrollIndicator={false}
+          >
             {WARNING_TYPES.map((warning) => (
               <Pressable
                 key={warning.id}
@@ -243,7 +254,9 @@ export default function ReportConditionModal({
             <ThemedText style={[styles.speedLabel, { color: theme.text }]}>
               Suggested Trail Speed (mph)
             </ThemedText>
-            <ThemedText style={[styles.speedHint, { color: theme.tabIconDefault }]}>
+            <ThemedText
+              style={[styles.speedHint, { color: theme.tabIconDefault }]}
+            >
               Optional - help others know a safe speed for this area
             </ThemedText>
             <View style={styles.speedInputRow}>
@@ -264,7 +277,9 @@ export default function ReportConditionModal({
                 onChangeText={setSuggestedSpeed}
                 maxLength={3}
               />
-              <ThemedText style={[styles.speedUnit, { color: theme.tabIconDefault }]}>
+              <ThemedText
+                style={[styles.speedUnit, { color: theme.tabIconDefault }]}
+              >
                 mph
               </ThemedText>
             </View>
@@ -272,7 +287,10 @@ export default function ReportConditionModal({
 
           <View style={styles.buttonContainer}>
             <Pressable
-              style={[styles.button, { backgroundColor: theme.backgroundSecondary }]}
+              style={[
+                styles.button,
+                { backgroundColor: theme.backgroundSecondary },
+              ]}
               onPress={onClose}
               disabled={isSubmitting}
             >

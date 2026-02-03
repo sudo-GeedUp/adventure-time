@@ -1,9 +1,9 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Location from 'expo-location';
-import { storage } from './storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Location from "expo-location";
+import { storage } from "./storage";
 
-const CONVOY_KEY = '@adventure-time/active_convoy';
-const CONVOY_HISTORY_KEY = '@adventure-time/convoy_history';
+const CONVOY_KEY = "@adventure-time/active_convoy";
+const CONVOY_HISTORY_KEY = "@adventure-time/convoy_history";
 
 export interface ConvoyMember {
   id: string;
@@ -17,7 +17,7 @@ export interface ConvoyMember {
     heading?: number;
   };
   lastUpdate: number;
-  status: 'active' | 'stopped' | 'emergency' | 'offline';
+  status: "active" | "stopped" | "emergency" | "offline";
   isLeader: boolean;
   color: string; // For map marker
 }
@@ -31,7 +31,7 @@ export interface Convoy {
   members: ConvoyMember[];
   route?: any[]; // Trail waypoints
   rallyPoints: RallyPoint[];
-  status: 'active' | 'completed' | 'cancelled';
+  status: "active" | "completed" | "cancelled";
 }
 
 export interface RallyPoint {
@@ -56,18 +56,18 @@ export class ConvoyManager {
         name,
         code: this.generateJoinCode(),
         createdAt: Date.now(),
-        leaderId: profile?.id || 'user',
+        leaderId: profile?.id || "user",
         members: [],
         rallyPoints: [],
-        status: 'active',
+        status: "active",
       };
 
       // Add creator as first member and leader
       const location = await Location.getCurrentPositionAsync();
       const leader: ConvoyMember = {
-        id: profile?.id || 'user',
-        name: profile?.name || 'Leader',
-        vehicleType: profile?.vehicleType || 'Unknown',
+        id: profile?.id || "user",
+        name: profile?.name || "Leader",
+        vehicleType: profile?.vehicleType || "Unknown",
         location: {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
@@ -76,17 +76,17 @@ export class ConvoyManager {
           heading: location.coords.heading || undefined,
         },
         lastUpdate: Date.now(),
-        status: 'active',
+        status: "active",
         isLeader: true,
-        color: '#3b82f6', // Blue for leader
+        color: "#3b82f6", // Blue for leader
       };
 
       convoy.members.push(leader);
       await AsyncStorage.setItem(CONVOY_KEY, JSON.stringify(convoy));
-      
+
       return convoy;
     } catch (error) {
-      console.error('Error creating convoy:', error);
+      console.error("Error creating convoy:", error);
       throw error;
     }
   }
@@ -98,11 +98,11 @@ export class ConvoyManager {
       // For now, we'll simulate joining
       const profile = await storage.getUserProfile();
       const location = await Location.getCurrentPositionAsync();
-      
+
       const member: ConvoyMember = {
         id: profile?.id || Date.now().toString(),
-        name: profile?.name || 'Member',
-        vehicleType: profile?.vehicleType || 'Unknown',
+        name: profile?.name || "Member",
+        vehicleType: profile?.vehicleType || "Unknown",
         location: {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
@@ -111,7 +111,7 @@ export class ConvoyManager {
           heading: location.coords.heading || undefined,
         },
         lastUpdate: Date.now(),
-        status: 'active',
+        status: "active",
         isLeader: false,
         color: this.getRandomColor(),
       };
@@ -123,10 +123,10 @@ export class ConvoyManager {
         await AsyncStorage.setItem(CONVOY_KEY, JSON.stringify(convoy));
         return convoy;
       }
-      
+
       return null;
     } catch (error) {
-      console.error('Error joining convoy:', error);
+      console.error("Error joining convoy:", error);
       return null;
     }
   }
@@ -134,13 +134,13 @@ export class ConvoyManager {
   // Update member location
   static async updateMemberLocation(
     memberId: string,
-    location: Location.LocationObject
+    location: Location.LocationObject,
   ): Promise<void> {
     try {
       const convoy = await this.getActiveConvoy();
       if (!convoy) return;
 
-      const memberIndex = convoy.members.findIndex(m => m.id === memberId);
+      const memberIndex = convoy.members.findIndex((m) => m.id === memberId);
       if (memberIndex !== -1) {
         convoy.members[memberIndex].location = {
           latitude: location.coords.latitude,
@@ -150,11 +150,11 @@ export class ConvoyManager {
           heading: location.coords.heading || undefined,
         };
         convoy.members[memberIndex].lastUpdate = Date.now();
-        
+
         await AsyncStorage.setItem(CONVOY_KEY, JSON.stringify(convoy));
       }
     } catch (error) {
-      console.error('Error updating member location:', error);
+      console.error("Error updating member location:", error);
     }
   }
 
@@ -162,7 +162,7 @@ export class ConvoyManager {
   static async addRallyPoint(
     name: string,
     description: string,
-    location: { latitude: number; longitude: number }
+    location: { latitude: number; longitude: number },
   ): Promise<void> {
     try {
       const convoy = await this.getActiveConvoy();
@@ -174,14 +174,14 @@ export class ConvoyManager {
         name,
         location,
         description,
-        setBy: profile?.name || 'Unknown',
+        setBy: profile?.name || "Unknown",
         timestamp: Date.now(),
       };
 
       convoy.rallyPoints.push(rallyPoint);
       await AsyncStorage.setItem(CONVOY_KEY, JSON.stringify(convoy));
     } catch (error) {
-      console.error('Error adding rally point:', error);
+      console.error("Error adding rally point:", error);
     }
   }
 
@@ -191,7 +191,7 @@ export class ConvoyManager {
       const convoy = await AsyncStorage.getItem(CONVOY_KEY);
       return convoy ? JSON.parse(convoy) : null;
     } catch (error) {
-      console.error('Error getting active convoy:', error);
+      console.error("Error getting active convoy:", error);
       return null;
     }
   }
@@ -202,11 +202,11 @@ export class ConvoyManager {
       const convoy = await this.getActiveConvoy();
       if (!convoy) return;
 
-      convoy.members = convoy.members.filter(m => m.id !== memberId);
-      
+      convoy.members = convoy.members.filter((m) => m.id !== memberId);
+
       if (convoy.members.length === 0) {
         // End convoy if no members left
-        convoy.status = 'completed';
+        convoy.status = "completed";
         await this.saveToHistory(convoy);
         await AsyncStorage.removeItem(CONVOY_KEY);
       } else {
@@ -218,7 +218,7 @@ export class ConvoyManager {
         await AsyncStorage.setItem(CONVOY_KEY, JSON.stringify(convoy));
       }
     } catch (error) {
-      console.error('Error leaving convoy:', error);
+      console.error("Error leaving convoy:", error);
     }
   }
 
@@ -227,12 +227,12 @@ export class ConvoyManager {
     try {
       const convoy = await this.getActiveConvoy();
       if (convoy) {
-        convoy.status = 'completed';
+        convoy.status = "completed";
         await this.saveToHistory(convoy);
         await AsyncStorage.removeItem(CONVOY_KEY);
       }
     } catch (error) {
-      console.error('Error ending convoy:', error);
+      console.error("Error ending convoy:", error);
     }
   }
 
@@ -247,7 +247,7 @@ export class ConvoyManager {
       }
       await AsyncStorage.setItem(CONVOY_HISTORY_KEY, JSON.stringify(history));
     } catch (error) {
-      console.error('Error saving convoy to history:', error);
+      console.error("Error saving convoy to history:", error);
     }
   }
 
@@ -257,15 +257,15 @@ export class ConvoyManager {
       const history = await AsyncStorage.getItem(CONVOY_HISTORY_KEY);
       return history ? JSON.parse(history) : [];
     } catch (error) {
-      console.error('Error getting convoy history:', error);
+      console.error("Error getting convoy history:", error);
       return [];
     }
   }
 
   // Generate join code
   private static generateJoinCode(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = '';
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "";
     for (let i = 0; i < 6; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
@@ -275,12 +275,12 @@ export class ConvoyManager {
   // Get random color for member marker
   private static getRandomColor(): string {
     const colors = [
-      '#10b981', // Green
-      '#f59e0b', // Yellow
-      '#8b5cf6', // Purple
-      '#ec4899', // Pink
-      '#06b6d4', // Cyan
-      '#f97316', // Orange
+      "#10b981", // Green
+      "#f59e0b", // Yellow
+      "#8b5cf6", // Purple
+      "#ec4899", // Pink
+      "#06b6d4", // Cyan
+      "#f97316", // Orange
     ];
     return colors[Math.floor(Math.random() * colors.length)];
   }
@@ -288,20 +288,20 @@ export class ConvoyManager {
   // Update member status
   static async updateMemberStatus(
     memberId: string,
-    status: 'active' | 'stopped' | 'emergency' | 'offline'
+    status: "active" | "stopped" | "emergency" | "offline",
   ): Promise<void> {
     try {
       const convoy = await this.getActiveConvoy();
       if (!convoy) return;
 
-      const memberIndex = convoy.members.findIndex(m => m.id === memberId);
+      const memberIndex = convoy.members.findIndex((m) => m.id === memberId);
       if (memberIndex !== -1) {
         convoy.members[memberIndex].status = status;
         convoy.members[memberIndex].lastUpdate = Date.now();
         await AsyncStorage.setItem(CONVOY_KEY, JSON.stringify(convoy));
       }
     } catch (error) {
-      console.error('Error updating member status:', error);
+      console.error("Error updating member status:", error);
     }
   }
 
@@ -311,12 +311,12 @@ export class ConvoyManager {
       const convoy = await this.getActiveConvoy();
       if (!convoy) return;
 
-      const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+      const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
       let updated = false;
 
-      convoy.members.forEach(member => {
-        if (member.lastUpdate < fiveMinutesAgo && member.status !== 'offline') {
-          member.status = 'offline';
+      convoy.members.forEach((member) => {
+        if (member.lastUpdate < fiveMinutesAgo && member.status !== "offline") {
+          member.status = "offline";
           updated = true;
         }
       });
@@ -325,7 +325,7 @@ export class ConvoyManager {
         await AsyncStorage.setItem(CONVOY_KEY, JSON.stringify(convoy));
       }
     } catch (error) {
-      console.error('Error checking offline members:', error);
+      console.error("Error checking offline members:", error);
     }
   }
 }

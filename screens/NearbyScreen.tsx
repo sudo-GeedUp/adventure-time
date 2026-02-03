@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, FlatList, Alert, Platform, Linking } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  FlatList,
+  Alert,
+  Platform,
+  Linking,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -9,11 +17,22 @@ import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { useTheme } from "@/hooks/useTheme";
 import { useScreenInsets } from "@/hooks/useScreenInsets";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
-import { storage, NearbyOffroader as StoredOffroader, UserProfile } from "@/utils/storage";
+import {
+  storage,
+  NearbyOffroader as StoredOffroader,
+  UserProfile,
+} from "@/utils/storage";
 import { calculateDistance } from "@/utils/location";
 import { getWeather } from "@/utils/weather";
-import { analyzeTrailConditions, calculateImpactAssessment } from "@/utils/conditions";
-import type { WeatherCondition, ImpactAssessment, TrailConditionSummary } from "@/utils/conditions";
+import {
+  analyzeTrailConditions,
+  calculateImpactAssessment,
+} from "@/utils/conditions";
+import type {
+  WeatherCondition,
+  ImpactAssessment,
+  TrailConditionSummary,
+} from "@/utils/conditions";
 import ReportConditionModal from "@/components/ReportConditionModal";
 import { getTrailsNearLocation, Trail } from "@/utils/trails";
 import { OfflineMapsManager } from "@/utils/offlineMaps";
@@ -68,7 +87,8 @@ export default function NearbyScreen() {
   const [offroaders, setOffroaders] = useState<NearbyOffroader[]>([]);
   const [weather, setWeather] = useState<WeatherCondition | null>(null);
   const [impact, setImpact] = useState<ImpactAssessment | null>(null);
-  const [trailConditions, setTrailConditions] = useState<TrailConditionSummary | null>(null);
+  const [trailConditions, setTrailConditions] =
+    useState<TrailConditionSummary | null>(null);
   const [isLoadingWeather, setIsLoadingWeather] = useState(false);
   const [weatherError, setWeatherError] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -79,7 +99,9 @@ export default function NearbyScreen() {
   const [showTrailsMap, setShowTrailsMap] = useState(true);
   const [selectedTrail, setSelectedTrail] = useState<Trail | null>(null);
   const [wishlistTrails, setWishlistTrails] = useState<Set<string>>(new Set());
-  const [downloadingTrails, setDownloadingTrails] = useState<Set<string>>(new Set());
+  const [downloadingTrails, setDownloadingTrails] = useState<Set<string>>(
+    new Set(),
+  );
   const [cachedTrails, setCachedTrails] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -91,21 +113,21 @@ export default function NearbyScreen() {
 
   const loadWishlist = async () => {
     try {
-      const saved = await AsyncStorage.getItem('trail_wishlist');
+      const saved = await AsyncStorage.getItem("trail_wishlist");
       if (saved) {
         setWishlistTrails(new Set(JSON.parse(saved)));
       }
     } catch (error) {
-      console.error('Error loading wishlist:', error);
+      console.error("Error loading wishlist:", error);
     }
   };
 
   const loadCachedTrails = async () => {
     try {
       const cached = await OfflineMapsManager.getCachedTrails();
-      setCachedTrails(new Set(cached.map(t => t.id)));
+      setCachedTrails(new Set(cached.map((t) => t.id)));
     } catch (error) {
-      console.error('Error loading cached trails:', error);
+      console.error("Error loading cached trails:", error);
     }
   };
 
@@ -113,30 +135,36 @@ export default function NearbyScreen() {
     const newWishlist = new Set(wishlistTrails);
     if (newWishlist.has(trailId)) {
       newWishlist.delete(trailId);
-      Alert.alert('Removed', 'Trail removed from wishlist');
+      Alert.alert("Removed", "Trail removed from wishlist");
     } else {
       newWishlist.add(trailId);
-      Alert.alert('Added', 'Trail added to wishlist');
+      Alert.alert("Added", "Trail added to wishlist");
     }
     setWishlistTrails(newWishlist);
-    await AsyncStorage.setItem('trail_wishlist', JSON.stringify(Array.from(newWishlist)));
+    await AsyncStorage.setItem(
+      "trail_wishlist",
+      JSON.stringify(Array.from(newWishlist)),
+    );
   };
 
   const downloadTrailOffline = async (trail: Trail) => {
     if (cachedTrails.has(trail.id)) {
-      Alert.alert('Already Downloaded', 'This trail is already available offline');
+      Alert.alert(
+        "Already Downloaded",
+        "This trail is already available offline",
+      );
       return;
     }
 
-    setDownloadingTrails(prev => new Set(prev).add(trail.id));
+    setDownloadingTrails((prev) => new Set(prev).add(trail.id));
     try {
       await OfflineMapsManager.cacheTrail(trail);
-      setCachedTrails(prev => new Set(prev).add(trail.id));
-      Alert.alert('Success', `${trail.name} is now available offline`);
+      setCachedTrails((prev) => new Set(prev).add(trail.id));
+      Alert.alert("Success", `${trail.name} is now available offline`);
     } catch (error) {
-      Alert.alert('Error', 'Failed to download trail for offline use');
+      Alert.alert("Error", "Failed to download trail for offline use");
     } finally {
-      setDownloadingTrails(prev => {
+      setDownloadingTrails((prev) => {
         const next = new Set(prev);
         next.delete(trail.id);
         return next;
@@ -149,7 +177,7 @@ export default function NearbyScreen() {
     if (status !== "granted") {
       Alert.alert(
         "Location Permission Required",
-        "Location access is needed to find nearby offroaders who can assist you."
+        "Location access is needed to find nearby offroaders who can assist you.",
       );
       return;
     }
@@ -164,7 +192,7 @@ export default function NearbyScreen() {
   const loadNearbyOffroaders = async (currentLocation: any) => {
     try {
       await storage.removeOldOffroaders(30);
-      
+
       let stored = await storage.getNearbyOffroaders();
 
       const withDistances: NearbyOffroader[] = stored.map((offroader) => ({
@@ -183,14 +211,14 @@ export default function NearbyScreen() {
   const loadConditions = async (currentLocation: any) => {
     setIsLoadingWeather(true);
     setWeatherError(false);
-    
+
     try {
       const weatherData = await getWeather(
         currentLocation.coords.latitude,
-        currentLocation.coords.longitude
+        currentLocation.coords.longitude,
       );
       setWeather(weatherData);
-      
+
       if (!weatherData) {
         setWeatherError(true);
       }
@@ -199,11 +227,14 @@ export default function NearbyScreen() {
       const analyzedConditions = analyzeTrailConditions(
         allTips,
         currentLocation.coords,
-        MAP_RADIUS
+        MAP_RADIUS,
       );
       setTrailConditions(analyzedConditions);
 
-      const impactAssessment = calculateImpactAssessment(weatherData, analyzedConditions);
+      const impactAssessment = calculateImpactAssessment(
+        weatherData,
+        analyzedConditions,
+      );
       setImpact(impactAssessment);
     } catch (error) {
       console.error("Error loading conditions:", error);
@@ -227,7 +258,7 @@ export default function NearbyScreen() {
       // Get all popular 4x4 trails within 200 miles
       const popularTrails = getTrailsNearLocation(currentLocation.coords, 200);
       const adventures = await storage.getCommunityAdventures();
-      
+
       // Convert community adventures to Trail format
       const communityTrailsData: Trail[] = adventures.map((adv: any) => ({
         id: `community_${adv.id}`,
@@ -247,16 +278,21 @@ export default function NearbyScreen() {
 
       // Combine all trails
       const combinedTrails = [...popularTrails, ...communityTrailsData];
-      
+
       // Calculate distance from user for each trail
-      const trailsWithDistance = combinedTrails.map(trail => ({
+      const trailsWithDistance = combinedTrails.map((trail) => ({
         ...trail,
-        distanceFromUser: calculateDistance(currentLocation.coords, trail.location)
+        distanceFromUser: calculateDistance(
+          currentLocation.coords,
+          trail.location,
+        ),
       }));
-      
+
       // Sort by distance
-      const sortedTrails = trailsWithDistance.sort((a, b) => a.distanceFromUser - b.distanceFromUser);
-      
+      const sortedTrails = trailsWithDistance.sort(
+        (a, b) => a.distanceFromUser - b.distanceFromUser,
+      );
+
       setAllTrails(sortedTrails);
       setNearbyTrails(sortedTrails.slice(0, 10)); // Top 10 nearest
       setCommunityTrails(communityTrailsData);
@@ -272,11 +308,14 @@ export default function NearbyScreen() {
   const openGPSNavigation = (trail: any) => {
     const { latitude, longitude } = trail.location;
     const label = encodeURIComponent(trail.name);
-    
+
     if (Platform.OS === "ios") {
       const url = `maps://app?daddr=${latitude},${longitude}&q=${label}`;
       Linking.openURL(url).catch(() => {
-        Alert.alert("Error", "Unable to open Maps. Please ensure Apple Maps is installed.");
+        Alert.alert(
+          "Error",
+          "Unable to open Maps. Please ensure Apple Maps is installed.",
+        );
       });
     } else {
       const url = `google.navigation:q=${latitude},${longitude}&label=${label}`;
@@ -303,7 +342,10 @@ export default function NearbyScreen() {
 
   const renderOffroader = ({ item }: { item: NearbyOffroader }) => (
     <Pressable
-      style={[styles.offroaderCard, { backgroundColor: theme.backgroundDefault }]}
+      style={[
+        styles.offroaderCard,
+        { backgroundColor: theme.backgroundDefault },
+      ]}
       onPress={() => handleOffroaderPress(item)}
       android_ripple={{ color: theme.backgroundSecondary }}
     >
@@ -311,8 +353,12 @@ export default function NearbyScreen() {
         <Feather name="user" size={28} color={theme.buttonText} />
       </View>
       <View style={styles.offroaderInfo}>
-        <ThemedText style={[Typography.h4, styles.offroaderName]}>{item.name}</ThemedText>
-        <ThemedText style={[styles.vehicleType, { color: theme.tabIconDefault }]}>
+        <ThemedText style={[Typography.h4, styles.offroaderName]}>
+          {item.name}
+        </ThemedText>
+        <ThemedText
+          style={[styles.vehicleType, { color: theme.tabIconDefault }]}
+        >
           {item.vehicleType}
         </ThemedText>
         <View style={styles.distanceRow}>
@@ -336,7 +382,10 @@ export default function NearbyScreen() {
           </ThemedText>
         </View>
         <View style={styles.headerButtons}>
-          <Pressable onPress={() => setShowReportModal(true)} style={styles.reportButton}>
+          <Pressable
+            onPress={() => setShowReportModal(true)}
+            style={styles.reportButton}
+          >
             <Feather name="alert-triangle" size={24} color={theme.warning} />
           </Pressable>
           <Pressable onPress={handleRefresh} style={styles.refreshButton}>
@@ -365,7 +414,9 @@ export default function NearbyScreen() {
                 coordinate={trail.location}
                 title={trail.name}
                 description={`${trail.difficulty} • ${trail.distance.toFixed(1)} mi`}
-                pinColor={trail.id.startsWith('community_') ? "#10b981" : "#3b82f6"}
+                pinColor={
+                  trail.id.startsWith("community_") ? "#10b981" : "#3b82f6"
+                }
                 onPress={() => setSelectedTrail(trail)}
               />
             ))}
@@ -380,61 +431,94 @@ export default function NearbyScreen() {
               />
             ))}
           </MapView>
-          <View style={[styles.mapLegend, { backgroundColor: theme.backgroundDefault }]}>
+          <View
+            style={[
+              styles.mapLegend,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: "#3b82f6" }]} />
+              <View
+                style={[styles.legendDot, { backgroundColor: "#3b82f6" }]}
+              />
               <ThemedText style={styles.legendText}>Popular Trails</ThemedText>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: "#10b981" }]} />
-              <ThemedText style={styles.legendText}>Community Trails</ThemedText>
+              <View
+                style={[styles.legendDot, { backgroundColor: "#10b981" }]}
+              />
+              <ThemedText style={styles.legendText}>
+                Community Trails
+              </ThemedText>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: "#ef4444" }]} />
+              <View
+                style={[styles.legendDot, { backgroundColor: "#ef4444" }]}
+              />
               <ThemedText style={styles.legendText}>Offroaders</ThemedText>
             </View>
           </View>
         </View>
       ) : (
-        <View style={[styles.mapPlaceholder, { backgroundColor: theme.backgroundSecondary }]}>
-          <Feather name="map" size={64} color={theme.tabIconDefault} style={styles.mapIcon} />
+        <View
+          style={[
+            styles.mapPlaceholder,
+            { backgroundColor: theme.backgroundSecondary },
+          ]}
+        >
+          <Feather
+            name="map"
+            size={64}
+            color={theme.tabIconDefault}
+            style={styles.mapIcon}
+          />
           <ThemedText style={[styles.mapText, { color: theme.tabIconDefault }]}>
-            {Platform.OS === "web" 
-              ? "Map available in Expo Go app" 
-              : mapsLoadError 
+            {Platform.OS === "web"
+              ? "Map available in Expo Go app"
+              : mapsLoadError
                 ? `Map error: ${mapsLoadError}`
                 : !mapsAvailable
                   ? "Map requires Expo Go on device"
-                  : location 
-                    ? "Loading map..." 
+                  : location
+                    ? "Loading map..."
                     : "Getting location..."}
           </ThemedText>
         </View>
       )}
 
       {isLoadingWeather ? (
-        <View style={[
-          styles.conditionsCard,
-          { backgroundColor: theme.backgroundDefault, borderLeftColor: theme.tabIconDefault }
-        ]}>
+        <View
+          style={[
+            styles.conditionsCard,
+            {
+              backgroundColor: theme.backgroundDefault,
+              borderLeftColor: theme.tabIconDefault,
+            },
+          ]}
+        >
           <View style={styles.loadingContainer}>
             <Feather name="loader" size={24} color={theme.tabIconDefault} />
-            <ThemedText style={[styles.loadingText, { color: theme.tabIconDefault }]}>
+            <ThemedText
+              style={[styles.loadingText, { color: theme.tabIconDefault }]}
+            >
               Loading trail conditions and weather...
             </ThemedText>
           </View>
         </View>
-      ) : (weather || (trailConditions && trailConditions.recentTips.length > 0)) && impact ? (
-        <View style={[
-          styles.conditionsCard,
-          { backgroundColor: theme.backgroundDefault, borderLeftColor: impact.color }
-        ]}>
+      ) : (weather ||
+          (trailConditions && trailConditions.recentTips.length > 0)) &&
+        impact ? (
+        <View
+          style={[
+            styles.conditionsCard,
+            {
+              backgroundColor: theme.backgroundDefault,
+              borderLeftColor: impact.color,
+            },
+          ]}
+        >
           <View style={styles.conditionsHeader}>
-            <Feather 
-              name="alert-circle" 
-              size={24} 
-              color={impact.color}
-            />
+            <Feather name="alert-circle" size={24} color={impact.color} />
             <ThemedText style={[Typography.h4, { marginLeft: Spacing.sm }]}>
               Current Conditions
             </ThemedText>
@@ -444,13 +528,16 @@ export default function NearbyScreen() {
             <View style={styles.weatherRow}>
               <Feather name="cloud" size={18} color={theme.tabIconDefault} />
               <ThemedText style={styles.weatherText}>
-                {weather.condition} • {Math.round(weather.temperature)}°F • Wind {weather.windSpeed} mph
+                {weather.condition} • {Math.round(weather.temperature)}°F • Wind{" "}
+                {weather.windSpeed} mph
               </ThemedText>
             </View>
           ) : weatherError ? (
             <View style={styles.weatherRow}>
               <Feather name="cloud-off" size={18} color={theme.warning} />
-              <ThemedText style={[styles.weatherText, { color: theme.warning }]}>
+              <ThemedText
+                style={[styles.weatherText, { color: theme.warning }]}
+              >
                 Weather data unavailable
               </ThemedText>
             </View>
@@ -469,7 +556,11 @@ export default function NearbyScreen() {
               </ThemedText>
               {trailConditions.recentTips.slice(0, 3).map((tip, index) => (
                 <View key={index} style={styles.tipItem}>
-                  <Feather name="message-circle" size={14} color={theme.primary} />
+                  <Feather
+                    name="message-circle"
+                    size={14}
+                    color={theme.primary}
+                  />
                   <ThemedText style={styles.tipText} numberOfLines={2}>
                     {tip.title} - {getTimeAgo(tip.timestamp)}
                   </ThemedText>
@@ -483,7 +574,11 @@ export default function NearbyScreen() {
               <ThemedText style={styles.sectionTitle}>Risk Factors:</ThemedText>
               {impact.riskFactors.map((factor, index) => (
                 <View key={index} style={styles.riskItem}>
-                  <Feather name="alert-triangle" size={14} color={theme.warning} />
+                  <Feather
+                    name="alert-triangle"
+                    size={14}
+                    color={theme.warning}
+                  />
                   <ThemedText style={styles.riskText}>{factor}</ThemedText>
                 </View>
               ))}
@@ -492,23 +587,37 @@ export default function NearbyScreen() {
 
           {impact.recommendations.length > 0 ? (
             <View style={styles.recommendSection}>
-              <ThemedText style={styles.sectionTitle}>Recommendations:</ThemedText>
+              <ThemedText style={styles.sectionTitle}>
+                Recommendations:
+              </ThemedText>
               {impact.recommendations.slice(0, 2).map((rec, index) => (
                 <View key={index} style={styles.recItem}>
-                  <Feather name="check-circle" size={14} color={theme.success} />
+                  <Feather
+                    name="check-circle"
+                    size={14}
+                    color={theme.success}
+                  />
                   <ThemedText style={styles.recText}>{rec}</ThemedText>
                 </View>
               ))}
             </View>
           ) : null}
         </View>
-      ) : !isLoadingWeather && !weather && (!trailConditions || trailConditions.recentTips.length === 0) ? (
-        <View style={[
-          styles.conditionsCard,
-          { backgroundColor: theme.backgroundDefault, borderLeftColor: theme.tabIconDefault }
-        ]}>
+      ) : !isLoadingWeather &&
+        !weather &&
+        (!trailConditions || trailConditions.recentTips.length === 0) ? (
+        <View
+          style={[
+            styles.conditionsCard,
+            {
+              backgroundColor: theme.backgroundDefault,
+              borderLeftColor: theme.tabIconDefault,
+            },
+          ]}
+        >
           <ThemedText style={styles.noDataText}>
-            No recent trail conditions or weather data available. Share a tip to help others!
+            No recent trail conditions or weather data available. Share a tip to
+            help others!
           </ThemedText>
         </View>
       ) : null}
@@ -519,17 +628,25 @@ export default function NearbyScreen() {
             <ThemedText style={[Typography.h4, styles.sectionHeaderTitle]}>
               Local & Nearby Trails ({allTrails.length})
             </ThemedText>
-            <ThemedText style={[styles.trailCount, { color: theme.tabIconDefault }]}>
+            <ThemedText
+              style={[styles.trailCount, { color: theme.tabIconDefault }]}
+            >
               {communityTrails.length} community
             </ThemedText>
           </View>
-          <ThemedText style={[styles.trailsDescription, { color: theme.tabIconDefault }]}>
-            Popular 4x4 trails and user-logged routes. Tap "Take Me There" for GPS navigation.
+          <ThemedText
+            style={[styles.trailsDescription, { color: theme.tabIconDefault }]}
+          >
+            Popular 4x4 trails and user-logged routes. Tap "Take Me There" for
+            GPS navigation.
           </ThemedText>
           {nearbyTrails.map((trail: any) => (
             <View
               key={trail.id}
-              style={[styles.trailCard, { backgroundColor: theme.backgroundDefault }]}
+              style={[
+                styles.trailCard,
+                { backgroundColor: theme.backgroundDefault },
+              ]}
             >
               <View style={styles.trailCardHeader}>
                 <View style={styles.trailCardContent}>
@@ -537,33 +654,73 @@ export default function NearbyScreen() {
                     <ThemedText style={[Typography.h4, styles.trailName]}>
                       {trail.name}
                     </ThemedText>
-                    {trail.id.startsWith('community_') && (
-                      <View style={[styles.communityBadge, { backgroundColor: theme.success + "20" }]}>
-                        <ThemedText style={[styles.communityBadgeText, { color: theme.success }]}>
+                    {trail.id.startsWith("community_") && (
+                      <View
+                        style={[
+                          styles.communityBadge,
+                          { backgroundColor: theme.success + "20" },
+                        ]}
+                      >
+                        <ThemedText
+                          style={[
+                            styles.communityBadgeText,
+                            { color: theme.success },
+                          ]}
+                        >
                           Community
                         </ThemedText>
                       </View>
                     )}
                   </View>
-                  <ThemedText style={[styles.trailDescription, { color: theme.tabIconDefault }]} numberOfLines={1}>
+                  <ThemedText
+                    style={[
+                      styles.trailDescription,
+                      { color: theme.tabIconDefault },
+                    ]}
+                    numberOfLines={1}
+                  >
                     {trail.description}
                   </ThemedText>
                   <View style={styles.trailMetaRow}>
                     <View style={styles.trailMetaItem}>
-                      <Feather name="navigation" size={14} color={theme.accent} />
-                      <ThemedText style={[styles.trailMetaText, { color: theme.accent }]}>
+                      <Feather
+                        name="navigation"
+                        size={14}
+                        color={theme.accent}
+                      />
+                      <ThemedText
+                        style={[styles.trailMetaText, { color: theme.accent }]}
+                      >
                         {trail.distanceFromUser.toFixed(1)} mi away
                       </ThemedText>
                     </View>
                     <View style={styles.trailMetaItem}>
-                      <Feather name="trending-up" size={14} color={theme.tabIconDefault} />
-                      <ThemedText style={[styles.trailMetaText, { color: theme.tabIconDefault }]}>
+                      <Feather
+                        name="trending-up"
+                        size={14}
+                        color={theme.tabIconDefault}
+                      />
+                      <ThemedText
+                        style={[
+                          styles.trailMetaText,
+                          { color: theme.tabIconDefault },
+                        ]}
+                      >
                         {trail.difficulty}
                       </ThemedText>
                     </View>
                     <View style={styles.trailMetaItem}>
-                      <Feather name="map" size={14} color={theme.tabIconDefault} />
-                      <ThemedText style={[styles.trailMetaText, { color: theme.tabIconDefault }]}>
+                      <Feather
+                        name="map"
+                        size={14}
+                        color={theme.tabIconDefault}
+                      />
+                      <ThemedText
+                        style={[
+                          styles.trailMetaText,
+                          { color: theme.tabIconDefault },
+                        ]}
+                      >
                         {trail.distance.toFixed(1)} mi
                       </ThemedText>
                     </View>
@@ -572,7 +729,10 @@ export default function NearbyScreen() {
               </View>
               <View style={styles.trailCardActions}>
                 <Pressable
-                  style={[styles.takeMeThereButton, { backgroundColor: theme.primary }]}
+                  style={[
+                    styles.takeMeThereButton,
+                    { backgroundColor: theme.primary },
+                  ]}
                   onPress={() => openGPSNavigation(trail)}
                   android_ripple={{ color: "rgba(255,255,255,0.2)" }}
                 >
@@ -582,29 +742,58 @@ export default function NearbyScreen() {
                   </ThemedText>
                 </Pressable>
                 <Pressable
-                  style={[styles.actionButton, { backgroundColor: cachedTrails.has(trail.id) ? theme.success : theme.accent }]}
+                  style={[
+                    styles.actionButton,
+                    {
+                      backgroundColor: cachedTrails.has(trail.id)
+                        ? theme.success
+                        : theme.accent,
+                    },
+                  ]}
                   onPress={() => downloadTrailOffline(trail)}
-                  disabled={downloadingTrails.has(trail.id) || cachedTrails.has(trail.id)}
+                  disabled={
+                    downloadingTrails.has(trail.id) ||
+                    cachedTrails.has(trail.id)
+                  }
                   android_ripple={{ color: "rgba(255,255,255,0.2)" }}
                 >
-                  <Feather 
-                    name={cachedTrails.has(trail.id) ? "check-circle" : downloadingTrails.has(trail.id) ? "download-cloud" : "download"} 
-                    size={18} 
-                    color="white" 
+                  <Feather
+                    name={
+                      cachedTrails.has(trail.id)
+                        ? "check-circle"
+                        : downloadingTrails.has(trail.id)
+                          ? "download-cloud"
+                          : "download"
+                    }
+                    size={18}
+                    color="white"
                   />
                   <ThemedText style={styles.actionButtonText}>
-                    {cachedTrails.has(trail.id) ? 'Offline' : downloadingTrails.has(trail.id) ? 'Downloading...' : 'Download'}
+                    {cachedTrails.has(trail.id)
+                      ? "Offline"
+                      : downloadingTrails.has(trail.id)
+                        ? "Downloading..."
+                        : "Download"}
                   </ThemedText>
                 </Pressable>
                 <Pressable
-                  style={[styles.wishlistButton, { backgroundColor: wishlistTrails.has(trail.id) ? theme.warning : theme.backgroundSecondary }]}
+                  style={[
+                    styles.wishlistButton,
+                    {
+                      backgroundColor: wishlistTrails.has(trail.id)
+                        ? theme.warning
+                        : theme.backgroundSecondary,
+                    },
+                  ]}
                   onPress={() => toggleWishlist(trail.id)}
                   android_ripple={{ color: theme.primary }}
                 >
-                  <Feather 
-                    name={wishlistTrails.has(trail.id) ? "heart" : "heart"} 
-                    size={18} 
-                    color={wishlistTrails.has(trail.id) ? "white" : theme.primary} 
+                  <Feather
+                    name={wishlistTrails.has(trail.id) ? "heart" : "heart"}
+                    size={18}
+                    color={
+                      wishlistTrails.has(trail.id) ? "white" : theme.primary
+                    }
                   />
                 </Pressable>
               </View>
@@ -612,11 +801,16 @@ export default function NearbyScreen() {
           ))}
           {allTrails.length > 10 && (
             <Pressable
-              style={[styles.viewAllButton, { backgroundColor: theme.backgroundDefault }]}
+              style={[
+                styles.viewAllButton,
+                { backgroundColor: theme.backgroundDefault },
+              ]}
               onPress={() => navigation.navigate("NavigateTab")}
               android_ripple={{ color: theme.backgroundSecondary }}
             >
-              <ThemedText style={[styles.viewAllText, { color: theme.primary }]}>
+              <ThemedText
+                style={[styles.viewAllText, { color: theme.primary }]}
+              >
                 View All {allTrails.length} Trails
               </ThemedText>
               <Feather name="arrow-right" size={20} color={theme.primary} />
@@ -644,7 +838,7 @@ export default function NearbyScreen() {
           style={{ flex: 1, backgroundColor: theme.backgroundRoot }}
           contentContainerStyle={[
             styles.container,
-            { paddingTop, paddingBottom: paddingBottom + Spacing.xl }
+            { paddingTop, paddingBottom: paddingBottom + Spacing.xl },
           ]}
           scrollIndicatorInsets={{ bottom: paddingBottom }}
         />
@@ -653,8 +847,11 @@ export default function NearbyScreen() {
           {renderMapHeader()}
           <View style={styles.emptyState}>
             <Feather name="users" size={48} color={theme.tabIconDefault} />
-            <ThemedText style={[styles.emptyText, { color: theme.tabIconDefault }]}>
-              No offroaders nearby at the moment. Recovery guides are available offline.
+            <ThemedText
+              style={[styles.emptyText, { color: theme.tabIconDefault }]}
+            >
+              No offroaders nearby at the moment. Recovery guides are available
+              offline.
             </ThemedText>
           </View>
         </ScreenScrollView>

@@ -32,16 +32,76 @@ export interface Badge {
 }
 
 export const MILESTONE_BADGES: Badge[] = [
-  { id: "rookie", name: "Trail Rookie", description: "Complete your first 10 off-highway miles", icon: "flag", milesRequired: 10 },
-  { id: "explorer", name: "Trail Explorer", description: "Travel 50 off-highway miles", icon: "compass", milesRequired: 50 },
-  { id: "trooper", name: "Trail Trooper", description: "Travel 100 off-highway miles", icon: "shield", milesRequired: 100 },
-  { id: "trailblazer", name: "Trailblazer", description: "Travel 250 off-highway miles", icon: "trending-up", milesRequired: 250 },
-  { id: "pathfinder", name: "Pathfinder", description: "Travel 500 off-highway miles", icon: "navigation", milesRequired: 500 },
-  { id: "adventurer", name: "Adventurer", description: "Travel 750 off-highway miles", icon: "map", milesRequired: 750 },
-  { id: "expedition", name: "Expedition Master", description: "Travel 1,000 off-highway miles", icon: "award", milesRequired: 1000 },
-  { id: "legend", name: "Trail Legend", description: "Travel 2,500 off-highway miles", icon: "star", milesRequired: 2500 },
-  { id: "pioneer", name: "Pioneer Elite", description: "Travel 5,000 off-highway miles", icon: "zap", milesRequired: 5000 },
-  { id: "boss", name: "Trail Boss", description: "Travel 7,500 off-highway miles", icon: "target", milesRequired: 7500 },
+  {
+    id: "rookie",
+    name: "Trail Rookie",
+    description: "Complete your first 10 off-highway miles",
+    icon: "flag",
+    milesRequired: 10,
+  },
+  {
+    id: "explorer",
+    name: "Trail Explorer",
+    description: "Travel 50 off-highway miles",
+    icon: "compass",
+    milesRequired: 50,
+  },
+  {
+    id: "trooper",
+    name: "Trail Trooper",
+    description: "Travel 100 off-highway miles",
+    icon: "shield",
+    milesRequired: 100,
+  },
+  {
+    id: "trailblazer",
+    name: "Trailblazer",
+    description: "Travel 250 off-highway miles",
+    icon: "trending-up",
+    milesRequired: 250,
+  },
+  {
+    id: "pathfinder",
+    name: "Pathfinder",
+    description: "Travel 500 off-highway miles",
+    icon: "navigation",
+    milesRequired: 500,
+  },
+  {
+    id: "adventurer",
+    name: "Adventurer",
+    description: "Travel 750 off-highway miles",
+    icon: "map",
+    milesRequired: 750,
+  },
+  {
+    id: "expedition",
+    name: "Expedition Master",
+    description: "Travel 1,000 off-highway miles",
+    icon: "award",
+    milesRequired: 1000,
+  },
+  {
+    id: "legend",
+    name: "Trail Legend",
+    description: "Travel 2,500 off-highway miles",
+    icon: "star",
+    milesRequired: 2500,
+  },
+  {
+    id: "pioneer",
+    name: "Pioneer Elite",
+    description: "Travel 5,000 off-highway miles",
+    icon: "zap",
+    milesRequired: 5000,
+  },
+  {
+    id: "boss",
+    name: "Trail Boss",
+    description: "Travel 7,500 off-highway miles",
+    icon: "target",
+    milesRequired: 7500,
+  },
 ];
 
 export interface UserProfile {
@@ -106,7 +166,12 @@ export interface CommunityTip {
   id: string;
   title: string;
   description: string;
-  category: "recovery" | "navigation" | "trail_condition" | "maintenance" | "safety";
+  category:
+    | "recovery"
+    | "navigation"
+    | "trail_condition"
+    | "maintenance"
+    | "safety";
   timestamp: number;
   location?: {
     latitude: number;
@@ -225,7 +290,10 @@ export const storage = {
   async addStatusUpdate(update: StatusUpdate): Promise<void> {
     const updates = await this.getStatusUpdates();
     updates.unshift(update);
-    await AsyncStorage.setItem(KEYS.STATUS_UPDATES, JSON.stringify(updates.slice(0, 50)));
+    await AsyncStorage.setItem(
+      KEYS.STATUS_UPDATES,
+      JSON.stringify(updates.slice(0, 50)),
+    );
   },
 
   async getStatusUpdates(): Promise<StatusUpdate[]> {
@@ -256,13 +324,21 @@ export const storage = {
     }
   },
 
-  async addTrailMiles(miles: number): Promise<{ newBadges: Badge[], profile: UserProfile }> {
+  async addTrailMiles(
+    miles: number,
+  ): Promise<{ newBadges: Badge[]; profile: UserProfile }> {
     const profile = await this.getUserProfile();
     if (!profile) {
-      return { newBadges: [], profile: { id: "1", name: "", vehicleType: "", avatarIndex: 0 } };
+      return {
+        newBadges: [],
+        profile: { id: "1", name: "", vehicleType: "", avatarIndex: 0 },
+      };
     }
 
-    const currentStats = profile.trailStats || { totalMiles: 0, trailsCompleted: 0 };
+    const currentStats = profile.trailStats || {
+      totalMiles: 0,
+      trailsCompleted: 0,
+    };
     const previousMiles = currentStats.totalMiles;
     const newTotalMiles = previousMiles + miles;
 
@@ -277,7 +353,10 @@ export const storage = {
     const newBadges: Badge[] = [];
 
     for (const badge of MILESTONE_BADGES) {
-      if (previousMiles < badge.milesRequired && newTotalMiles >= badge.milesRequired) {
+      if (
+        previousMiles < badge.milesRequired &&
+        newTotalMiles >= badge.milesRequired
+      ) {
         if (!earnedBadges.includes(badge.id)) {
           earnedBadges.push(badge.id);
           newBadges.push({ ...badge, earnedAt: Date.now() });
@@ -296,7 +375,9 @@ export const storage = {
   },
 
   getEarnedBadges(earnedBadgeIds: string[]): Badge[] {
-    return MILESTONE_BADGES.filter(badge => earnedBadgeIds.includes(badge.id));
+    return MILESTONE_BADGES.filter((badge) =>
+      earnedBadgeIds.includes(badge.id),
+    );
   },
 
   getNextBadge(totalMiles: number): Badge | null {
@@ -322,13 +403,13 @@ export const storage = {
     try {
       const saved = await this.getSavedGuides();
       const index = saved.indexOf(guideId);
-      
+
       if (index === -1) {
         saved.push(guideId);
       } else {
         saved.splice(index, 1);
       }
-      
+
       await AsyncStorage.setItem(KEYS.SAVED_GUIDES, JSON.stringify(saved));
     } catch (error) {
       console.error("Error toggling saved guide:", error);
@@ -347,7 +428,10 @@ export const storage = {
 
   async saveEmergencyContacts(contacts: EmergencyContact[]): Promise<void> {
     try {
-      await AsyncStorage.setItem(KEYS.EMERGENCY_CONTACTS, JSON.stringify(contacts));
+      await AsyncStorage.setItem(
+        KEYS.EMERGENCY_CONTACTS,
+        JSON.stringify(contacts),
+      );
     } catch (error) {
       console.error("Error saving emergency contacts:", error);
     }
@@ -367,7 +451,10 @@ export const storage = {
     try {
       const history = await this.getScanHistory();
       history.unshift(item);
-      await AsyncStorage.setItem(KEYS.SCAN_HISTORY, JSON.stringify(history.slice(0, 20)));
+      await AsyncStorage.setItem(
+        KEYS.SCAN_HISTORY,
+        JSON.stringify(history.slice(0, 20)),
+      );
     } catch (error) {
       console.error("Error saving scan history:", error);
     }
@@ -387,7 +474,10 @@ export const storage = {
     try {
       const requests = await this.getHelpRequests();
       requests.unshift(request);
-      await AsyncStorage.setItem(KEYS.HELP_REQUESTS, JSON.stringify(requests.slice(0, 50)));
+      await AsyncStorage.setItem(
+        KEYS.HELP_REQUESTS,
+        JSON.stringify(requests.slice(0, 50)),
+      );
     } catch (error) {
       console.error("Error saving help request:", error);
     }
@@ -395,14 +485,17 @@ export const storage = {
 
   async updateHelpRequestStatus(
     requestId: string,
-    status: "active" | "resolved" | "cancelled"
+    status: "active" | "resolved" | "cancelled",
   ): Promise<void> {
     try {
       const requests = await this.getHelpRequests();
       const index = requests.findIndex((r) => r.id === requestId);
       if (index !== -1) {
         requests[index].status = status;
-        await AsyncStorage.setItem(KEYS.HELP_REQUESTS, JSON.stringify(requests));
+        await AsyncStorage.setItem(
+          KEYS.HELP_REQUESTS,
+          JSON.stringify(requests),
+        );
       }
     } catch (error) {
       console.error("Error updating help request:", error);
@@ -423,14 +516,17 @@ export const storage = {
     try {
       const offroaders = await this.getNearbyOffroaders();
       const index = offroaders.findIndex((o) => o.id === offroader.id);
-      
+
       if (index !== -1) {
         offroaders[index] = offroader;
       } else {
         offroaders.push(offroader);
       }
-      
-      await AsyncStorage.setItem(KEYS.NEARBY_OFFROADERS, JSON.stringify(offroaders));
+
+      await AsyncStorage.setItem(
+        KEYS.NEARBY_OFFROADERS,
+        JSON.stringify(offroaders),
+      );
     } catch (error) {
       console.error("Error adding nearby offroader:", error);
     }
@@ -440,8 +536,13 @@ export const storage = {
     try {
       const offroaders = await this.getNearbyOffroaders();
       const cutoffTime = Date.now() - maxAgeMinutes * 60 * 1000;
-      const activeOffroaders = offroaders.filter((o) => o.lastSeen > cutoffTime);
-      await AsyncStorage.setItem(KEYS.NEARBY_OFFROADERS, JSON.stringify(activeOffroaders));
+      const activeOffroaders = offroaders.filter(
+        (o) => o.lastSeen > cutoffTime,
+      );
+      await AsyncStorage.setItem(
+        KEYS.NEARBY_OFFROADERS,
+        JSON.stringify(activeOffroaders),
+      );
     } catch (error) {
       console.error("Error removing old offroaders:", error);
     }
@@ -451,7 +552,9 @@ export const storage = {
     try {
       const data = await AsyncStorage.getItem(KEYS.COMMUNITY_TIPS);
       const tips = data ? JSON.parse(data) : [];
-      return tips.sort((a: CommunityTip, b: CommunityTip) => b.timestamp - a.timestamp);
+      return tips.sort(
+        (a: CommunityTip, b: CommunityTip) => b.timestamp - a.timestamp,
+      );
     } catch (error) {
       console.error("Error loading community tips:", error);
       return [];
@@ -491,10 +594,14 @@ export const storage = {
     }
   },
 
-  async getConversation(participantId: string): Promise<ChatConversation | null> {
+  async getConversation(
+    participantId: string,
+  ): Promise<ChatConversation | null> {
     try {
       const conversations = await this.getChatConversations();
-      return conversations.find((c) => c.participantId === participantId) || null;
+      return (
+        conversations.find((c) => c.participantId === participantId) || null
+      );
     } catch (error) {
       console.error("Error loading conversation:", error);
       return null;
@@ -504,12 +611,14 @@ export const storage = {
   async createOrUpdateConversation(
     participantId: string,
     participantName: string,
-    participantVehicle: string
+    participantVehicle: string,
   ): Promise<ChatConversation> {
     try {
       const data = await AsyncStorage.getItem(KEYS.CHAT_CONVERSATIONS);
       const conversations: ChatConversation[] = data ? JSON.parse(data) : [];
-      const index = conversations.findIndex((c) => c.participantId === participantId);
+      const index = conversations.findIndex(
+        (c) => c.participantId === participantId,
+      );
 
       if (index !== -1) {
         return conversations[index];
@@ -524,10 +633,13 @@ export const storage = {
         lastMessageTime: Date.now(),
         unreadCount: 0,
       };
-      
+
       conversations.push(newConversation);
-      await AsyncStorage.setItem(KEYS.CHAT_CONVERSATIONS, JSON.stringify(conversations));
-      
+      await AsyncStorage.setItem(
+        KEYS.CHAT_CONVERSATIONS,
+        JSON.stringify(conversations),
+      );
+
       return newConversation;
     } catch (error) {
       console.error("Error creating conversation:", error);
@@ -541,12 +653,14 @@ export const storage = {
     participantVehicle: string,
     senderId: string,
     senderName: string,
-    text: string
+    text: string,
   ): Promise<void> {
     try {
       const data = await AsyncStorage.getItem(KEYS.CHAT_CONVERSATIONS);
       const conversations: ChatConversation[] = data ? JSON.parse(data) : [];
-      let index = conversations.findIndex((c) => c.participantId === participantId);
+      let index = conversations.findIndex(
+        (c) => c.participantId === participantId,
+      );
 
       if (index === -1) {
         const newConversation: ChatConversation = {
@@ -574,18 +688,26 @@ export const storage = {
       conversations[index].messages.push(message);
       conversations[index].lastMessageTime = message.timestamp;
 
-      await AsyncStorage.setItem(KEYS.CHAT_CONVERSATIONS, JSON.stringify(conversations));
+      await AsyncStorage.setItem(
+        KEYS.CHAT_CONVERSATIONS,
+        JSON.stringify(conversations),
+      );
     } catch (error) {
       console.error("Error sending message:", error);
       throw error;
     }
   },
 
-  async markMessagesAsRead(participantId: string, currentUserId: string): Promise<void> {
+  async markMessagesAsRead(
+    participantId: string,
+    currentUserId: string,
+  ): Promise<void> {
     try {
       const data = await AsyncStorage.getItem(KEYS.CHAT_CONVERSATIONS);
       const conversations: ChatConversation[] = data ? JSON.parse(data) : [];
-      const index = conversations.findIndex((c) => c.participantId === participantId);
+      const index = conversations.findIndex(
+        (c) => c.participantId === participantId,
+      );
 
       if (index !== -1) {
         let hasUnread = false;
@@ -595,10 +717,13 @@ export const storage = {
             hasUnread = true;
           }
         });
-        
+
         if (hasUnread) {
           conversations[index].unreadCount = 0;
-          await AsyncStorage.setItem(KEYS.CHAT_CONVERSATIONS, JSON.stringify(conversations));
+          await AsyncStorage.setItem(
+            KEYS.CHAT_CONVERSATIONS,
+            JSON.stringify(conversations),
+          );
         }
       }
     } catch (error) {
@@ -608,7 +733,7 @@ export const storage = {
 
   async sendSimulatedResponse(
     participantId: string,
-    participantName: string
+    participantName: string,
   ): Promise<void> {
     const simulatedResponses = [
       "Got it! I'm about 2 miles away, heading your direction.",
@@ -621,8 +746,9 @@ export const storage = {
       "I'm nearby. Let me grab my recovery equipment and head over.",
     ];
 
-    const randomResponse = simulatedResponses[Math.floor(Math.random() * simulatedResponses.length)];
-    
+    const randomResponse =
+      simulatedResponses[Math.floor(Math.random() * simulatedResponses.length)];
+
     try {
       const conversation = await this.getConversation(participantId);
       if (!conversation) {
@@ -636,7 +762,7 @@ export const storage = {
         conversation.participantVehicle,
         participantId,
         participantName,
-        randomResponse
+        randomResponse,
       );
     } catch (error) {
       console.error("Error sending simulated response:", error);
@@ -747,7 +873,9 @@ export const storage = {
     try {
       const data = await AsyncStorage.getItem(KEYS.COMMUNITY_ADVENTURES);
       const adventures = data ? JSON.parse(data) : [];
-      return adventures.sort((a: CompletedAdventure, b: CompletedAdventure) => b.endTime - a.endTime);
+      return adventures.sort(
+        (a: CompletedAdventure, b: CompletedAdventure) => b.endTime - a.endTime,
+      );
     } catch (error) {
       console.error("Error loading community adventures:", error);
       return [];
@@ -758,7 +886,10 @@ export const storage = {
     try {
       const adventures = await this.getCommunityAdventures();
       adventures.unshift(adventure);
-      await AsyncStorage.setItem(KEYS.COMMUNITY_ADVENTURES, JSON.stringify(adventures.slice(0, 100)));
+      await AsyncStorage.setItem(
+        KEYS.COMMUNITY_ADVENTURES,
+        JSON.stringify(adventures.slice(0, 100)),
+      );
     } catch (error) {
       console.error("Error saving completed adventure:", error);
     }
@@ -767,7 +898,7 @@ export const storage = {
   async getAdventuresNearLocation(
     latitude: number,
     longitude: number,
-    radiusMiles: number = 50
+    radiusMiles: number = 50,
   ): Promise<CompletedAdventure[]> {
     try {
       const adventures = await this.getCommunityAdventures();
@@ -793,11 +924,16 @@ export const storage = {
     }
   },
 
-  async getActiveAssistanceWaypoints(): Promise<{ adventure: CompletedAdventure; waypoint: AssistanceWaypoint }[]> {
+  async getActiveAssistanceWaypoints(): Promise<
+    { adventure: CompletedAdventure; waypoint: AssistanceWaypoint }[]
+  > {
     try {
       const adventures = await this.getCommunityAdventures();
-      const activeWaypoints: { adventure: CompletedAdventure; waypoint: AssistanceWaypoint }[] = [];
-      
+      const activeWaypoints: {
+        adventure: CompletedAdventure;
+        waypoint: AssistanceWaypoint;
+      }[] = [];
+
       adventures.forEach((adventure) => {
         adventure.assistanceWaypoints
           .filter((wp) => wp.status === "active")
@@ -805,7 +941,7 @@ export const storage = {
             activeWaypoints.push({ adventure, waypoint });
           });
       });
-      
+
       return activeWaypoints;
     } catch (error) {
       console.error("Error getting active assistance waypoints:", error);
@@ -822,7 +958,7 @@ export const storage = {
         ...scan,
         difficultyScore: this.calculateDifficultyScore(scan),
         votes: scan.votes || 0,
-        userName: scan.userName || 'Anonymous',
+        userName: scan.userName || "Anonymous",
       }));
       return communityScans;
     } catch (error) {
@@ -834,18 +970,18 @@ export const storage = {
   calculateDifficultyScore(scan: any): number {
     // Calculate difficulty based on situation type
     const difficultyMap: { [key: string]: number } = {
-      'Deep Mud': 7,
-      'Rock Crawl': 8,
-      'Sand Trap': 6,
-      'Water Crossing': 7,
-      'Steep Incline': 8,
-      'Vehicle Rollover': 10,
-      'Broken Axle': 9,
-      'High Centering': 7,
-      'Stuck in Snow': 6,
-      'Other': 5,
+      "Deep Mud": 7,
+      "Rock Crawl": 8,
+      "Sand Trap": 6,
+      "Water Crossing": 7,
+      "Steep Incline": 8,
+      "Vehicle Rollover": 10,
+      "Broken Axle": 9,
+      "High Centering": 7,
+      "Stuck in Snow": 6,
+      Other: 5,
     };
-    
+
     return difficultyMap[scan.situationType] || 5;
   },
 };
