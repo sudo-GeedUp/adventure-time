@@ -34,7 +34,7 @@ export const initializeRevenueCat = async () => {
     }
 
     // Configure RevenueCat
-    Purchases.setLogLevel(LOG_LEVEL.VERBOSE); // Set to INFO in production
+    Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.VERBOSE : LOG_LEVEL.INFO);
 
     const apiKey = Platform.select({
       ios: REVENUECAT_IOS_KEY || FALLBACK_TEST_KEY,
