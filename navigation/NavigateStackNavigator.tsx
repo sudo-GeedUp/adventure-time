@@ -3,15 +3,30 @@ import { Platform } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import NavigateScreen from "@/screens/NavigateScreen";
 import ActiveAdventureScreen from "@/screens/ActiveAdventureScreen";
+import ActiveAdventureScreenWeb from "@/screens/ActiveAdventureScreen.web";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useTheme } from "@/hooks/useTheme";
 import { Trail } from "@/utils/trails";
 
-// Conditionally import screens based on platform
+// Define navigation prop types
+type NavigationProp = any; // Using any for now since StackScreenProps is not available
+
+// Wrapper components to prevent remounting on every render
+const ActiveAdventureScreenWithBoundary = (props: NavigationProp) => (
+  <ErrorBoundary>
+    <ActiveAdventureScreen {...props} />
+  </ErrorBoundary>
+);
+
+const ActiveAdventureScreenWebWithBoundary = (props: NavigationProp) => (
+  <ErrorBoundary>
+    <ActiveAdventureScreenWeb />
+  </ErrorBoundary>
+);
+
+// Conditionally import LiveMapScreen based on platform
 const LiveMapScreen =
   Platform.OS !== "web" ? require("@/screens/LiveMapScreen").default : null;
-const ActiveAdventureScreenWeb =
-  Platform.OS === "web" ? require("@/screens/ActiveAdventureScreen.web").default : null;
 
 export type NavigateStackParamList = {
   LiveMap: undefined;
@@ -52,20 +67,16 @@ export default function NavigateStackNavigator() {
       {Platform.OS !== "web" && (
         <Stack.Screen
           name="ActiveAdventure"
-          component={(props: any) => (
-            <ErrorBoundary>
-              <ActiveAdventureScreen {...props} />
-            </ErrorBoundary>
-          )}
+          component={ActiveAdventureScreenWithBoundary}
           options={{
             title: "Adventure",
           }}
         />
       )}
-      {Platform.OS === "web" && ActiveAdventureScreenWeb && (
+      {Platform.OS === "web" && (
         <Stack.Screen
           name="ActiveAdventure"
-          component={ActiveAdventureScreenWeb}
+          component={ActiveAdventureScreenWebWithBoundary}
           options={{
             title: "Adventure",
           }}

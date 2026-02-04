@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -15,12 +15,14 @@ import { useTheme } from "@/hooks/useTheme";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 import { getOfferings } from "@/config/revenuecat";
+import { PACKAGE_TYPE } from "react-native-purchases";
 
 export default function SubscriptionScreen() {
   const { theme } = useTheme();
-  const { isPremium, purchaseSubscription, restore, isLoading } =
+  const { isPremium, purchaseSubscription, restore, isLoading, refreshStatus } =
     useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
+  const processingRef = useRef(false);
   const [monthlyPackage, setMonthlyPackage] = useState<PurchasesPackage | null>(
     null,
   );
@@ -36,30 +38,73 @@ export default function SubscriptionScreen() {
       const offerings = await getOfferings();
       if (offerings) {
         const monthly = offerings.availablePackages.find(
-          (pkg) =>
-            pkg.packageType === "MONTHLY" ||
-            pkg.product.identifier === "com.adventuretime.premium.monthly",
+          (pkg) => pkg.packageType === PACKAGE_TYPE.MONTHLY
         );
         setMonthlyPackage(monthly || null);
+      } else if (__DEV__) {
+        // Mock package for development
+        console.log("Using mock subscription data for development");
+        setMonthlyPackage({
+          identifier: "mock-monthly",
+          packageType: "MONTHLY",
+          product: {
+            identifier: "com.adventuretime.premium.monthly",
+            priceString: "$4.99/month",
+            price: 4.99,
+            currencyCode: "USD",
+          }
+        } as any);
       }
     } catch (error) {
       console.error("Error loading offerings:", error);
+      if (__DEV__) {
+        // Fallback to mock data
+        setMonthlyPackage({
+          identifier: "mock-monthly",
+          packageType: "MONTHLY",
+          product: {
+            identifier: "com.adventuretime.premium.monthly",
+            priceString: "$4.99/month",
+            price: 4.99,
+            currencyCode: "USD",
+          }
+        } as any);
+      }
     } finally {
       setLoadingOfferings(false);
     }
   };
 
   const handlePurchase = async () => {
-    if (isProcessing) return;
+    // Prevent multiple simultaneous purchases
+    if (processingRef.current) return;
 
+    processingRef.current = true;
     setIsProcessing(true);
+    
     try {
-      const success = await purchaseSubscription();
-      if (success) {
+      // Check if using mock data
+      if (__DEV__ && monthlyPackage?.identifier.startsWith("mock-")) {
+        // Mock purchase for development
+        console.log("Processing mock subscription...");
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate delay
+        
         Alert.alert(
           "Welcome to Premium!",
-          "You now have access to all premium features including AI Scan, trail updates, and more!",
+          "You now have access to all premium features including AI Scan, trail updates, and more!\n\n(Note: This is a mock subscription for development)",
         );
+        
+        // Update subscription status
+        refreshStatus();
+      } else {
+        // Real purchase flow
+        const success = await purchaseSubscription();
+        if (success) {
+          Alert.alert(
+            "Welcome to Premium!",
+            "You now have access to all premium features including AI Scan, trail updates, and more!",
+          );
+        }
       }
     } catch (error: any) {
       if (!error.userCancelled) {
@@ -69,14 +114,18 @@ export default function SubscriptionScreen() {
         );
       }
     } finally {
+      processingRef.current = false;
       setIsProcessing(false);
     }
   };
 
   const handleRestore = async () => {
-    if (isProcessing) return;
+    // Prevent multiple simultaneous restore attempts
+    if (processingRef.current) return;
 
+    processingRef.current = true;
     setIsProcessing(true);
+    
     try {
       const success = await restore();
       if (success) {
@@ -96,6 +145,7 @@ export default function SubscriptionScreen() {
         "Unable to restore purchases. Please try again.",
       );
     } finally {
+      processingRef.current = false;
       setIsProcessing(false);
     }
   };

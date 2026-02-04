@@ -1,0 +1,15 @@
+{
+  "identifier": "premium_monthly_",
+  "type": "Auto-Renewable Subscription",
+  "displayName": "Adventure Time Premium",
+  "description": "Unlock all premium features",
+  "price": 4.99,
+  "duration": "P1M",
+  "familyShareable": false,
+  "introductoryOffer": {
+    "type": "Free Trial",
+    "duration": "P7D",
+    "price": 0
+  },
+  "subscriptionGroup": "21593625"
+}

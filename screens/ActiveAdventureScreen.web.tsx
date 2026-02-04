@@ -6,7 +6,11 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, Typography } from "@/constants/theme";
 import { Feather } from "@expo/vector-icons";
 
-export default function ActiveAdventureScreen() {
+interface ActiveAdventureScreenWebProps {
+  // No props currently used, but interface added for clarity
+}
+
+export default function ActiveAdventureScreen(_props: ActiveAdventureScreenWebProps) {
   const { theme } = useTheme();
 
   return (

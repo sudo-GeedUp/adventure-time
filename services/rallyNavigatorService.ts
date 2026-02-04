@@ -4,6 +4,11 @@ import { Trail } from "@/utils/trails";
 import { RoutePoint, AdventureHazard } from "@/utils/storage";
 import { calculateDistance } from "@/utils/location";
 
+// Enhanced location interface with additional properties
+interface EnhancedLocation extends Location.LocationObject {
+  enhancedSpeed?: number;
+}
+
 export interface NavigationCallout {
   id: string;
   type:
@@ -49,6 +54,8 @@ class RallyNavigatorService {
   private lastLocation: Location.LocationObject | null = null;
   private lastHeading: number | null = null;
   private audioEnabled: boolean = true;
+  private maxCalloutHistory: number = 100; // Limit history to prevent memory leaks
+  private lastLogTime: number = 0; // Track last log time to reduce spam
 
   /**
    * Initialize navigator with trail and route data
@@ -90,8 +97,8 @@ class RallyNavigatorService {
     // Use enhanced speed if available (already in MPH from ActiveAdventureScreen)
     // Otherwise convert GPS speed from m/s to mph
     const currentSpeed =
-      (location as any).enhancedSpeed !== undefined
-        ? (location as any).enhancedSpeed
+      (location as EnhancedLocation).enhancedSpeed !== undefined
+        ? (location as EnhancedLocation).enhancedSpeed
         : location.coords.speed
           ? location.coords.speed * 2.237
           : 0;
@@ -103,12 +110,20 @@ class RallyNavigatorService {
       return [];
     }
 
-    console.log(
-      `[Rally Navigator] Speed: ${currentSpeed.toFixed(1)} MPH, Heading: ${currentHeading}°, Altitude: ${currentAltitude.toFixed(0)} ft`,
-    );
+    // Only log every 10 seconds to reduce console spam
+    if (now - this.lastLogTime > 10000 || !this.lastLogTime) {
+      console.log(
+        `[Rally Navigator] Speed: ${currentSpeed?.toFixed(1) || 0} MPH, Heading: ${currentHeading?.toFixed(0) || 0}°, Altitude: ${currentAltitude.toFixed(0)} ft`,
+      );
+      this.lastLogTime = now;
+    }
+
+    // Check for upcoming hazards
+    const hazardCallouts = this.checkUpcomingHazards(location, now);
+    callouts.push(...hazardCallouts);
 
     // Check for speed advisories (lower threshold for off-road)
-    if (currentSpeed > 30) {
+    if (currentSpeed && currentSpeed > 30) {
       callouts.push({
         id: `speed-${now}`,
         message: `⚠️ Speed ${Math.round(currentSpeed)} mph - Slow down for trail conditions`,
@@ -169,6 +184,11 @@ class RallyNavigatorService {
     if (callouts.length > 0) {
       this.lastCalloutTime = now;
       this.calloutHistory.push(...callouts);
+      
+      // Cleanup old callouts to prevent memory leaks
+      if (this.calloutHistory.length > this.maxCalloutHistory) {
+        this.calloutHistory = this.calloutHistory.slice(-this.maxCalloutHistory);
+      }
 
       // Speak the callouts over device speakers
       if (this.audioEnabled) {

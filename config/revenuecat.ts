@@ -1,15 +1,19 @@
 import Purchases, {
   LOG_LEVEL,
   PurchasesOffering,
+  PACKAGE_TYPE,
 } from "react-native-purchases";
 import { Platform } from "react-native";
 
 // RevenueCat API Keys
+// WARNING: These are test keys only. Never use production keys in client-side code.
 const REVENUECAT_IOS_KEY =
-  process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY ||
-  "test_VuKiYKHZIagZNWUqTtxfCQColuV";
+  process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY;
 const REVENUECAT_ANDROID_KEY =
-  process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || "";
+  process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY;
+
+// Fallback test key for development only
+const FALLBACK_TEST_KEY = __DEV__ ? "test_VuKiYKHZIagZNWUqTtxfCQColuV" : "";
 
 // Product IDs
 export const PRODUCT_IDS = {
@@ -33,19 +37,29 @@ export const initializeRevenueCat = async () => {
     Purchases.setLogLevel(LOG_LEVEL.VERBOSE); // Set to INFO in production
 
     const apiKey = Platform.select({
-      ios: REVENUECAT_IOS_KEY,
-      android: REVENUECAT_ANDROID_KEY,
+      ios: REVENUECAT_IOS_KEY || FALLBACK_TEST_KEY,
+      android: REVENUECAT_ANDROID_KEY || FALLBACK_TEST_KEY,
     });
 
     if (!apiKey) {
       console.error("RevenueCat API key not configured");
+      if (!__DEV__) {
+        console.error("Please set EXPO_PUBLIC_REVENUECAT_IOS_KEY and/or EXPO_PUBLIC_REVENUECAT_ANDROID_KEY in your environment");
+      }
       return false;
+    }
+    
+    // Warn if using fallback key
+    if (apiKey === FALLBACK_TEST_KEY && apiKey !== "") {
+      console.warn("WARNING: Using test RevenueCat key in development mode only!");
     }
 
     await Purchases.configure({ apiKey });
 
-    // Optional: Set user ID if you have your own user system
-    // await Purchases.logIn(userId);
+    // For development, enable test mode
+    if (__DEV__) {
+      console.log("RevenueCat running in test mode");
+    }
 
     return true;
   } catch (error) {
@@ -60,6 +74,12 @@ export const getOfferings = async (): Promise<PurchasesOffering | null> => {
     if (offerings.current !== null) {
       return offerings.current;
     }
+    
+    // No current offering available
+    if (__DEV__) {
+      console.warn("No current offering found - mock data will be used in SubscriptionScreen");
+    }
+    
     return null;
   } catch (error) {
     console.error("Error fetching offerings:", error);
@@ -76,7 +96,7 @@ export const purchaseMonthlySubscription = async () => {
 
     // Find the monthly package
     const monthlyPackage = offerings.availablePackages.find(
-      (pkg) => pkg.product.identifier === PRODUCT_IDS.MONTHLY_SUBSCRIPTION,
+      (pkg) => pkg.packageType === PACKAGE_TYPE.MONTHLY
     );
 
     if (!monthlyPackage) {
@@ -88,7 +108,7 @@ export const purchaseMonthlySubscription = async () => {
       customerInfo.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined
     );
   } catch (error: any) {
-    if (!error.userCancelled) {
+    if (error?.userCancelled !== true) {
       console.error("Purchase error:", error);
       throw error;
     }

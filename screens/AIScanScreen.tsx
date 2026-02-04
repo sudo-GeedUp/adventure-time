@@ -2,29 +2,60 @@ import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Pressable, Alert, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { CompositeNavigationProp } from "@react-navigation/native";
+import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import * as ImagePicker from "expo-image-picker";
 import { Feather } from "@expo/vector-icons";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { AIScanStackParamList } from "@/navigation/AIScanStackNavigator";
+import { MainTabParamList } from "@/navigation/MainTabNavigator";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage } from "@/utils/storage";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 
-type AIScanScreenNavigationProp = NativeStackNavigationProp<
-  AIScanStackParamList,
-  "AIScan"
+// Define types for scan data
+interface ScanHistoryItem {
+  id: string;
+  imageUri: string;
+  situationType: string;
+  timestamp: number;
+  analysis?: any;
+}
+
+interface StuckOfTheWeek {
+  imageUri?: string;
+  situationType?: string;
+  description?: string;
+  difficultyScore?: number;
+  userName?: string;
+  votes?: number;
+}
+
+interface AnalysisResult {
+  situationType: string;
+  severity: string;
+  vehiclePosition: string;
+  recommendations: string[];
+  safetyNotes: string;
+  estimatedRecoveryTime: string;
+  requiredEquipment: string[];
+}
+
+type AIScanScreenNavigationProp = CompositeNavigationProp<
+  NativeStackNavigationProp<AIScanStackParamList, "AIScan">,
+  BottomTabNavigationProp<MainTabParamList>
 >;
 
 export default function AIScanScreen() {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<AIScanScreenNavigationProp>();
   const { theme } = useTheme();
   const { isPremium } = useSubscription();
-  const [scanHistory, setScanHistory] = useState<any[]>([]);
-  const [stuckOfTheWeek, setStuckOfTheWeek] = useState<any>(null);
+  const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([]);
+  const [stuckOfTheWeek, setStuckOfTheWeek] = useState<StuckOfTheWeek | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
 
   useEffect(() => {
     loadScanHistory();
@@ -52,7 +83,7 @@ export default function AIScanScreen() {
     setScanHistory(history);
   };
 
-  const analyzeImage = async (imageUri: string) => {
+  const analyzeImage = async (imageUri: string): Promise<AnalysisResult> => {
     // Mock analysis for development
     return {
       situationType: "Rock Crawl",
@@ -82,7 +113,7 @@ export default function AIScanScreen() {
     return true;
   };
 
-  const handleTakePhoto = async () => {
+  const checkPremiumAndNavigate = () => {
     if (!isPremium) {
       Alert.alert(
         "Premium Feature",
@@ -92,14 +123,19 @@ export default function AIScanScreen() {
           {
             text: "Subscribe",
             onPress: () =>
-              (navigation as any).navigate("ProfileTab", {
+              navigation.navigate("ProfileTab" as any, {
                 screen: "Subscription",
               }),
           },
         ],
       );
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const handleTakePhoto = async () => {
+    if (!checkPremiumAndNavigate()) return;
 
     const hasPermission = await requestCameraPermission();
     if (!hasPermission) return;
@@ -114,12 +150,13 @@ export default function AIScanScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
+        let analysis;
         try {
-          const analysis = await analyzeImage(result.assets[0].uri);
+          analysis = await analyzeImage(result.assets[0].uri);
           setAnalysisResult(analysis);
         } catch (error) {
           console.warn("AI analysis not available in development mode:", error);
-          setAnalysisResult({
+          analysis = {
             situationType: "Rock Crawl",
             severity: "Moderate",
             vehiclePosition: "High-centered on rocks",
@@ -132,12 +169,13 @@ export default function AIScanScreen() {
             safetyNotes: "Ensure vehicle is stable before attempting recovery",
             estimatedRecoveryTime: "30-45 minutes",
             requiredEquipment: ["Traction boards", "Winch", "Tow straps"],
-          });
+          };
+          setAnalysisResult(analysis);
         }
         setIsAnalyzing(false);
         navigation.navigate("AIResults", {
           imageUri: result.assets[0].uri,
-          analysisResult,
+          analysisResult: analysis,
         });
       }
     } catch (error) {
@@ -147,23 +185,7 @@ export default function AIScanScreen() {
   };
 
   const handleUploadPhoto = async () => {
-    if (!isPremium) {
-      Alert.alert(
-        "Premium Feature",
-        "AI Recovery Analysis is a premium feature. Subscribe to unlock this and other premium features.",
-        [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Subscribe",
-            onPress: () =>
-              (navigation as any).navigate("ProfileTab", {
-                screen: "Subscription",
-              }),
-          },
-        ],
-      );
-      return;
-    }
+    if (!checkPremiumAndNavigate()) return;
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -172,7 +194,30 @@ export default function AIScanScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      navigation.navigate("AIResults", { imageUri: result.assets[0].uri });
+      let analysis;
+      try {
+        analysis = await analyzeImage(result.assets[0].uri);
+      } catch (error) {
+        console.warn("AI analysis not available in development mode:", error);
+        analysis = {
+          situationType: "Rock Crawl",
+          severity: "Moderate",
+          vehiclePosition: "High-centered on rocks",
+          recommendations: [
+            "Use rock sliders for protection",
+            "Air down tires for better traction",
+            "Use a spotter for guidance",
+            "Consider winching if stuck",
+          ],
+          safetyNotes: "Ensure vehicle is stable before attempting recovery",
+          estimatedRecoveryTime: "30-45 minutes",
+          requiredEquipment: ["Traction boards", "Winch", "Tow straps"],
+        };
+      }
+      navigation.navigate("AIResults", { 
+        imageUri: result.assets[0].uri,
+        analysisResult: analysis
+      });
     }
   };
 
@@ -357,7 +402,7 @@ export default function AIScanScreen() {
               styles.viewDetailsButton,
               { backgroundColor: theme.warning },
             ]}
-            onPress={() => handleScanPress(stuckOfTheWeek.imageUri)}
+            onPress={() => stuckOfTheWeek.imageUri && handleScanPress(stuckOfTheWeek.imageUri)}
             android_ripple={{ color: "rgba(255,255,255,0.2)" }}
           >
             <ThemedText style={styles.viewDetailsText}>
@@ -373,7 +418,7 @@ export default function AIScanScreen() {
           <ThemedText style={[Typography.h4, styles.historyTitle]}>
             Recent Scans
           </ThemedText>
-          {scanHistory.map((item) => (
+          {scanHistory.map((item: ScanHistoryItem) => (
             <Pressable
               key={item.id}
               style={[
