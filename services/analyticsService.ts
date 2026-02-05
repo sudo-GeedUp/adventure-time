@@ -238,6 +238,20 @@ class AnalyticsService {
       console.error("Error logging custom event:", error);
     }
   }
+
+  trackPerformance(name: string, duration: number, unit?: string) {
+    if (!this.isInitialized) return;
+    try {
+      firebaseLogEvent(this.analytics, "performance_metric", {
+        metric_name: name,
+        duration,
+        unit: unit || 'ms',
+        timestamp: Date.now(),
+      });
+    } catch (error) {
+      console.error("Error tracking performance:", error);
+    }
+  }
 }
 
 export const analyticsService = new AnalyticsService();

@@ -10,7 +10,7 @@
 - ✅ Firebase configured
 - ✅ Google Maps API key configured
 - ✅ OpenAI API key configured
-- ✅ RevenueCat iOS key configured
+- ✅ RevenueCat iOS key configured 
 - ⚠️ Need: RevenueCat Android key
 - ⚠️ Optional: OpenWeather API key
 - ⚠️ Optional: Google OAuth keys

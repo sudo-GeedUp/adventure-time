@@ -51,7 +51,8 @@
           }
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "@sentry/react-native"
     ],
     "experiments": {
       "reactCompiler": true
