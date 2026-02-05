@@ -48,20 +48,6 @@ export default function CommunityTipsScreen() {
 
   const loadTips = async () => {
     if (!isPremium) {
-      Alert.alert(
-        "Premium Feature",
-        "Viewing community tips and trail conditions is a premium feature. Subscribe to access this feature!",
-        [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Subscribe",
-            onPress: () =>
-              (navigation as any).navigate("ProfileTab", {
-                screen: "Subscription",
-              }),
-          },
-        ],
-      );
       return;
     }
 

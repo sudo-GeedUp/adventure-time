@@ -22,13 +22,14 @@ export default function AIResultsScreen() {
   const route = useRoute<AIResultsScreenRouteProp>();
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
-  const [isAnalyzing, setIsAnalyzing] = useState(true);
-  const [analysis, setAnalysis] = useState<any>(null);
-
-  const { imageUri } = route.params;
+  const { imageUri, analysisResult } = route.params;
+  const [isAnalyzing, setIsAnalyzing] = useState(!analysisResult);
+  const [analysis, setAnalysis] = useState<any>(analysisResult ?? null);
 
   useEffect(() => {
-    performAnalysis();
+    if (!analysisResult) {
+      performAnalysis();
+    }
   }, []);
 
   const performAnalysis = async () => {

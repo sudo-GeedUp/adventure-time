@@ -21,14 +21,14 @@ export interface GuideCategory {
   guideCount: number;
 }
 
-export const categories: GuideCategory[] = [
-  { id: "mud", title: "Stuck in Mud", icon: "droplet", guideCount: 4 },
-  { id: "sand", title: "Sand Recovery", icon: "sun", guideCount: 3 },
-  { id: "snow", title: "Stuck in Snow", icon: "cloud", guideCount: 4 },
-  { id: "rocks", title: "Rock Crawling", icon: "triangle", guideCount: 3 },
-  { id: "mechanical", title: "Mechanical Issues", icon: "tool", guideCount: 5 },
-  { id: "winching", title: "Winching", icon: "anchor", guideCount: 3 },
-  { id: "tire", title: "Tire Repairs", icon: "disc", guideCount: 4 },
+const categoryMeta: Omit<GuideCategory, "guideCount">[] = [
+  { id: "mud", title: "Stuck in Mud", icon: "droplet" },
+  { id: "sand", title: "Sand Recovery", icon: "sun" },
+  { id: "snow", title: "Stuck in Snow", icon: "cloud" },
+  { id: "rocks", title: "Rock Crawling", icon: "triangle" },
+  { id: "mechanical", title: "Mechanical Issues", icon: "tool" },
+  { id: "winching", title: "Winching", icon: "anchor" },
+  { id: "tire", title: "Tire Repairs", icon: "disc" },
 ];
 
 export const guides: Guide[] = [
@@ -457,3 +457,8 @@ export const guides: Guide[] = [
     ],
   },
 ];
+
+export const categories: GuideCategory[] = categoryMeta.map((cat) => ({
+  ...cat,
+  guideCount: guides.filter((g) => g.category === cat.id).length,
+}));

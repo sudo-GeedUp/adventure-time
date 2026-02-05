@@ -99,9 +99,16 @@ export default function ForgotPasswordScreen() {
 
             <Pressable
               style={styles.resendButton}
-              onPress={() => {
-                setEmailSent(false);
-                handleResetPassword();
+              onPress={async () => {
+                setLoading(true);
+                try {
+                  await authService.sendPasswordReset(email);
+                  Alert.alert("Email Sent", "A new reset link has been sent to your email.");
+                } catch (error: any) {
+                  Alert.alert("Error", error.message);
+                } finally {
+                  setLoading(false);
+                }
               }}
             >
               <ThemedText style={[styles.resendText, { color: theme.primary }]}>

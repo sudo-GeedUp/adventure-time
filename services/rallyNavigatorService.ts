@@ -134,20 +134,23 @@ class RallyNavigatorService {
       });
     }
 
-    // Check for direction changes
-    if (
-      this.lastHeading !== null &&
-      Math.abs(currentHeading - this.lastHeading) > 45
-    ) {
-      callouts.push({
-        id: `turn-${now}`,
-        message: `🔄 Turn ${currentHeading > this.lastHeading ? "right" : "left"} ahead`,
-        priority: "medium",
-        type: "direction",
-        timestamp: now,
-        icon: "refresh-cw",
-      });
-      this.lastHeading = currentHeading;
+    // Check for direction changes (handle 360/0 wraparound)
+    if (this.lastHeading !== null) {
+      let headingDiff = currentHeading - this.lastHeading;
+      if (headingDiff < -180) headingDiff += 360;
+      if (headingDiff > 180) headingDiff -= 360;
+
+      if (Math.abs(headingDiff) > 45) {
+        callouts.push({
+          id: `turn-${now}`,
+          message: `🔄 Turn ${headingDiff > 0 ? "right" : "left"} ahead`,
+          priority: "medium",
+          type: "direction",
+          timestamp: now,
+          icon: "refresh-cw",
+        });
+        this.lastHeading = currentHeading;
+      }
     }
 
     // Check for altitude changes (steep ascent/descent)

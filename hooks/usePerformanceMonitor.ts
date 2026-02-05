@@ -101,31 +101,29 @@ export const usePerformanceMonitor = (options: PerformanceMonitorOptions = {}) =
       endTiming(name, { success: true });
       return result;
     } catch (error) {
-      endTiming(name, { success: false, error: error.message });
+      endTiming(name, { success: false, error: error instanceof Error ? error.message : String(error) });
       throw error;
     }
   }, [startTiming, endTiming]);
 
-  // Measure render time
+  // Measure render time — returns a cleanup function to call in the consumer's useEffect
   const measureRender = useCallback((componentName: string) => {
-    useEffect(() => {
-      const mountTime = performance.now();
-      
-      // Use requestAnimationFrame to ensure render is complete
-      const frame = requestAnimationFrame(() => {
-        const renderTime = performance.now() - mountTime;
-        
-        if (trackInAnalytics) {
-          analyticsService.trackPerformance(`${componentName}_render`, renderTime);
-        }
-        
-        if (renderTime > 100) { // 100ms render threshold
-          console.warn(`Slow render detected: ${componentName} took ${renderTime.toFixed(2)}ms`);
-        }
-      });
+    const mountTime = performance.now();
 
-      return () => cancelAnimationFrame(frame);
+    // Use requestAnimationFrame to ensure render is complete
+    const frame = requestAnimationFrame(() => {
+      const renderTime = performance.now() - mountTime;
+
+      if (trackInAnalytics) {
+        analyticsService.trackPerformance(`${componentName}_render`, renderTime);
+      }
+
+      if (renderTime > 100) { // 100ms render threshold
+        console.warn(`Slow render detected: ${componentName} took ${renderTime.toFixed(2)}ms`);
+      }
     });
+
+    return () => cancelAnimationFrame(frame);
   }, [trackInAnalytics]);
 
   // Get current active metrics
@@ -191,12 +189,12 @@ export const useApiMonitor = () => {
         
         // Track additional metrics
         if (response.ok) {
-          analyticsService.trackCustomEvent('api_success', {
+          analyticsService.logCustomEvent('api_success', {
             url: new URL(url).pathname,
             status: response.status,
           });
         } else {
-          analyticsService.trackError('api_error', `HTTP ${response.status}`, 'API Call');
+          analyticsService.logError('api_error', `HTTP ${response.status}`, 'API Call');
         }
         
         return response;

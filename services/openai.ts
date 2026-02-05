@@ -97,12 +97,9 @@ Focus on:
     let jsonContent = content.trim();
 
     // Remove markdown code blocks if present
-    if (jsonContent.startsWith("```json")) {
-      jsonContent = jsonContent
-        .replace(/```json\n?/g, "")
-        .replace(/```\n?$/g, "");
-    } else if (jsonContent.startsWith("```")) {
-      jsonContent = jsonContent.replace(/```\n?/g, "").replace(/```\n?$/g, "");
+    if (jsonContent.startsWith("```")) {
+      // Remove opening fence (```json or ```) and closing fence (```)
+      jsonContent = jsonContent.replace(/^```(?:json)?\n?/, "").replace(/\n?```\s*$/, "");
     }
 
     const analysis: RecoveryAnalysis = JSON.parse(jsonContent.trim());

@@ -173,6 +173,16 @@ export class OfflineMapsManager {
     }
   }
 
+  // Clear all cached offline data
+  static async clearAllCache(): Promise<void> {
+    try {
+      await AsyncStorage.multiRemove([OFFLINE_TRAILS_KEY, OFFLINE_MAP_TILES_KEY]);
+      console.log("All offline cache data cleared");
+    } catch (error) {
+      console.error("Error clearing all cache data:", error);
+    }
+  }
+
   // Get storage usage info
   static async getCacheInfo(): Promise<{
     trailsCount: number;

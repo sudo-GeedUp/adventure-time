@@ -6,6 +6,7 @@ import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 import { storage } from "@/utils/storage";
+import { OfflineMapsManager } from "@/utils/offlineMaps";
 
 export default function SettingsScreen() {
   const { theme } = useTheme();
@@ -19,7 +20,8 @@ export default function SettingsScreen() {
         {
           text: "Clear",
           style: "destructive",
-          onPress: () => {
+          onPress: async () => {
+            await OfflineMapsManager.clearAllCache();
             Alert.alert(
               "Cache Cleared",
               "Offline guide cache has been cleared.",

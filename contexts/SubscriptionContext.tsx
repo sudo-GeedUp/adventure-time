@@ -68,14 +68,14 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
         if (initialized) {
           await refreshStatus();
         } else {
-          // If RevenueCat fails to initialize, grant free access
-          console.warn("RevenueCat not initialized, granting free access");
-          setIsPremium(true);
+          // If RevenueCat fails to initialize on mobile, default to non-premium
+          console.warn("RevenueCat not initialized, defaulting to non-premium");
+          setIsPremium(false);
         }
       } catch (error) {
         console.error("Error initializing subscriptions:", error);
-        // On error, grant free access to avoid blocking users
-        setIsPremium(true);
+        // On error, default to non-premium on mobile
+        setIsPremium(false);
       } finally {
         setIsLoading(false);
       }

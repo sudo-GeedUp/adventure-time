@@ -470,6 +470,7 @@ export default function ActiveAdventureScreen() {
     null,
   );
   const sosTrackingStartedRef = useRef(false);
+  const speedHistoryRef = useRef<number[]>([]);
 
   const HAZARD_TYPES = [
     { id: "washout", label: "Washout", icon: "alert-triangle" },
@@ -601,7 +602,8 @@ export default function ActiveAdventureScreen() {
             // Real device will show actual GPS speed when moving
 
             // Apply speed smoothing
-            const newSpeedHistory = [...speedHistory, rawSpeed].slice(-5); // Keep last 5 readings
+            const newSpeedHistory = [...speedHistoryRef.current, rawSpeed].slice(-5); // Keep last 5 readings
+            speedHistoryRef.current = newSpeedHistory;
             setSpeedHistory(newSpeedHistory);
 
             // Calculate average speed for smooth display
@@ -666,7 +668,7 @@ export default function ActiveAdventureScreen() {
     if (Platform.OS !== "web") {
       startLocationTracking();
     }
-  }, [isTracking, session, speedHistory]);
+  }, [isTracking]);
 
   const startAdventure = async () => {
     try {
@@ -841,13 +843,24 @@ export default function ActiveAdventureScreen() {
     try {
       const location = await Location.getCurrentPositionAsync({});
 
+      // Sanitize description with same security measures as hazard descriptions
+      const sanitizedDescription = assistanceDescription
+        .trim()
+        .replace(/[\x00-\x1F\x7F]/g, "")
+        .replace(/[<>\"'&]/g, "")
+        .replace(/javascript:/gi, "")
+        .replace(/on\w+=/gi, "")
+        .replace(/[\r\n]/g, " ")
+        .replace(/\s+/g, " ")
+        .substring(0, 500);
+
       const newWaypoint: AssistanceWaypoint = {
         id: `assistance_${Date.now()}`,
         location: {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
         },
-        description: assistanceDescription.trim(),
+        description: sanitizedDescription,
         timestamp: Date.now(),
         status: "active",
       };
@@ -923,19 +936,12 @@ export default function ActiveAdventureScreen() {
       .padStart(2, "0")}`;
   }, []);
 
-  const formatSpeed = useCallback((mps: number) => {
-    const mph = mps * 2.237; // Convert m/s to mph
+  const formatSpeed = useCallback((mph: number) => {
     return mph.toFixed(1);
   }, []);
 
-  useEffect(() => {
-    startAdventure();
-    return () => {
-      if (isTracking) {
-        endAdventure();
-      }
-    };
-  }, []);
+  // Note: startAdventure is called in the initialization useEffect above.
+  // Cleanup of location subscription and SOS tracking is handled in the cleanup useEffect.
 
   if (!session) {
     return (

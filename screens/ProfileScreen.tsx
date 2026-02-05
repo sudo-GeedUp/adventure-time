@@ -120,6 +120,7 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       const updatedProfile = {
         ...profile,
         customPhotoUri: result.assets[0].uri,
@@ -130,12 +131,14 @@ export default function ProfileScreen() {
   };
 
   const handleRemovePhoto = async () => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     const updatedProfile = { ...profile, customPhotoUri: undefined };
     setProfile(updatedProfile);
     await storage.saveUserProfile(updatedProfile);
   };
 
   const toggleEquipment = async (equipmentId: string) => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     const equipment = profile.equipment || [];
     const updatedEquipment = equipment.includes(equipmentId)
       ? equipment.filter((id) => id !== equipmentId)
