@@ -32,7 +32,8 @@ export default function EmergencySOSScreen() {
   const [sosMessage, setSOSMessage] = useState("");
   const [locationMessage, setLocationMessage] = useState("");
   const [currentLocation, setCurrentLocation] = useState<any>(null);
-  const [trailName, setTrailName] = useState("");
+  const [sosTrailName, setSOSTrailName] = useState("");
+  const [locationTrailName, setLocationTrailName] = useState("");
   const [isTrackingRoute, setIsTrackingRoute] = useState(false);
   const [routeStats, setRouteStats] = useState({
     distance: 0,
@@ -147,10 +148,11 @@ export default function EmergencySOSScreen() {
           onPress: async () => {
             await EmergencySOS.shareLocationWithRoute(
               locationMessage,
-              trailName,
+              locationTrailName,
             );
             setShowLocationShareModal(false);
             setLocationMessage("");
+            setLocationTrailName("");
           },
         },
       ],
@@ -167,9 +169,10 @@ export default function EmergencySOSScreen() {
           text: "Send SOS",
           style: "destructive",
           onPress: async () => {
-            await EmergencySOS.sendSOSAlert(sosMessage, trailName);
+            await EmergencySOS.sendSOSAlert(sosMessage, sosTrailName);
             setShowSOSModal(false);
             setSOSMessage("");
+            setSOSTrailName("");
           },
         },
       ],
@@ -188,8 +191,15 @@ export default function EmergencySOSScreen() {
   };
 
   const handleAddContact = async () => {
-    if (!newContact.name || !newContact.phone) {
+    if (!newContact.name.trim() || !newContact.phone.trim()) {
       Alert.alert("Error", "Please fill in all required fields");
+      return;
+    }
+
+    // Basic phone number validation: strip non-digit chars and check length
+    const digitsOnly = newContact.phone.replace(/\D/g, "");
+    if (digitsOnly.length < 7 || digitsOnly.length > 15) {
+      Alert.alert("Invalid Phone Number", "Please enter a valid phone number (7-15 digits).");
       return;
     }
 
@@ -553,8 +563,8 @@ export default function EmergencySOSScreen() {
               ]}
               placeholder="Trail name (optional)"
               placeholderTextColor={theme.tabIconDefault}
-              value={trailName}
-              onChangeText={setTrailName}
+              value={locationTrailName}
+              onChangeText={setLocationTrailName}
             />
 
             <TextInput
@@ -629,8 +639,8 @@ export default function EmergencySOSScreen() {
               ]}
               placeholder="Trail name (optional)"
               placeholderTextColor={theme.tabIconDefault}
-              value={trailName}
-              onChangeText={setTrailName}
+              value={sosTrailName}
+              onChangeText={setSOSTrailName}
             />
 
             <TextInput

@@ -85,7 +85,7 @@ export default function AIResultsScreen() {
           },
         ],
         warning:
-          error.message ||
+          (error instanceof Error ? error.message : String(error)) ||
           "Unable to complete analysis. Please check your API key configuration.",
       });
     } finally {

@@ -244,6 +244,15 @@ class BreadcrumbManager {
     return R * c; // Distance in meters
   }
 
+  private escapeXml(str: string): string {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
+  }
+
   async exportToGPX(trailId: string): Promise<string> {
     const trail = await this.getTrailById(trailId);
     if (!trail) {
@@ -266,7 +275,7 @@ class BreadcrumbManager {
       <trkpt lat="${b.latitude}" lon="${b.longitude}">
         ${b.altitude ? `<ele>${b.altitude}</ele>` : ""}
         <time>${new Date(b.timestamp).toISOString()}</time>
-        ${b.note ? `<name>${b.note}</name>` : ""}
+        ${b.note ? `<name>${this.escapeXml(b.note)}</name>` : ""}
       </trkpt>`,
       )
       .join("");

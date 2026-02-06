@@ -183,6 +183,11 @@ Use this context to provide personalized, relevant advice.
         content: assistantMessage,
       });
 
+      // Cap conversation history to prevent unbounded memory growth
+      if (this.conversationHistory.length > 20) {
+        this.conversationHistory = this.conversationHistory.slice(-20);
+      }
+
       return assistantMessage;
     } catch (error: any) {
       console.error("AI Guide chat error:", error);
