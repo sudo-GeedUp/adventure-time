@@ -33,11 +33,7 @@ export default function App() {
         console.log("App initialization starting in background...");
 
         // Initialize Sentry for crash reporting (optional)
-        try {
-          sentryService.initialize();
-        } catch (error) {
-          console.log("Sentry initialization skipped");
-        }
+        sentryService.initialize();
 
         // Initialize Firebase (optional - app works without it)
         try {
