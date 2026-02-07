@@ -15,11 +15,33 @@ import { initializeAuth } from "@/utils/firebaseHelpers";
 import { storage } from "@/utils/storage";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { sentryService } from "@/services/sentryService";
 import { analyticsService } from "@/services/analyticsService";
 import { notificationService } from "@/services/notificationService";
+import * as Sentry from "@sentry/react-native";
 
-export default function App() {
+Sentry.init({
+  dsn: "https://8b074ecb0cc560ecefa834828807ebf2@o4510841815891968.ingest.us.sentry.io/4510841833455616",
+
+  // Adds more context data to events (IP address, cookies, user, etc.)
+  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+  sendDefaultPii: true,
+
+  // Enable Logs
+  enableLogs: true,
+
+  // Configure Session Replay
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1,
+  integrations: [
+    Sentry.mobileReplayIntegration(),
+    Sentry.feedbackIntegration(),
+  ],
+
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
+
+export default Sentry.wrap(function App() {
   const [showSpecialThanks, setShowSpecialThanks] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -32,9 +54,7 @@ export default function App() {
       try {
         console.log("App initialization starting in background...");
 
-        // Initialize Sentry for crash reporting (optional)
-        sentryService.initialize();
-
+        // Sentry already initialized at module level
         // Initialize Firebase (optional - app works without it)
         try {
           const firebaseServices = await initializeFirebase();
@@ -43,7 +63,7 @@ export default function App() {
           }
         } catch (error) {
           console.log(
-            "Firebase initialization skipped - app will use local storage",
+            "Firebase initialization skipped - app will use local storage"
           );
         }
 
@@ -63,7 +83,7 @@ export default function App() {
             },
             (response) => {
               console.log("Notification tapped:", response);
-            },
+            }
           );
         } catch (error) {
           console.log("Notifications initialization skipped");
@@ -123,7 +143,7 @@ export default function App() {
       />
     </ErrorBoundary>
   );
-}
+});
 
 const styles = StyleSheet.create({
   root: {
