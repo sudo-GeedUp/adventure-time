@@ -1,7 +1,7 @@
-const { getDefaultConfig } = require("expo/metro-config");
 const path = require("path");
+const { getSentryExpoConfig } = require("@sentry/react-native/metro");
 
-const config = getDefaultConfig(__dirname);
+const config = getSentryExpoConfig(__dirname);
 
 // Add resolver to handle platform-specific extensions and path aliases
 config.resolver = {
