@@ -1,0 +1,10 @@
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:iOS Simulator, arch:arm64, id:5A0B57C1-6581-45FA-96E4-C1772C23FE12, OS:17.0, name:iPhone 15 Pro Max }
+{ platform:iOS Simulator, arch:x86_64, id:5A0B57C1-6581-45FA-96E4-C1772C23FE12, OS:17.0, name:iPhone 15 Pro Max }
+** BUILD FAILED **
+
+
+The following build commands failed:
+	PhaseScriptExecution Bundle\ React\ Native\ code\ and\ images /Users/sinjin/Library/Developer/Xcode/DerivedData/ItsAdventureTime-bfmigddiurvbnpaplqgnumjdizoj/Build/Intermediates.noindex/ItsAdventureTime.build/Debug-iphonesimulator/ItsAdventureTime.build/Script-00DD1BFF1BD5951E006B06BC.sh (in target 'ItsAdventureTime' from project 'ItsAdventureTime')
+	Building workspace ItsAdventureTime with scheme ItsAdventureTime and configuration Debug
+(2 failures)
