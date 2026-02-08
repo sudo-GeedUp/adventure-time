@@ -11,7 +11,7 @@ const REVENUECAT_IOS_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY;
 const REVENUECAT_ANDROID_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY;
 
 // Fallback test key for development only
-const FALLBACK_TEST_KEY = __DEV__ ? "test_VuKiYKHZIagZNWUqTtxfCQColuV" : "";
+const FALLBACK_TEST_KEY = __DEV__ ? "test_giauVpCRAVQIZDZJNmhNIhRDNaq" : "";
 
 // Product IDs
 export const PRODUCT_IDS = {
@@ -25,13 +25,15 @@ export const ENTITLEMENT_IDS = {
 
 export const initializeRevenueCat = async () => {
   try {
-    // RevenueCat is not supported on web
-    if (Platform.OS === "web") {
-      console.log("RevenueCat not available on web platform");
-      return false;
+    // Check for web browser environment more reliably
+    const isWeb = typeof window !== 'undefined' && window.location;
+    
+    if (isWeb) {
+      console.log("RevenueCat not available on web platform - using premium mode");
+      return true;
     }
 
-    // Configure RevenueCat
+    // Configure RevenueCat for native platforms
     Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.VERBOSE : LOG_LEVEL.INFO);
 
     const apiKey = Platform.select({

@@ -16,6 +16,7 @@ import { MainTabParamList } from "@/navigation/MainTabNavigator";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage } from "@/utils/storage";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { analyzeRecoverySituation } from "@/services/openai";
 
 // Define types for scan data
 interface ScanHistoryItem {
@@ -90,21 +91,25 @@ export default function AIScanScreen() {
   };
 
   const analyzeImage = async (imageUri: string): Promise<AnalysisResult> => {
-    // Mock analysis for development
-    return {
-      situationType: "Rock Crawl",
-      severity: "Moderate",
-      vehiclePosition: "High-centered on rocks",
-      recommendations: [
-        "Use rock sliders for protection",
-        "Air down tires for better traction",
-        "Use a spotter for guidance",
-        "Consider winching if stuck",
-      ],
-      safetyNotes: "Ensure vehicle is stable before attempting recovery",
-      estimatedRecoveryTime: "30-45 minutes",
-      requiredEquipment: ["Traction boards", "Winch", "Tow straps"],
-    };
+    try {
+      const analysis = await analyzeRecoverySituation(imageUri);
+      
+      // Convert OpenAI response to our AnalysisResult format
+      return {
+        situationType: analysis.situation,
+        severity: analysis.severity,
+        vehiclePosition: analysis.situation,
+        recommendations: analysis.recommendations,
+        safetyNotes: analysis.safetyWarnings.join(" "),
+        estimatedRecoveryTime: analysis.estimatedDifficulty === "Easy" ? "15-30 minutes" :
+                           analysis.estimatedDifficulty === "Moderate" ? "30-45 minutes" :
+                           analysis.estimatedDifficulty === "Difficult" ? "45-60 minutes" : "60+ minutes",
+        requiredEquipment: analysis.requiredEquipment,
+      };
+    } catch (error) {
+      console.error("OpenAI analysis failed:", error);
+      throw error;
+    }
   };
 
   const requestCameraPermission = async () => {

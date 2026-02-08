@@ -763,10 +763,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   heroTitle: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "900",
     marginBottom: 6,
     letterSpacing: 0.5,
+    flexShrink: 0,
   },
   heroSubtitle: {
     fontSize: 16,

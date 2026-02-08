@@ -7,8 +7,7 @@ import {
 import { getDatabase } from "firebase/database";
 import { getFirestore } from "firebase/firestore";
 
-// Replace these with your Firebase project credentials
-// Get these from Firebase Console: https://console.firebase.google.com
+// Firebase configuration - will use local storage if not configured
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY || "",
   authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
@@ -32,16 +31,23 @@ export const initializeFirebase = async () => {
     }
 
     app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
+    
+    // Initialize auth for web environment (browser)
+    if (typeof window !== 'undefined' && window.location) {
+      // Web browser environment
+      auth = getAuth(app);
+      try {
+        await setPersistence(auth, browserLocalPersistence);
+      } catch (error) {
+        console.log("Browser persistence not available, using default");
+      }
+    } else {
+      // Native or other environment
+      auth = getAuth(app);
+    }
+    
     db = getDatabase(app);
     firestore = getFirestore(app);
-
-    // Set persistence for auth
-    try {
-      await setPersistence(auth, browserLocalPersistence);
-    } catch (error) {
-      console.log("Persistence not available, using default");
-    }
 
     return { auth, db, firestore };
   } catch (error) {
