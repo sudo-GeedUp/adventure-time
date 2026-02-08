@@ -67,7 +67,7 @@ export default function EmergencySOSScreen() {
           async (location) => {
             await EmergencySOS.addRoutePoint(location);
             await updateRouteStats();
-          }
+          },
         );
       };
       startTracking();
@@ -116,7 +116,7 @@ export default function EmergencySOSScreen() {
         route[i - 1].latitude,
         route[i - 1].longitude,
         route[i].latitude,
-        route[i].longitude
+        route[i].longitude,
       );
     }
 
@@ -148,14 +148,14 @@ export default function EmergencySOSScreen() {
           onPress: async () => {
             await EmergencySOS.shareLocationWithRoute(
               locationMessage,
-              locationTrailName
+              locationTrailName,
             );
             setShowLocationShareModal(false);
             setLocationMessage("");
             setLocationTrailName("");
           },
         },
-      ]
+      ],
     );
   };
 
@@ -175,7 +175,7 @@ export default function EmergencySOSScreen() {
             setSOSTrailName("");
           },
         },
-      ]
+      ],
     );
   };
 
@@ -201,7 +201,7 @@ export default function EmergencySOSScreen() {
     if (digitsOnly.length < 7 || digitsOnly.length > 15) {
       Alert.alert(
         "Invalid Phone Number",
-        "Please enter a valid phone number (7-15 digits)."
+        "Please enter a valid phone number (7-15 digits).",
       );
       return;
     }
@@ -234,7 +234,7 @@ export default function EmergencySOSScreen() {
             await loadEmergencyContacts();
           },
         },
-      ]
+      ],
     );
   };
 

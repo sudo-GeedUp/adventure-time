@@ -69,7 +69,7 @@ class AuthService {
 
     return () => {
       this.authStateListeners = this.authStateListeners.filter(
-        (cb) => cb !== callback
+        (cb) => cb !== callback,
       );
     };
   }
@@ -81,7 +81,7 @@ class AuthService {
   async signUpWithEmail(
     email: string,
     password: string,
-    displayName: string
+    displayName: string,
   ): Promise<UserProfile> {
     if (!this.auth) throw new Error("Firebase not initialized");
 
@@ -89,7 +89,7 @@ class AuthService {
       const userCredential = await createUserWithEmailAndPassword(
         this.auth,
         email,
-        password
+        password,
       );
       const user = userCredential.user;
 
@@ -118,7 +118,7 @@ class AuthService {
       const userCredential = await signInWithEmailAndPassword(
         this.auth,
         email,
-        password
+        password,
       );
       const user = userCredential.user;
 
@@ -214,7 +214,7 @@ class AuthService {
 
   async updateUserPassword(
     currentPassword: string,
-    newPassword: string
+    newPassword: string,
   ): Promise<void> {
     const user = this.getCurrentUser();
     if (!user || !user.email) throw new Error("No user logged in");
@@ -222,7 +222,7 @@ class AuthService {
     try {
       const credential = EmailAuthProvider.credential(
         user.email,
-        currentPassword
+        currentPassword,
       );
       await reauthenticateWithCredential(user, credential);
       await updatePassword(user, newPassword);
@@ -262,7 +262,7 @@ class AuthService {
     try {
       await AsyncStorage.setItem(
         `userProfile_${profile.uid}`,
-        JSON.stringify(profile)
+        JSON.stringify(profile),
       );
 
       const legacyProfile = {
@@ -359,7 +359,7 @@ class AuthService {
 
   async setPremiumStatus(
     isPremium: boolean,
-    expiresAt?: number
+    expiresAt?: number,
   ): Promise<void> {
     const user = this.getCurrentUser();
     if (!user) throw new Error("No user logged in");

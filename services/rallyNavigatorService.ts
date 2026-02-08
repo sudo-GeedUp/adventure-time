@@ -63,7 +63,7 @@ class RallyNavigatorService {
   initialize(
     trail: Trail,
     routePoints: RoutePoint[] = [],
-    hazards: AdventureHazard[] = []
+    hazards: AdventureHazard[] = [],
   ) {
     this.currentTrail = trail;
     this.routePoints = routePoints;
@@ -100,8 +100,8 @@ class RallyNavigatorService {
       (location as EnhancedLocation).enhancedSpeed !== undefined
         ? (location as EnhancedLocation).enhancedSpeed
         : location.coords.speed
-        ? location.coords.speed * 2.237
-        : 0;
+          ? location.coords.speed * 2.237
+          : 0;
     const currentAltitude = location.coords.altitude || 0;
     const currentHeading = location.coords.heading || 0;
 
@@ -117,7 +117,7 @@ class RallyNavigatorService {
           currentSpeed?.toFixed(1) || 0
         } MPH, Heading: ${
           currentHeading?.toFixed(0) || 0
-        }°, Altitude: ${currentAltitude.toFixed(0)} ft`
+        }°, Altitude: ${currentAltitude.toFixed(0)} ft`,
       );
       this.lastLogTime = now;
     }
@@ -131,7 +131,7 @@ class RallyNavigatorService {
       callouts.push({
         id: `speed-${now}`,
         message: `⚠️ Speed ${Math.round(
-          currentSpeed
+          currentSpeed,
         )} mph - Slow down for trail conditions`,
         priority: "high",
         type: "speed",
@@ -171,7 +171,7 @@ class RallyNavigatorService {
             altitudeChange > 0
               ? `⬆️ Steep ascent ahead (${Math.round(altitudeChange)}ft gain)`
               : `⬇️ Steep descent ahead (${Math.abs(
-                  Math.round(altitudeChange)
+                  Math.round(altitudeChange),
                 )}ft drop)`,
           priority: "medium",
           type: "altitude",
@@ -186,7 +186,7 @@ class RallyNavigatorService {
       // Sort by priority: critical > high > medium > low
       const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
       callouts.sort(
-        (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]
+        (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority],
       );
       // Keep only the top priority callout
       callouts.splice(1);
@@ -199,7 +199,7 @@ class RallyNavigatorService {
       // Cleanup old callouts to prevent memory leaks
       if (this.calloutHistory.length > this.maxCalloutHistory) {
         this.calloutHistory = this.calloutHistory.slice(
-          -this.maxCalloutHistory
+          -this.maxCalloutHistory,
         );
       }
 
@@ -259,7 +259,7 @@ class RallyNavigatorService {
    */
   private checkSpeed(
     currentSpeed: number,
-    now: number
+    now: number,
   ): NavigationCallout | null {
     // Speed warnings for different conditions
     if (currentSpeed > 35 && this.currentTrail?.difficulty === "Hard") {
@@ -270,7 +270,7 @@ class RallyNavigatorService {
           id: `speed-${now}`,
           type: "speed",
           message: `⚠️ Speed ${Math.round(
-            currentSpeed
+            currentSpeed,
           )} mph - Caution on difficult terrain!`,
           priority: "high",
           timestamp: now,
@@ -324,7 +324,7 @@ class RallyNavigatorService {
         id: `speed-${now}`,
         type: "info",
         message: `📍 Traveling at ${Math.round(
-          currentSpeed
+          currentSpeed,
         )} mph on ${difficulty} terrain`,
         priority: "low",
         timestamp: now,
@@ -341,7 +341,7 @@ class RallyNavigatorService {
    */
   private checkUpcomingHazards(
     location: Location.LocationObject,
-    now: number
+    now: number,
   ): NavigationCallout[] {
     const callouts: NavigationCallout[] = [];
     const currentPos = {
@@ -356,7 +356,7 @@ class RallyNavigatorService {
       // Warn about hazards within 200 meters
       if (distanceMeters <= 200 && distanceMeters > 0) {
         const alreadyWarned = this.calloutHistory.some(
-          (c) => c.type === "obstacle" && c.message.includes(hazard.type)
+          (c) => c.type === "obstacle" && c.message.includes(hazard.type),
         );
 
         if (!alreadyWarned || distanceMeters < 50) {
@@ -365,7 +365,7 @@ class RallyNavigatorService {
             type: "obstacle",
             message: this.getHazardCallout(
               hazard.type,
-              Math.round(distanceMeters)
+              Math.round(distanceMeters),
             ),
             priority: distanceMeters < 50 ? "critical" : "high",
             timestamp: now,
@@ -423,7 +423,7 @@ class RallyNavigatorService {
   private checkTerrainChange(
     location: Location.LocationObject,
     currentAltitude: number,
-    now: number
+    now: number,
   ): NavigationCallout | null {
     // Check altitude change rate
     if (this.lastLocation && this.lastLocation.coords.altitude) {
@@ -469,21 +469,21 @@ class RallyNavigatorService {
   private checkDirectionChange(
     location: Location.LocationObject,
     currentHeading: number,
-    now: number
+    now: number,
   ): NavigationCallout | null {
     if (!this.lastLocation || !this.lastLocation.coords.heading) {
       return null;
     }
 
     const headingChange = Math.abs(
-      currentHeading - this.lastLocation.coords.heading
+      currentHeading - this.lastLocation.coords.heading,
     );
 
     // Significant turn detected
     if (headingChange > 45 && headingChange < 315) {
       const direction = this.getDirectionFromHeadingChange(
         this.lastLocation.coords.heading,
-        currentHeading
+        currentHeading,
       );
 
       return {
@@ -504,7 +504,7 @@ class RallyNavigatorService {
    */
   private getDirectionFromHeadingChange(
     oldHeading: number,
-    newHeading: number
+    newHeading: number,
   ): "left" | "right" {
     let diff = newHeading - oldHeading;
     if (diff < -180) diff += 360;
@@ -535,7 +535,7 @@ class RallyNavigatorService {
    * Get hazards ahead of current position
    */
   private getHazardsAhead(
-    location: Location.LocationObject
+    location: Location.LocationObject,
   ): AdventureHazard[] {
     const currentPos = {
       latitude: location.coords.latitude,

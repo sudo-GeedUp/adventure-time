@@ -8,14 +8,13 @@ import {
   ScrollView,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { PurchasesPackage } from "react-native-purchases";
+import { PurchasesPackage, PACKAGE_TYPE } from "react-native-purchases";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 import { getOfferings } from "@/config/revenuecat";
-import { PACKAGE_TYPE } from "react-native-purchases";
 
 export default function SubscriptionScreen() {
   const { theme } = useTheme();
@@ -24,7 +23,7 @@ export default function SubscriptionScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
   const processingRef = useRef(false);
   const [monthlyPackage, setMonthlyPackage] = useState<PurchasesPackage | null>(
-    null
+    null,
   );
   const [loadingOfferings, setLoadingOfferings] = useState(true);
 
@@ -38,7 +37,7 @@ export default function SubscriptionScreen() {
       const offerings = await getOfferings();
       if (offerings) {
         const monthly = offerings.availablePackages.find(
-          (pkg) => pkg.packageType === PACKAGE_TYPE.MONTHLY
+          (pkg) => pkg.packageType === PACKAGE_TYPE.MONTHLY,
         );
         setMonthlyPackage(monthly || null);
       } else if (__DEV__) {
@@ -91,7 +90,7 @@ export default function SubscriptionScreen() {
 
         Alert.alert(
           "Welcome to Premium!",
-          "You now have access to all premium features including AI Scan, trail updates, and more!\n\n(Note: This is a mock subscription for development)"
+          "You now have access to all premium features including AI Scan, trail updates, and more!\n\n(Note: This is a mock subscription for development)",
         );
 
         // Update subscription status
@@ -102,7 +101,7 @@ export default function SubscriptionScreen() {
         if (success) {
           Alert.alert(
             "Welcome to Premium!",
-            "You now have access to all premium features including AI Scan, trail updates, and more!"
+            "You now have access to all premium features including AI Scan, trail updates, and more!",
           );
         }
       }
@@ -110,7 +109,7 @@ export default function SubscriptionScreen() {
       if (!error.userCancelled) {
         Alert.alert(
           "Purchase Failed",
-          error.message || "Unable to complete purchase. Please try again."
+          error.message || "Unable to complete purchase. Please try again.",
         );
       }
     } finally {
@@ -131,18 +130,18 @@ export default function SubscriptionScreen() {
       if (success) {
         Alert.alert(
           "Subscription Restored!",
-          "Your premium subscription has been restored successfully."
+          "Your premium subscription has been restored successfully.",
         );
       } else {
         Alert.alert(
           "No Subscription Found",
-          "No active subscription found for this account."
+          "No active subscription found for this account.",
         );
       }
     } catch (error) {
       Alert.alert(
         "Restore Failed",
-        "Unable to restore purchases. Please try again."
+        "Unable to restore purchases. Please try again.",
       );
     } finally {
       processingRef.current = false;
@@ -233,7 +232,7 @@ export default function SubscriptionScreen() {
             onPress={() =>
               Alert.alert(
                 "Manage Subscription",
-                "To manage your subscription, go to Settings > [Your Name] > Subscriptions on your device."
+                "To manage your subscription, go to Settings > [Your Name] > Subscriptions on your device.",
               )
             }
           >

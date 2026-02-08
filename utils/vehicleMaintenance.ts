@@ -55,7 +55,7 @@ export interface VehicleDamage {
 export class MaintenanceTracker {
   // Add maintenance record
   static async addMaintenanceRecord(
-    item: Omit<MaintenanceItem, "id">
+    item: Omit<MaintenanceItem, "id">,
   ): Promise<void> {
     try {
       const newItem: MaintenanceItem = {
@@ -69,7 +69,7 @@ export class MaintenanceTracker {
 
       // Update schedule if applicable
       await this.updateScheduleForType(
-        item.type === "Custom" ? item.customType! : item.type
+        item.type === "Custom" ? item.customType! : item.type,
       );
     } catch (error) {
       console.error("Error adding maintenance record:", error);
@@ -136,7 +136,7 @@ export class MaintenanceTracker {
 
       await AsyncStorage.setItem(
         MAINTENANCE_SCHEDULE_KEY,
-        JSON.stringify(defaultSchedule)
+        JSON.stringify(defaultSchedule),
       );
     } catch (error) {
       console.error("Error setting up maintenance schedule:", error);
@@ -173,7 +173,7 @@ export class MaintenanceTracker {
         schedule[itemIndex] = item;
         await AsyncStorage.setItem(
           MAINTENANCE_SCHEDULE_KEY,
-          JSON.stringify(schedule)
+          JSON.stringify(schedule),
         );
       }
     } catch (error) {
@@ -190,7 +190,7 @@ export class MaintenanceTracker {
       const now = Date.now();
 
       return schedule.filter(
-        (item) => item.nextDueMiles <= currentMiles || item.nextDueDate <= now
+        (item) => item.nextDueMiles <= currentMiles || item.nextDueDate <= now,
       );
     } catch (error) {
       console.error("Error checking due maintenance:", error);
@@ -201,7 +201,7 @@ export class MaintenanceTracker {
   // Calculate maintenance cost per adventure
   static async calculateCostPerAdventure(
     startDate?: number,
-    endDate?: number
+    endDate?: number,
   ): Promise<{
     totalCost: number;
     adventureCount: number;
@@ -254,7 +254,7 @@ export class MaintenanceTracker {
 
   // Log trail damage
   static async logTrailDamage(
-    damage: Omit<VehicleDamage, "id">
+    damage: Omit<VehicleDamage, "id">,
   ): Promise<void> {
     try {
       const newDamage: VehicleDamage = {
@@ -266,7 +266,7 @@ export class MaintenanceTracker {
       damageLog.unshift(newDamage);
       await AsyncStorage.setItem(
         "@adventure-time/damage_log",
-        JSON.stringify(damageLog)
+        JSON.stringify(damageLog),
       );
     } catch (error) {
       console.error("Error logging trail damage:", error);
@@ -287,7 +287,7 @@ export class MaintenanceTracker {
   // Mark damage as repaired
   static async markDamageRepaired(
     damageId: string,
-    cost: number
+    cost: number,
   ): Promise<void> {
     try {
       const log = await this.getDamageLog();
@@ -298,7 +298,7 @@ export class MaintenanceTracker {
         log[index].repairCost = cost;
         await AsyncStorage.setItem(
           "@adventure-time/damage_log",
-          JSON.stringify(log)
+          JSON.stringify(log),
         );
       }
     } catch (error) {
@@ -314,13 +314,13 @@ export class MaintenanceTracker {
 
       due.forEach((item) => {
         const daysOverdue = Math.floor(
-          (Date.now() - item.nextDueDate) / (24 * 60 * 60 * 1000)
+          (Date.now() - item.nextDueDate) / (24 * 60 * 60 * 1000),
         );
         if (daysOverdue > 0) {
           reminders.push(`⚠️ ${item.type} is ${daysOverdue} days overdue!`);
         } else {
           const daysUntil = Math.floor(
-            (item.nextDueDate - Date.now()) / (24 * 60 * 60 * 1000)
+            (item.nextDueDate - Date.now()) / (24 * 60 * 60 * 1000),
           );
           reminders.push(`📅 ${item.type} due in ${daysUntil} days`);
         }

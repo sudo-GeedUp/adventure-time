@@ -100,7 +100,7 @@ export default function NearbyScreen() {
   const [selectedTrail, setSelectedTrail] = useState<Trail | null>(null);
   const [wishlistTrails, setWishlistTrails] = useState<Set<string>>(new Set());
   const [downloadingTrails, setDownloadingTrails] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [cachedTrails, setCachedTrails] = useState<Set<string>>(new Set());
 
@@ -143,7 +143,7 @@ export default function NearbyScreen() {
     setWishlistTrails(newWishlist);
     await AsyncStorage.setItem(
       "trail_wishlist",
-      JSON.stringify(Array.from(newWishlist))
+      JSON.stringify(Array.from(newWishlist)),
     );
   };
 
@@ -151,7 +151,7 @@ export default function NearbyScreen() {
     if (cachedTrails.has(trail.id)) {
       Alert.alert(
         "Already Downloaded",
-        "This trail is already available offline"
+        "This trail is already available offline",
       );
       return;
     }
@@ -177,7 +177,7 @@ export default function NearbyScreen() {
     if (status !== "granted") {
       Alert.alert(
         "Location Permission Required",
-        "Location access is needed to find nearby offroaders who can assist you."
+        "Location access is needed to find nearby offroaders who can assist you.",
       );
       return;
     }
@@ -215,7 +215,7 @@ export default function NearbyScreen() {
     try {
       const weatherData = await getWeather(
         currentLocation.coords.latitude,
-        currentLocation.coords.longitude
+        currentLocation.coords.longitude,
       );
       setWeather(weatherData);
 
@@ -227,13 +227,13 @@ export default function NearbyScreen() {
       const analyzedConditions = analyzeTrailConditions(
         allTips,
         currentLocation.coords,
-        MAP_RADIUS
+        MAP_RADIUS,
       );
       setTrailConditions(analyzedConditions);
 
       const impactAssessment = calculateImpactAssessment(
         weatherData,
-        analyzedConditions
+        analyzedConditions,
       );
       setImpact(impactAssessment);
     } catch (error) {
@@ -284,13 +284,13 @@ export default function NearbyScreen() {
         ...trail,
         distanceFromUser: calculateDistance(
           currentLocation.coords,
-          trail.location
+          trail.location,
         ),
       }));
 
       // Sort by distance
       const sortedTrails = trailsWithDistance.sort(
-        (a, b) => a.distanceFromUser - b.distanceFromUser
+        (a, b) => a.distanceFromUser - b.distanceFromUser,
       );
 
       setAllTrails(sortedTrails);
@@ -314,7 +314,7 @@ export default function NearbyScreen() {
       Linking.openURL(url).catch(() => {
         Alert.alert(
           "Error",
-          "Unable to open Maps. Please ensure Apple Maps is installed."
+          "Unable to open Maps. Please ensure Apple Maps is installed.",
         );
       });
     } else {
@@ -414,7 +414,7 @@ export default function NearbyScreen() {
                 coordinate={trail.location}
                 title={trail.name}
                 description={`${trail.difficulty} • ${trail.distance.toFixed(
-                  1
+                  1,
                 )} mi`}
                 pinColor={
                   trail.id.startsWith("community_") ? "#10b981" : "#3b82f6"
@@ -478,12 +478,12 @@ export default function NearbyScreen() {
             {Platform.OS === "web"
               ? "Map available in Expo Go app"
               : mapsLoadError
-              ? `Map error: ${mapsLoadError}`
-              : !mapsAvailable
-              ? "Map requires Expo Go on device"
-              : location
-              ? "Loading map..."
-              : "Getting location..."}
+                ? `Map error: ${mapsLoadError}`
+                : !mapsAvailable
+                  ? "Map requires Expo Go on device"
+                  : location
+                    ? "Loading map..."
+                    : "Getting location..."}
           </ThemedText>
         </View>
       )}
@@ -764,8 +764,8 @@ export default function NearbyScreen() {
                       cachedTrails.has(trail.id)
                         ? "check-circle"
                         : downloadingTrails.has(trail.id)
-                        ? "download-cloud"
-                        : "download"
+                          ? "download-cloud"
+                          : "download"
                     }
                     size={18}
                     color="white"
@@ -774,8 +774,8 @@ export default function NearbyScreen() {
                     {cachedTrails.has(trail.id)
                       ? "Offline"
                       : downloadingTrails.has(trail.id)
-                      ? "Downloading..."
-                      : "Download"}
+                        ? "Downloading..."
+                        : "Download"}
                   </ThemedText>
                 </Pressable>
                 <Pressable

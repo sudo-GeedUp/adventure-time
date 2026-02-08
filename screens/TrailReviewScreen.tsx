@@ -66,7 +66,7 @@ export default function TrailReviewScreen() {
     if (status !== "granted") {
       Alert.alert(
         "Permission Required",
-        "Camera permission is required to take photos"
+        "Camera permission is required to take photos",
       );
       return;
     }
@@ -229,7 +229,7 @@ export default function TrailReviewScreen() {
                   {condition}
                 </ThemedText>
               </Pressable>
-            )
+            ),
           )}
         </View>
       </View>

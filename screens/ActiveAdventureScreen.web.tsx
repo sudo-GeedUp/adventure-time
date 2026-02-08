@@ -11,7 +11,7 @@ interface ActiveAdventureScreenWebProps {
 }
 
 export default function ActiveAdventureScreen(
-  _props: ActiveAdventureScreenWebProps
+  _props: ActiveAdventureScreenWebProps,
 ) {
   const { theme } = useTheme();
 

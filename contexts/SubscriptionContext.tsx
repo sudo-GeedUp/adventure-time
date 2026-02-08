@@ -25,7 +25,7 @@ interface SubscriptionContextType {
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
@@ -130,7 +130,7 @@ export const useSubscription = () => {
   const context = useContext(SubscriptionContext);
   if (context === undefined) {
     throw new Error(
-      "useSubscription must be used within a SubscriptionProvider"
+      "useSubscription must be used within a SubscriptionProvider",
     );
   }
   return context;

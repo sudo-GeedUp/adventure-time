@@ -43,7 +43,7 @@ export const initializeRevenueCat = async () => {
       console.error("RevenueCat API key not configured");
       if (!__DEV__) {
         console.error(
-          "Please set EXPO_PUBLIC_REVENUECAT_IOS_KEY and/or EXPO_PUBLIC_REVENUECAT_ANDROID_KEY in your environment"
+          "Please set EXPO_PUBLIC_REVENUECAT_IOS_KEY and/or EXPO_PUBLIC_REVENUECAT_ANDROID_KEY in your environment",
         );
       }
       return false;
@@ -52,7 +52,7 @@ export const initializeRevenueCat = async () => {
     // Warn if using fallback key
     if (apiKey === FALLBACK_TEST_KEY && apiKey !== "") {
       console.warn(
-        "WARNING: Using test RevenueCat key in development mode only!"
+        "WARNING: Using test RevenueCat key in development mode only!",
       );
     }
 
@@ -80,7 +80,7 @@ export const getOfferings = async (): Promise<PurchasesOffering | null> => {
     // No current offering available
     if (__DEV__) {
       console.warn(
-        "No current offering found - mock data will be used in SubscriptionScreen"
+        "No current offering found - mock data will be used in SubscriptionScreen",
       );
     }
 
@@ -100,7 +100,7 @@ export const purchaseMonthlySubscription = async () => {
 
     // Find the monthly package
     const monthlyPackage = offerings.availablePackages.find(
-      (pkg) => pkg.packageType === PACKAGE_TYPE.MONTHLY
+      (pkg) => pkg.packageType === PACKAGE_TYPE.MONTHLY,
     );
 
     if (!monthlyPackage) {

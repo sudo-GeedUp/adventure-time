@@ -50,7 +50,7 @@ export default function NavigateScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [downloadingTrails, setDownloadingTrails] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [cachedTrails, setCachedTrails] = useState<Set<string>>(new Set());
   const [communityTrails, setCommunityTrails] = useState<Trail[]>([]);
@@ -152,7 +152,7 @@ export default function NavigateScreen() {
     if (allTrails.length === 0) {
       Alert.alert(
         "No Adventures Available",
-        "Please wait while we load nearby trails."
+        "Please wait while we load nearby trails.",
       );
       return;
     }
@@ -168,7 +168,7 @@ export default function NavigateScreen() {
         `We've picked "${result.trail.name}" for you!\n\nDifficulty: ${
           result.trail.difficulty
         }\nDistance: ${result.trail.distance.toFixed(
-          1
+          1,
         )} miles\n\nReady to start this adventure?`,
         [
           { text: "Pick Another", onPress: handleRandomAdventure },
@@ -178,7 +178,7 @@ export default function NavigateScreen() {
             onPress: () =>
               navigation.navigate("ActiveAdventure", { trail: result.trail }),
           },
-        ]
+        ],
       );
     }
   };
@@ -221,14 +221,14 @@ export default function NavigateScreen() {
           trail.description.toLowerCase().includes(query) ||
           // Search by location coordinates (for city/region searches)
           `${trail.location.latitude},${trail.location.longitude}`.includes(
-            query
+            query,
           ) ||
           // Search by features (rock crawling, scenic, etc.)
           trail.features.some((feature) =>
-            feature.toLowerCase().includes(query)
+            feature.toLowerCase().includes(query),
           ) ||
           // Search by vehicle types
-          trail.vehicleTypes.some((type) => type.toLowerCase().includes(query))
+          trail.vehicleTypes.some((type) => type.toLowerCase().includes(query)),
       );
     }
 
@@ -236,7 +236,7 @@ export default function NavigateScreen() {
     if (difficultyFilter !== "All") {
       filtered = filterTrailsByDifficulty(
         filtered,
-        difficultyFilter as "Easy" | "Moderate" | "Hard" | "Expert"
+        difficultyFilter as "Easy" | "Moderate" | "Hard" | "Expert",
       );
     }
 
@@ -515,7 +515,7 @@ export default function NavigateScreen() {
   const renderFilterButton = (
     label: string,
     isActive: boolean,
-    onPress: () => void
+    onPress: () => void,
   ) => (
     <Pressable
       style={[
@@ -669,7 +669,7 @@ export default function NavigateScreen() {
               {renderFilterButton(
                 difficulty,
                 difficultyFilter === difficulty,
-                () => setDifficultyFilter(difficulty)
+                () => setDifficultyFilter(difficulty),
               )}
             </View>
           ))}
@@ -685,10 +685,10 @@ export default function NavigateScreen() {
             (landType) => (
               <View key={landType}>
                 {renderFilterButton(landType, landTypeFilter === landType, () =>
-                  setLandTypeFilter(landType)
+                  setLandTypeFilter(landType),
                 )}
               </View>
-            )
+            ),
           )}
         </View>
       </View>

@@ -134,7 +134,7 @@ export class FirebaseLocationService {
   // Update user location in Firebase
   static async updateUserLocation(
     userId: string,
-    location: UserLocation
+    location: UserLocation,
   ): Promise<void> {
     if (!database) return;
     const userRef = ref(database, `users/locations/${userId}`);
@@ -144,7 +144,7 @@ export class FirebaseLocationService {
   // Get nearby users
   static subscribeToNearbyUsers(
     callback: (users: UserLocation[]) => void,
-    maxDistance: number = 50
+    maxDistance: number = 50,
   ): () => void {
     if (!database) {
       callback([]);
@@ -198,7 +198,7 @@ export class TrailEventsService {
     event: Omit<
       TrailEvent,
       "id" | "timestamp" | "upvotes" | "downvotes" | "verified"
-    >
+    >,
   ): Promise<string> {
     if (!database) throw new Error("Firebase not available");
 
@@ -221,7 +221,7 @@ export class TrailEventsService {
   // Get trail events for a specific trail
   static subscribeToTrailEvents(
     trailId: string,
-    callback: (events: TrailEvent[]) => void
+    callback: (events: TrailEvent[]) => void,
   ): () => void {
     if (!database) {
       callback([]);
@@ -255,7 +255,7 @@ export class TrailEventsService {
 
   // Get all active trail events
   static subscribeToAllTrailEvents(
-    callback: (events: TrailEvent[]) => void
+    callback: (events: TrailEvent[]) => void,
   ): () => void {
     if (!database) {
       callback([]);
@@ -285,7 +285,7 @@ export class TrailEventsService {
   // Upvote/downvote an event
   static async voteOnEvent(
     eventId: string,
-    vote: "up" | "down"
+    vote: "up" | "down",
   ): Promise<void> {
     if (!database) return;
 
@@ -303,7 +303,7 @@ export class TrailEventsService {
           update(eventRef, updates);
         }
       },
-      { onlyOnce: true }
+      { onlyOnce: true },
     );
   }
 
@@ -321,7 +321,7 @@ export class MediaService {
   static async uploadPhoto(
     uri: string,
     path: string,
-    fileName: string
+    fileName: string,
   ): Promise<string> {
     if (!storageInstance) throw new Error("Firebase Storage not available");
 
@@ -338,20 +338,20 @@ export class MediaService {
   // Upload adventure photo
   static async uploadAdventurePhoto(
     adventureId: string,
-    photoUri: string
+    photoUri: string,
   ): Promise<string> {
     const fileName = `${Date.now()}.jpg`;
     return await this.uploadPhoto(
       photoUri,
       `adventures/${adventureId}`,
-      fileName
+      fileName,
     );
   }
 
   // Upload profile photo
   static async uploadProfilePhoto(
     userId: string,
-    photoUri: string
+    photoUri: string,
   ): Promise<string> {
     const fileName = `profile.jpg`;
     return await this.uploadPhoto(photoUri, `profiles/${userId}`, fileName);
@@ -360,13 +360,13 @@ export class MediaService {
   // Upload trail event photo
   static async uploadTrailEventPhoto(
     eventId: string,
-    photoUri: string
+    photoUri: string,
   ): Promise<string> {
     const fileName = `${Date.now()}.jpg`;
     return await this.uploadPhoto(
       photoUri,
       `trail-events/${eventId}`,
-      fileName
+      fileName,
     );
   }
 }
@@ -396,7 +396,7 @@ export class SocialService {
     fromUserId: string,
     fromUserName: string,
     toUserId: string,
-    toUserName: string
+    toUserName: string,
   ): Promise<string> {
     if (!database) throw new Error("Firebase not available");
 
@@ -449,20 +449,20 @@ export class SocialService {
           await set(
             ref(
               database!,
-              `friendships/${request.fromUserId}/${request.toUserId}`
+              `friendships/${request.fromUserId}/${request.toUserId}`,
             ),
-            friendship1
+            friendship1,
           );
           await set(
             ref(
               database!,
-              `friendships/${request.toUserId}/${request.fromUserId}`
+              `friendships/${request.toUserId}/${request.fromUserId}`,
             ),
-            friendship2
+            friendship2,
           );
         }
       },
-      { onlyOnce: true }
+      { onlyOnce: true },
     );
   }
 
@@ -476,7 +476,7 @@ export class SocialService {
   // Get pending friend requests for a user
   static subscribeToPendingRequests(
     userId: string,
-    callback: (requests: FriendRequest[]) => void
+    callback: (requests: FriendRequest[]) => void,
   ): () => void {
     if (!database) {
       callback([]);
@@ -502,7 +502,7 @@ export class SocialService {
   // Get user's friends
   static subscribeToFriends(
     userId: string,
-    callback: (friends: Friendship[]) => void
+    callback: (friends: Friendship[]) => void,
   ): () => void {
     if (!database) {
       callback([]);
@@ -547,7 +547,7 @@ export class MessagingService {
     conversationId: string,
     senderId: string,
     senderName: string,
-    text: string
+    text: string,
   ): Promise<string> {
     if (!database) throw new Error("Firebase not available");
 
@@ -571,7 +571,7 @@ export class MessagingService {
   // Subscribe to conversation messages
   static subscribeToMessages(
     conversationId: string,
-    callback: (messages: Message[]) => void
+    callback: (messages: Message[]) => void,
   ): () => void {
     if (!database) {
       callback([]);
@@ -595,7 +595,7 @@ export class MessagingService {
   // Mark message as read
   static async markAsRead(
     conversationId: string,
-    messageId: string
+    messageId: string,
   ): Promise<void> {
     if (!database) return;
     const messageRef = ref(database, `messages/${conversationId}/${messageId}`);
@@ -628,7 +628,7 @@ export class WeatherService {
   // Get weather for location
   static async getWeather(
     latitude: number,
-    longitude: number
+    longitude: number,
   ): Promise<WeatherData | null> {
     if (!this.WEATHER_API_KEY) {
       console.log("Weather API key not configured");
@@ -637,7 +637,7 @@ export class WeatherService {
 
     try {
       const response = await fetch(
-        `${this.WEATHER_API_URL}?lat=${latitude}&lon=${longitude}&appid=${this.WEATHER_API_KEY}&units=imperial`
+        `${this.WEATHER_API_URL}?lat=${latitude}&lon=${longitude}&appid=${this.WEATHER_API_KEY}&units=imperial`,
       );
 
       if (!response.ok) {

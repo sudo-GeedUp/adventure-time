@@ -32,7 +32,7 @@ export function LoadingSkeleton({
           duration: 800,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
     animation.start();
     return () => animation.stop();

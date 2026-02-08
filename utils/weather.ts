@@ -11,11 +11,11 @@ interface CachedWeather {
 
 export async function fetchWeatherFromNWS(
   latitude: number,
-  longitude: number
+  longitude: number,
 ): Promise<WeatherCondition | null> {
   try {
     const pointsUrl = `https://api.weather.gov/points/${latitude.toFixed(
-      4
+      4,
     )},${longitude.toFixed(4)}`;
 
     const pointsResponse = await fetch(pointsUrl, {
@@ -77,10 +77,10 @@ export async function fetchWeatherFromNWS(
 
 export async function getWeather(
   latitude: number,
-  longitude: number
+  longitude: number,
 ): Promise<WeatherCondition | null> {
   const cacheKey = `${CACHE_KEY_PREFIX}_${latitude.toFixed(
-    4
+    4,
   )}_${longitude.toFixed(4)}`;
 
   try {
@@ -133,7 +133,7 @@ export async function clearWeatherCache(): Promise<void> {
   try {
     const keys = await AsyncStorage.getAllKeys();
     const weatherCacheKeys = keys.filter((key) =>
-      key.startsWith(CACHE_KEY_PREFIX)
+      key.startsWith(CACHE_KEY_PREFIX),
     );
 
     if (weatherCacheKeys.length > 0) {

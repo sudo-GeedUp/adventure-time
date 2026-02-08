@@ -78,7 +78,7 @@ class GPXRecorder {
     if (this.activeTrack.trackPoints.length > 0) {
       const totalSpeed = this.activeTrack.trackPoints.reduce(
         (sum, pt) => sum + (pt.speed || 0),
-        0
+        0,
       );
       this.activeTrack.averageSpeed =
         totalSpeed / this.activeTrack.trackPoints.length;
@@ -118,7 +118,7 @@ class GPXRecorder {
         },
         (location) => {
           this.handleLocationUpdate(location);
-        }
+        },
       );
     } catch (error) {
       console.error("Error starting location tracking:", error);
@@ -172,7 +172,7 @@ class GPXRecorder {
         lastPoint.latitude,
         lastPoint.longitude,
         trackPoint.latitude,
-        trackPoint.longitude
+        trackPoint.longitude,
       );
       this.activeTrack.totalDistance += distance;
     }
@@ -183,7 +183,7 @@ class GPXRecorder {
   async addWaypoint(
     name: string,
     description?: string,
-    symbol?: string
+    symbol?: string,
   ): Promise<GPXWaypoint | null> {
     if (!this.activeTrack) return null;
 
@@ -245,7 +245,7 @@ class GPXRecorder {
     <name>${this.escapeXml(wp.name)}</name>
     ${wp.description ? `<desc>${this.escapeXml(wp.description)}</desc>` : ""}
     ${wp.symbol ? `<sym>${this.escapeXml(wp.symbol)}</sym>` : ""}
-  </wpt>`
+  </wpt>`,
       )
       .join("");
 
@@ -258,7 +258,7 @@ class GPXRecorder {
         <time>${new Date(pt.timestamp).toISOString()}</time>
         ${pt.speed ? `<speed>${pt.speed}</speed>` : ""}
         ${pt.heading ? `<course>${pt.heading}</course>` : ""}
-      </trkpt>`
+      </trkpt>`,
       )
       .join("");
 
@@ -290,7 +290,7 @@ class GPXRecorder {
 
     const fileName = `${track.name.replace(
       /[^a-z0-9]/gi,
-      "_"
+      "_",
     )}_${Date.now()}.gpx`;
     // Use a temporary directory path for GPX files
     const filePath = `${fileName}`;
@@ -350,7 +350,7 @@ class GPXRecorder {
     lat1: number,
     lon1: number,
     lat2: number,
-    lon2: number
+    lon2: number,
   ): number {
     const R = 6371e3;
     const φ1 = (lat1 * Math.PI) / 180;

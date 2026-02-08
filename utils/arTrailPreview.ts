@@ -6,7 +6,7 @@ function calculateDistance(
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number
+  lon2: number,
 ): number {
   const R = 6371e3;
   const φ1 = (lat1 * Math.PI) / 180;
@@ -110,7 +110,7 @@ class ARTrailPreviewManager {
 
   private generateARMarkers(
     trail: Trail,
-    userLocation: { latitude: number; longitude: number; heading: number }
+    userLocation: { latitude: number; longitude: number; heading: number },
   ): ARMarker[] {
     const markers: ARMarker[] = [];
 
@@ -119,14 +119,14 @@ class ARTrailPreviewManager {
       userLocation.latitude,
       userLocation.longitude,
       trail.location.latitude,
-      trail.location.longitude
+      trail.location.longitude,
     );
 
     const bearing = this.calculateBearing(
       userLocation.latitude,
       userLocation.longitude,
       trail.location.latitude,
-      trail.location.longitude
+      trail.location.longitude,
     );
 
     markers.push({
@@ -179,7 +179,7 @@ class ARTrailPreviewManager {
       trail.features.some(
         (f) =>
           f.toLowerCase().includes("steep") ||
-          f.toLowerCase().includes("technical")
+          f.toLowerCase().includes("technical"),
       )
     ) {
       markers.push({
@@ -206,7 +206,7 @@ class ARTrailPreviewManager {
     lat1: number,
     lon1: number,
     lat2: number,
-    lon2: number
+    lon2: number,
   ): number {
     const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const lat1Rad = (lat1 * Math.PI) / 180;
@@ -282,14 +282,14 @@ class ARTrailPreviewManager {
           location.coords.latitude,
           location.coords.longitude,
           marker.position.latitude,
-          marker.position.longitude
+          marker.position.longitude,
         );
 
         marker.bearing = this.calculateBearing(
           location.coords.latitude,
           location.coords.longitude,
           marker.position.latitude,
-          marker.position.longitude
+          marker.position.longitude,
         );
       });
 
@@ -302,7 +302,7 @@ class ARTrailPreviewManager {
 
   getVisibleMarkers(
     fieldOfView: number = 60,
-    maxDistance: number = 5000
+    maxDistance: number = 5000,
   ): ARMarker[] {
     if (!this.currentTrailData) return [];
 
@@ -326,7 +326,7 @@ class ARTrailPreviewManager {
     marker: ARMarker,
     screenWidth: number,
     screenHeight: number,
-    fieldOfView: number = 60
+    fieldOfView: number = 60,
   ): { x: number; y: number; scale: number } | null {
     if (!this.currentTrailData) return null;
 
@@ -359,7 +359,7 @@ class ARTrailPreviewManager {
 
   getTrailDifficultyAssessment(
     trail: Trail,
-    vehicleType: string
+    vehicleType: string,
   ): {
     canComplete: boolean;
     requiredModifications: string[];
@@ -380,7 +380,7 @@ class ARTrailPreviewManager {
     ) {
       assessment.canComplete = false;
       assessment.requiredModifications.push(
-        `Vehicle type ${vehicleType} not recommended`
+        `Vehicle type ${vehicleType} not recommended`,
       );
     }
 
@@ -389,11 +389,11 @@ class ARTrailPreviewManager {
       assessment.riskLevel = "extreme";
       assessment.requiredModifications.push(
         "Lift kit recommended",
-        "Rock sliders essential"
+        "Rock sliders essential",
       );
       assessment.tips.push(
         "Travel with experienced group",
-        "Bring recovery gear"
+        "Bring recovery gear",
       );
     } else if (trail.difficulty === "Hard") {
       assessment.riskLevel = "high";
@@ -403,7 +403,7 @@ class ARTrailPreviewManager {
       assessment.riskLevel = "medium";
       assessment.tips.push(
         "Air down tires for better traction",
-        "Drive slowly through obstacles"
+        "Drive slowly through obstacles",
       );
     } else {
       assessment.riskLevel = "low";
@@ -413,7 +413,7 @@ class ARTrailPreviewManager {
     // Check features
     if (trail.features.includes("Water Crossings")) {
       assessment.requiredModifications.push(
-        "Snorkel recommended for deep water"
+        "Snorkel recommended for deep water",
       );
       assessment.tips.push("Check water depth before crossing");
     }

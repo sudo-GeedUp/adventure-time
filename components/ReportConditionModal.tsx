@@ -109,7 +109,7 @@ export default function ReportConditionModal({
               // Navigation would need to be passed as prop or use navigation hook
             },
           },
-        ]
+        ],
       );
       return;
     }
@@ -117,7 +117,7 @@ export default function ReportConditionModal({
     if (!selectedWarning || !userLocation) {
       Alert.alert(
         "Error",
-        "Please select a warning type and ensure location is available"
+        "Please select a warning type and ensure location is available",
       );
       return;
     }
@@ -151,7 +151,7 @@ export default function ReportConditionModal({
       await storage.saveCommunityTip(tip);
       Alert.alert(
         "Success",
-        "Thank you! Your report helps other offroaders stay safe."
+        "Thank you! Your report helps other offroaders stay safe.",
       );
       setSelectedWarning(null);
       setSuggestedSpeed("");

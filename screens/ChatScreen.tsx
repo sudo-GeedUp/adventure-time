@@ -62,7 +62,7 @@ export default function ChatScreen() {
       conversation = await storage.createOrUpdateConversation(
         participantId,
         participantName,
-        participantVehicle
+        participantVehicle,
       );
     }
 
@@ -90,7 +90,7 @@ export default function ChatScreen() {
         participantVehicle,
         currentUserId,
         currentUserName,
-        messageText.trim()
+        messageText.trim(),
       );
       setMessageText("");
       loadConversation();

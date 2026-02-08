@@ -23,8 +23,8 @@ export default function GuideListItem({
     guide.difficulty === "Easy"
       ? theme.success
       : guide.difficulty === "Moderate"
-      ? theme.warning
-      : theme.error;
+        ? theme.warning
+        : theme.error;
 
   return (
     <Pressable

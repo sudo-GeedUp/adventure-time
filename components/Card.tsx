@@ -26,7 +26,7 @@ const springConfig: WithSpringConfig = {
 
 const getBackgroundColorForElevation = (
   elevation: number,
-  theme: any
+  theme: any,
 ): string => {
   switch (elevation) {
     case 1:

@@ -67,12 +67,12 @@ interface AdventureSession {
   currentDistance: number;
   startTime: number;
   // Location tracking with optional heading for map camera orientation
-  locations: Array<{
+  locations: {
     latitude: number;
     longitude: number;
     timestamp: number;
     heading?: number;
-  }>;
+  }[];
   route: RoutePoint[];
   hazards: AdventureHazard[];
   assistanceWaypoints: AssistanceWaypoint[];
@@ -445,7 +445,7 @@ export default function ActiveAdventureScreen() {
   const [showHazardModal, setShowHazardModal] = useState(false);
   const [showAssistanceModal, setShowAssistanceModal] = useState(false);
   const [selectedHazardType, setSelectedHazardType] = useState<string | null>(
-    null
+    null,
   );
   const [hazardDescription, setHazardDescription] = useState("");
   const [assistanceDescription, setAssistanceDescription] = useState("");
@@ -461,13 +461,13 @@ export default function ActiveAdventureScreen() {
   const [communityTrails, setCommunityTrails] = useState<any[]>([]);
   const mapRef = React.useRef<any>(null);
   const speedUpdateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
+    null,
   );
   const altitudeUpdateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
+    null,
   );
   const locationSubscriptionRef = useRef<Location.LocationSubscription | null>(
-    null
+    null,
   );
   const sosTrackingStartedRef = useRef(false);
   const speedHistoryRef = useRef<number[]>([]);
@@ -495,7 +495,7 @@ export default function ActiveAdventureScreen() {
       console.log(
         "[Community Data] Loaded",
         recentTrails.length,
-        "trails from past users"
+        "trails from past users",
       );
     } catch (error) {
       console.error("[Community Data] Error loading trails:", error);
@@ -511,7 +511,7 @@ export default function ActiveAdventureScreen() {
     rallyNavigatorService.initialize(
       trail,
       [],
-      [] // Hazards will be added dynamically during the adventure
+      [], // Hazards will be added dynamically during the adventure
     );
     console.log("[Rally Navigator] Initialized successfully");
 
@@ -550,7 +550,7 @@ export default function ActiveAdventureScreen() {
       if (status !== "granted") {
         Alert.alert(
           "Permission Required",
-          "Location permission is needed to track your adventure"
+          "Location permission is needed to track your adventure",
         );
         setIsTracking(false);
         return;
@@ -632,10 +632,10 @@ export default function ActiveAdventureScreen() {
             if (callouts.length > 0) {
               console.log(
                 "[Rally Navigator] New callouts:",
-                callouts.map((c) => c.message)
+                callouts.map((c) => c.message),
               );
               setNavigationCallouts((prev) =>
-                [...callouts, ...prev].slice(0, 10)
+                [...callouts, ...prev].slice(0, 10),
               );
             }
 
@@ -664,7 +664,7 @@ export default function ActiveAdventureScreen() {
               speedReadings: prev.speedReadings + 1,
             };
           });
-        }
+        },
       );
     };
 
@@ -711,7 +711,7 @@ export default function ActiveAdventureScreen() {
     } catch (error) {
       Alert.alert(
         "Error",
-        "Could not get your location. Please enable location services."
+        "Could not get your location. Please enable location services.",
       );
     }
   };
@@ -749,7 +749,7 @@ export default function ActiveAdventureScreen() {
     if (isPremium) {
       // Log miles to profile
       const { newBadges: earnedBadges, profile } = await storage.addTrailMiles(
-        session.currentDistance
+        session.currentDistance,
       );
       setNewBadges(earnedBadges.map((b) => b.id));
     }
@@ -831,7 +831,7 @@ export default function ActiveAdventureScreen() {
 
       Alert.alert(
         "Hazard Marked",
-        "Other users will be warned about this hazard."
+        "Other users will be warned about this hazard.",
       );
       setShowHazardModal(false);
       setSelectedHazardType(null);
@@ -880,7 +880,7 @@ export default function ActiveAdventureScreen() {
       // Send location and route to emergency contacts
       await EmergencySOS.shareLocationWithRoute(
         `🆘 ASSISTANCE NEEDED: ${assistanceDescription.trim()}`,
-        trail.name
+        trail.name,
       );
 
       setShowAssistanceModal(false);
@@ -889,7 +889,7 @@ export default function ActiveAdventureScreen() {
       console.error("[Emergency SOS] Error sending assistance request:", error);
       Alert.alert(
         "Error",
-        "Could not send assistance request. Please try again."
+        "Could not send assistance request. Please try again.",
       );
     }
   };
@@ -925,7 +925,7 @@ export default function ActiveAdventureScreen() {
         } catch (error) {
           console.error(
             "[Emergency SOS] Error stopping route tracking:",
-            error
+            error,
           );
         }
       }
@@ -1014,14 +1014,14 @@ export default function ActiveAdventureScreen() {
                       callout.priority === "critical"
                         ? theme.error + "20"
                         : callout.priority === "high"
-                        ? theme.warning + "20"
-                        : theme.backgroundSecondary,
+                          ? theme.warning + "20"
+                          : theme.backgroundSecondary,
                     borderLeftColor:
                       callout.priority === "critical"
                         ? theme.error
                         : callout.priority === "high"
-                        ? theme.warning
-                        : theme.primary,
+                          ? theme.warning
+                          : theme.primary,
                   },
                 ]}
               >
@@ -1032,8 +1032,8 @@ export default function ActiveAdventureScreen() {
                     callout.priority === "critical"
                       ? theme.error
                       : callout.priority === "high"
-                      ? theme.warning
-                      : theme.primary
+                        ? theme.warning
+                        : theme.primary
                   }
                 />
                 <ThemedText
@@ -1044,8 +1044,8 @@ export default function ActiveAdventureScreen() {
                         callout.priority === "critical"
                           ? theme.error
                           : callout.priority === "high"
-                          ? theme.warning
-                          : theme.text,
+                            ? theme.warning
+                            : theme.text,
                       fontWeight:
                         callout.priority === "critical" ? "800" : "600",
                     },
@@ -1107,7 +1107,7 @@ export default function ActiveAdventureScreen() {
                       lineDashPattern={[5, 5]}
                       opacity={0.4}
                     />
-                  )
+                  ),
               )}
 
               {/* Current Route Polyline */}

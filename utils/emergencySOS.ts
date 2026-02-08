@@ -69,7 +69,7 @@ export class EmergencySOS {
           startTime: Date.now(),
           route,
           isTracking: true,
-        })
+        }),
       );
     } catch (error) {
       console.error("Error starting route tracking:", error);
@@ -127,7 +127,7 @@ export class EmergencySOS {
           startTime: data.startTime,
           route: [],
           isTracking: false,
-        })
+        }),
       );
 
       return route;
@@ -142,7 +142,7 @@ export class EmergencySOS {
     lat1: number,
     lon1: number,
     lat2: number,
-    lon2: number
+    lon2: number,
   ): number {
     const R = 6371; // Earth's radius in km
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -160,7 +160,7 @@ export class EmergencySOS {
   // Share location with route
   static async shareLocationWithRoute(
     customMessage?: string,
-    trailName?: string
+    trailName?: string,
   ): Promise<void> {
     try {
       // Get current location
@@ -173,7 +173,7 @@ export class EmergencySOS {
         Alert.alert(
           "No Contacts",
           "Please add emergency contacts in your profile before sharing location.",
-          [{ text: "OK" }]
+          [{ text: "OK" }],
         );
         return;
       }
@@ -189,7 +189,7 @@ export class EmergencySOS {
           route[i - 1].latitude,
           route[i - 1].longitude,
           route[i].latitude,
-          route[i].longitude
+          route[i].longitude,
         );
       }
 
@@ -221,7 +221,7 @@ export class EmergencySOS {
 ${customMessage || "Sharing my location with you"}
 
 📍 Current Location: ${location.coords.latitude.toFixed(
-        6
+        6,
       )}, ${location.coords.longitude.toFixed(6)}
 ${trailName ? `🛤️ Trail: ${trailName}` : ""}
 🚗 Vehicle: ${vehicleInfo}
@@ -242,7 +242,7 @@ Shared via Adventure Time app.`;
         Alert.alert(
           "SMS Not Available",
           "SMS is not available on this device. The message has been copied to your clipboard.",
-          [{ text: "OK" }]
+          [{ text: "OK" }],
         );
       }
 
@@ -269,7 +269,7 @@ Shared via Adventure Time app.`;
       Alert.alert(
         "Location Shared",
         `Location and route shared with ${contacts.length} contact(s)`,
-        [{ text: "OK" }]
+        [{ text: "OK" }],
       );
     } catch (error) {
       console.error("Error sharing location:", error);
@@ -287,7 +287,7 @@ Shared via Adventure Time app.`;
       }
       await AsyncStorage.setItem(
         LOCATION_SHARE_HISTORY_KEY,
-        JSON.stringify(history)
+        JSON.stringify(history),
       );
     } catch (error) {
       console.error("Error saving location share history:", error);
@@ -308,7 +308,7 @@ Shared via Adventure Time app.`;
   // Send emergency alert to all contacts (keep for true emergencies)
   static async sendSOSAlert(
     customMessage?: string,
-    trailName?: string
+    trailName?: string,
   ): Promise<void> {
     try {
       // Get current location
@@ -321,7 +321,7 @@ Shared via Adventure Time app.`;
         Alert.alert(
           "No Emergency Contacts",
           "Please add emergency contacts in your profile before using SOS.",
-          [{ text: "OK" }]
+          [{ text: "OK" }],
         );
         return;
       }
@@ -338,7 +338,7 @@ Shared via Adventure Time app.`;
 ${customMessage || "I need assistance!"}
 
 📍 Location: ${location.coords.latitude.toFixed(
-        6
+        6,
       )}, ${location.coords.longitude.toFixed(6)}
 ${trailName ? `🛤️ Trail: ${trailName}` : ""}
 🚗 Vehicle: ${vehicleInfo}
@@ -357,7 +357,7 @@ This is an automated emergency alert from Adventure Time app.`;
         Alert.alert(
           "SMS Not Available",
           "SMS is not available on this device. The emergency message has been copied to your clipboard.",
-          [{ text: "OK" }]
+          [{ text: "OK" }],
         );
       }
 
@@ -382,13 +382,13 @@ This is an automated emergency alert from Adventure Time app.`;
       Alert.alert(
         "SOS Sent",
         `Emergency alert sent to ${contacts.length} contact(s)`,
-        [{ text: "OK" }]
+        [{ text: "OK" }],
       );
     } catch (error) {
       console.error("Error sending SOS alert:", error);
       Alert.alert(
         "Error",
-        "Failed to send emergency alert. Please try calling 911."
+        "Failed to send emergency alert. Please try calling 911.",
       );
     }
   }
@@ -400,7 +400,7 @@ This is an automated emergency alert from Adventure Time app.`;
       contacts.push(contact);
       await AsyncStorage.setItem(
         EMERGENCY_CONTACTS_KEY,
-        JSON.stringify(contacts)
+        JSON.stringify(contacts),
       );
     } catch (error) {
       console.error("Error adding emergency contact:", error);
@@ -425,7 +425,7 @@ This is an automated emergency alert from Adventure Time app.`;
       const filtered = contacts.filter((c) => c.id !== contactId);
       await AsyncStorage.setItem(
         EMERGENCY_CONTACTS_KEY,
-        JSON.stringify(filtered)
+        JSON.stringify(filtered),
       );
     } catch (error) {
       console.error("Error removing emergency contact:", error);
@@ -461,7 +461,7 @@ This is an automated emergency alert from Adventure Time app.`;
   // Update SOS status
   static async updateSOSStatus(
     alertId: string,
-    status: "active" | "resolved" | "cancelled"
+    status: "active" | "resolved" | "cancelled",
   ): Promise<void> {
     try {
       const history = await this.getSOSHistory();

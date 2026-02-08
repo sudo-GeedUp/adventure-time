@@ -28,7 +28,7 @@ export class ImageOptimizer {
    * Get image dimensions without loading the full image
    */
   static async getImageDimensions(
-    uri: string
+    uri: string,
   ): Promise<ImageDimensions | null> {
     try {
       if (Platform.OS === "web") {
@@ -65,7 +65,7 @@ export class ImageOptimizer {
    */
   static async needsOptimization(
     uri: string,
-    options: Partial<OptimizationOptions> = {}
+    options: Partial<OptimizationOptions> = {},
   ): Promise<boolean> {
     const dims = await this.getImageDimensions(uri);
     if (!dims) return false;
@@ -83,7 +83,7 @@ export class ImageOptimizer {
    */
   static async optimize(
     uri: string,
-    options: Partial<OptimizationOptions> = {}
+    options: Partial<OptimizationOptions> = {},
   ): Promise<string> {
     const opts = { ...this.defaultOptions, ...options };
 
@@ -100,7 +100,7 @@ export class ImageOptimizer {
         dims.width,
         dims.height,
         opts.maxWidth,
-        opts.maxHeight
+        opts.maxHeight,
       );
 
       // If dimensions haven't changed, return original
@@ -128,11 +128,11 @@ export class ImageOptimizer {
             format,
             compress: opts.quality || 0.8,
             base64: false,
-          }
+          },
         );
 
         console.log(
-          `Image optimized: ${dims.width}x${dims.height} → ${newWidth}x${newHeight}`
+          `Image optimized: ${dims.width}x${dims.height} → ${newWidth}x${newHeight}`,
         );
         return result.uri;
       } else {
@@ -150,7 +150,7 @@ export class ImageOptimizer {
    */
   static async optimizeMultiple(
     uris: string[],
-    options: Partial<OptimizationOptions> = {}
+    options: Partial<OptimizationOptions> = {},
   ): Promise<string[]> {
     const promises = uris.map((uri) => this.optimize(uri, options));
     return Promise.all(promises);
@@ -167,7 +167,7 @@ export class ImageOptimizer {
         return blob.size / (1024 * 1024); // Convert to MB
       } else {
         const info = await FileSystem.getInfoAsync(uri);
-        if (info.exists && 'size' in info) {
+        if (info.exists && "size" in info) {
           return (info.size || 0) / (1024 * 1024); // Convert to MB
         }
         return 0;
@@ -185,7 +185,7 @@ export class ImageOptimizer {
     width: number,
     height: number,
     maxWidth?: number,
-    maxHeight?: number
+    maxHeight?: number,
   ): { width: number; height: number } {
     if (!maxWidth && !maxHeight) {
       return { width, height };
@@ -246,7 +246,7 @@ export class ImageOptimizer {
     uri: string,
     width: number,
     height: number,
-    options: OptimizationOptions
+    options: OptimizationOptions,
   ): Promise<string> {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -277,7 +277,7 @@ export class ImageOptimizer {
             }
           },
           `image/${options.format || "jpeg"}`,
-          options.quality || 0.8
+          options.quality || 0.8,
         );
       };
 
@@ -291,7 +291,7 @@ export class ImageOptimizer {
    */
   static async generateThumbnail(
     uri: string,
-    size: number = 200
+    size: number = 200,
   ): Promise<string> {
     return this.optimize(uri, {
       maxWidth: size,

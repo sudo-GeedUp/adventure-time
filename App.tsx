@@ -63,7 +63,7 @@ export default Sentry.wrap(function App() {
           }
         } catch (error) {
           console.log(
-            "Firebase initialization skipped - app will use local storage"
+            "Firebase initialization skipped - app will use local storage",
           );
         }
 
@@ -83,7 +83,7 @@ export default Sentry.wrap(function App() {
             },
             (response) => {
               console.log("Notification tapped:", response);
-            }
+            },
           );
         } catch (error) {
           console.log("Notifications initialization skipped");

@@ -85,7 +85,7 @@ class BreadcrumbManager {
           this.lastPosition.latitude,
           this.lastPosition.longitude,
           latitude,
-          longitude
+          longitude,
         );
 
         if (distance < MIN_DISTANCE_METERS) {
@@ -158,7 +158,7 @@ class BreadcrumbManager {
   }
 
   async getTrailByAdventureId(
-    adventureId: string
+    adventureId: string,
   ): Promise<BreadcrumbTrail | null> {
     const trails = await this.getAllTrails();
     return trails.find((t) => t.adventureId === adventureId) || null;
@@ -216,7 +216,7 @@ class BreadcrumbManager {
         location.coords.latitude,
         location.coords.longitude,
         startBreadcrumb.latitude,
-        startBreadcrumb.longitude
+        startBreadcrumb.longitude,
       );
     } catch (error) {
       console.error("Error calculating distance to start:", error);
@@ -228,7 +228,7 @@ class BreadcrumbManager {
     lat1: number,
     lon1: number,
     lat2: number,
-    lon2: number
+    lon2: number,
   ): number {
     const R = 6371e3; // Earth's radius in meters
     const φ1 = (lat1 * Math.PI) / 180;
@@ -276,7 +276,7 @@ class BreadcrumbManager {
         ${b.altitude ? `<ele>${b.altitude}</ele>` : ""}
         <time>${new Date(b.timestamp).toISOString()}</time>
         ${b.note ? `<name>${this.escapeXml(b.note)}</name>` : ""}
-      </trkpt>`
+      </trkpt>`,
       )
       .join("");
 

@@ -56,7 +56,7 @@ class PerformanceService {
     if (metric.duration > this.getThresholdForType(metric.type)) {
       sentryService.captureMessage(
         `Slow operation: ${metric.name} took ${metric.duration}ms`,
-        "warning"
+        "warning",
       );
       sentryService.setContext("slow_operation", fullMetric);
     }
@@ -73,14 +73,14 @@ class PerformanceService {
   startTimer(
     name: string,
     type: PerformanceMetric["type"],
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ) {
     const startTime = performance.now();
 
     return {
       end: (
         success: boolean = true,
-        additionalMetadata?: Record<string, any>
+        additionalMetadata?: Record<string, any>,
       ) => {
         const duration = performance.now() - startTime;
 
@@ -103,7 +103,7 @@ class PerformanceService {
   async measureApiCall<T>(
     name: string,
     apiCall: () => Promise<T>,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
   ): Promise<T> {
     const timer = this.startTimer(name, "api", metadata);
 
@@ -165,14 +165,14 @@ class PerformanceService {
 
     const totalDuration = relevantMetrics.reduce(
       (sum, m) => sum + m.duration,
-      0
+      0,
     );
     const averageResponseTime = totalDuration / relevantMetrics.length;
     const slowest = relevantMetrics.reduce((prev, current) =>
-      current.duration > prev.duration ? current : prev
+      current.duration > prev.duration ? current : prev,
     );
     const errorCount = relevantMetrics.filter(
-      (m) => m.success === false
+      (m) => m.success === false,
     ).length;
 
     return {
@@ -188,7 +188,7 @@ class PerformanceService {
    */
   getMetricsByType(
     type: PerformanceMetric["type"],
-    limit?: number
+    limit?: number,
   ): PerformanceMetric[] {
     const filtered = this.metrics
       .filter((m) => m.type === type)
@@ -202,7 +202,7 @@ class PerformanceService {
    */
   getSlowOperations(
     threshold?: number,
-    limit: number = 10
+    limit: number = 10,
   ): PerformanceMetric[] {
     const ms = threshold || 1000; // Default 1 second
 
@@ -237,11 +237,14 @@ class PerformanceService {
    */
   private startPeriodicReporting() {
     // Report every 5 minutes
-    this.reportInterval = setInterval(() => {
-      if (!this.isReporting) {
-        this.sendPeriodicReport();
-      }
-    }, 5 * 60 * 1000);
+    this.reportInterval = setInterval(
+      () => {
+        if (!this.isReporting) {
+          this.sendPeriodicReport();
+        }
+      },
+      5 * 60 * 1000,
+    );
   }
 
   /**

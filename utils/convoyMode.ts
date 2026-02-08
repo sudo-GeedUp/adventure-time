@@ -134,7 +134,7 @@ export class ConvoyManager {
   // Update member location
   static async updateMemberLocation(
     memberId: string,
-    location: Location.LocationObject
+    location: Location.LocationObject,
   ): Promise<void> {
     try {
       const convoy = await this.getActiveConvoy();
@@ -162,7 +162,7 @@ export class ConvoyManager {
   static async addRallyPoint(
     name: string,
     description: string,
-    location: { latitude: number; longitude: number }
+    location: { latitude: number; longitude: number },
   ): Promise<void> {
     try {
       const convoy = await this.getActiveConvoy();
@@ -288,7 +288,7 @@ export class ConvoyManager {
   // Update member status
   static async updateMemberStatus(
     memberId: string,
-    status: "active" | "stopped" | "emergency" | "offline"
+    status: "active" | "stopped" | "emergency" | "offline",
   ): Promise<void> {
     try {
       const convoy = await this.getActiveConvoy();

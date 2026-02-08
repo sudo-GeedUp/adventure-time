@@ -80,13 +80,13 @@ async function analyzeBundle(platform = "all") {
             colorLog(
               "red",
               `⚠️  Bundle size exceeds recommended limit (${formatBytes(
-                THRESHOLDS.error
-              )})`
+                THRESHOLDS.error,
+              )})`,
             );
           } else if (bundleSize > THRESHOLDS.warning) {
             colorLog(
               "yellow",
-              `⚠️  Bundle size is large (${formatBytes(THRESHOLDS.warning)})`
+              `⚠️  Bundle size is large (${formatBytes(THRESHOLDS.warning)})`,
             );
           } else {
             colorLog("green", "✅ Bundle size is within recommended limits");
@@ -98,7 +98,7 @@ async function analyzeBundle(platform = "all") {
             const percentage = ((file.size / bundleSize) * 100).toFixed(1);
             colorLog(
               "bright",
-              `  ${file.name}: ${file.sizeFormatted} (${percentage}%)`
+              `  ${file.name}: ${file.sizeFormatted} (${percentage}%)`,
             );
           });
         }
@@ -106,7 +106,7 @@ async function analyzeBundle(platform = "all") {
         // For native platforms, we'd need to build and analyze the APK/IPA
         colorLog(
           "yellow",
-          `Native bundle analysis for ${p} requires full build. Run:`
+          `Native bundle analysis for ${p} requires full build. Run:`,
         );
         colorLog("cyan", `  eas build --platform ${p} --profile production`);
       }
@@ -151,7 +151,7 @@ function generateRecommendations(results) {
         priority: "high",
         message: "Consider code splitting and lazy loading for large modules",
         details: `Bundle size (${formatBytes(
-          data.totalSize
+          data.totalSize,
         )}) significantly exceeds recommended limit`,
       });
     }
@@ -185,7 +185,7 @@ function generateRecommendations(results) {
       priority: "low",
       message: "Enable gzip compression on your server",
       details: "Can reduce bundle size by up to 70%",
-    }
+    },
   );
 
   return recommendations;

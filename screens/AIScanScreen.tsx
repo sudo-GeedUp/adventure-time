@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Pressable, Alert, Image } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import {
+  useNavigation,
+  CompositeNavigationProp,
+} from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { CompositeNavigationProp } from "@react-navigation/native";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import * as ImagePicker from "expo-image-picker";
 import { Feather } from "@expo/vector-icons";
@@ -54,11 +56,11 @@ export default function AIScanScreen() {
   const { isPremium } = useSubscription();
   const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([]);
   const [stuckOfTheWeek, setStuckOfTheWeek] = useState<StuckOfTheWeek | null>(
-    null
+    null,
   );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
-    null
+    null,
   );
 
   useEffect(() => {
@@ -73,7 +75,7 @@ export default function AIScanScreen() {
         // Sort by difficulty score (higher = more stuck)
         const sorted = allScans.sort(
           (a: any, b: any) =>
-            (b.difficultyScore || 0) - (a.difficultyScore || 0)
+            (b.difficultyScore || 0) - (a.difficultyScore || 0),
         );
         setStuckOfTheWeek(sorted[0]);
       }
@@ -110,7 +112,7 @@ export default function AIScanScreen() {
     if (status !== "granted") {
       Alert.alert(
         "Permission Required",
-        "Camera permission is required to take photos for analysis."
+        "Camera permission is required to take photos for analysis.",
       );
       return false;
     }
@@ -131,7 +133,7 @@ export default function AIScanScreen() {
                 screen: "Subscription",
               }),
           },
-        ]
+        ],
       );
       return false;
     }
@@ -378,7 +380,7 @@ export default function AIScanScreen() {
                         backgroundColor: theme.error,
                         width: `${Math.min(
                           (stuckOfTheWeek.difficultyScore || 8) * 10,
-                          100
+                          100,
                         )}%`,
                       },
                     ]}

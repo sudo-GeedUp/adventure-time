@@ -53,7 +53,7 @@ class AIGuideService {
 
     if (!apiKey) {
       console.warn(
-        "OpenAI API key not configured. AI Guide will not be available."
+        "OpenAI API key not configured. AI Guide will not be available.",
       );
       return;
     }
@@ -209,8 +209,8 @@ Use this context to provide personalized, relevant advice.
     if (this.context.userLocation) {
       contextParts.push(
         `📍 Location: ${this.context.userLocation.latitude.toFixed(
-          4
-        )}, ${this.context.userLocation.longitude.toFixed(4)}`
+          4,
+        )}, ${this.context.userLocation.longitude.toFixed(4)}`,
       );
     }
 
@@ -307,7 +307,7 @@ Focus on actionable, relevant suggestions based on current conditions.`;
 
   async getTrailRecommendations(
     trails: Trail[],
-    limit: number = 3
+    limit: number = 3,
   ): Promise<Trail[]> {
     if (!this.apiKey || trails.length === 0) return trails.slice(0, limit);
 
@@ -518,7 +518,7 @@ Give clear, step-by-step instructions prioritizing safety. Include when to call 
   async generateTripPlan(
     destination: string,
     duration: string,
-    preferences: string[]
+    preferences: string[],
   ): Promise<string> {
     if (!this.apiKey) {
       return "I'm unable to generate a trip plan right now. Please try again later.";

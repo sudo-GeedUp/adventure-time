@@ -49,7 +49,7 @@ export default function GuidesScreen() {
 
   const searchedGuides = searchQuery
     ? filteredGuides.filter((guide) =>
-        guide.title.toLowerCase().includes(searchQuery.toLowerCase())
+        guide.title.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : filteredGuides;
 

@@ -30,7 +30,7 @@ export class ErrorHandler {
       analyticsService.logError(
         error.name || "UnknownError",
         error.message,
-        screen
+        screen,
       );
     }
 
@@ -42,7 +42,7 @@ export class ErrorHandler {
   static async retry<T>(
     fn: () => Promise<T>,
     maxRetries: number = 3,
-    delay: number = 1000
+    delay: number = 1000,
   ): Promise<T> {
     let lastError: Error | null = null;
 
@@ -64,7 +64,7 @@ export class ErrorHandler {
 
   static async withErrorHandling<T>(
     fn: () => Promise<T>,
-    options: ErrorHandlerOptions = {}
+    options: ErrorHandlerOptions = {},
   ): Promise<T | null> {
     try {
       return await fn();
@@ -93,7 +93,7 @@ export class ErrorHandler {
 
   static permissionError(
     permission: string,
-    options: ErrorHandlerOptions = {}
+    options: ErrorHandlerOptions = {},
   ) {
     const error = new Error(`Permission denied: ${permission}`);
     this.handle(error, {

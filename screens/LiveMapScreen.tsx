@@ -89,8 +89,8 @@ export default function LiveMapScreen() {
   const gpsStatusText = !location
     ? "No Signal"
     : typeof gpsAccuracy === "number"
-    ? `GPS ±${Math.round(gpsAccuracy)}m`
-    : "GPS Active";
+      ? `GPS ±${Math.round(gpsAccuracy)}m`
+      : "GPS Active";
 
   useEffect(() => {
     initializeLocation();
@@ -124,7 +124,7 @@ export default function LiveMapScreen() {
       if (status !== "granted") {
         Alert.alert(
           "Permission Required",
-          "Location permission is needed for live GPS tracking"
+          "Location permission is needed for live GPS tracking",
         );
         return;
       }
@@ -136,7 +136,7 @@ export default function LiveMapScreen() {
       setGpsAccuracy(
         typeof currentLocation.coords.accuracy === "number"
           ? currentLocation.coords.accuracy
-          : null
+          : null,
       );
       setLocation(currentLocation);
       lastAcceptedLocationRef.current = currentLocation;
@@ -174,12 +174,12 @@ export default function LiveMapScreen() {
                 : Date.now();
             const timeDeltaSeconds = Math.max(
               (newTimestamp - prevTimestamp) / 1000,
-              0.001
+              0.001,
             );
 
             const distanceMiles = calculateDistance(
               prevAccepted.coords,
-              newLocation.coords
+              newLocation.coords,
             );
             const distanceMeters = distanceMiles * 1609.344;
             const speedMps = distanceMeters / timeDeltaSeconds;
@@ -191,7 +191,7 @@ export default function LiveMapScreen() {
 
           lastAcceptedLocationRef.current = newLocation;
           setLocation(newLocation);
-        }
+        },
       );
       setLocationSubscription(subscription);
     } catch (error) {
@@ -258,7 +258,7 @@ export default function LiveMapScreen() {
         latitudeDelta: 0.01,
         longitudeDelta: 0.01,
       },
-      800
+      800,
     );
   };
 
@@ -289,7 +289,7 @@ export default function LiveMapScreen() {
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
         },
-        500
+        500,
       );
     }
   };
@@ -312,7 +312,7 @@ export default function LiveMapScreen() {
           latitudeDelta: 0.005,
           longitudeDelta: 0.005,
         },
-        1000
+        1000,
       );
     }
   };
@@ -427,7 +427,7 @@ export default function LiveMapScreen() {
                   <Feather name="alert-triangle" size={16} color="white" />
                 </View>
               </Marker>
-            ))
+            )),
           )}
 
         {/* Active Assistance Waypoints */}
@@ -551,7 +551,7 @@ export default function LiveMapScreen() {
                 {location
                   ? calculateDistance(
                       location.coords,
-                      selectedTrail.location
+                      selectedTrail.location,
                     ).toFixed(1)
                   : "0"}{" "}
                 miles away (straight-line)
@@ -611,7 +611,7 @@ export default function LiveMapScreen() {
               >
                 {location
                   ? calculateDistance(location.coords, trail.location).toFixed(
-                      1
+                      1,
                     )
                   : "0"}{" "}
                 miles

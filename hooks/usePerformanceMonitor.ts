@@ -18,7 +18,7 @@ interface PerformanceMonitorOptions {
 }
 
 export const usePerformanceMonitor = (
-  options: PerformanceMonitorOptions = {}
+  options: PerformanceMonitorOptions = {},
 ) => {
   const {
     trackInAnalytics = true,
@@ -48,7 +48,7 @@ export const usePerformanceMonitor = (
         });
       }
     },
-    [trackInSentry]
+    [trackInSentry],
   );
 
   // End timing and record metric
@@ -73,8 +73,8 @@ export const usePerformanceMonitor = (
       if (duration > threshold) {
         console.warn(
           `Performance warning: ${name} took ${duration.toFixed(
-            2
-          )}ms (threshold: ${threshold}ms)`
+            2,
+          )}ms (threshold: ${threshold}ms)`,
         );
       }
 
@@ -87,7 +87,7 @@ export const usePerformanceMonitor = (
       if (trackInSentry && duration > threshold) {
         sentryService.captureMessage(
           `Performance threshold exceeded: ${name}`,
-          "warning"
+          "warning",
         );
         sentryService.setContext("performance_metric", metric);
       }
@@ -97,7 +97,7 @@ export const usePerformanceMonitor = (
 
       return duration;
     },
-    [trackInAnalytics, trackInSentry, threshold]
+    [trackInAnalytics, trackInSentry, threshold],
   );
 
   // Measure a function execution time
@@ -105,7 +105,7 @@ export const usePerformanceMonitor = (
     async <T>(
       name: string,
       fn: () => Promise<T> | T,
-      metadata?: Record<string, any>
+      metadata?: Record<string, any>,
     ): Promise<T> => {
       startTiming(name, metadata);
 
@@ -121,7 +121,7 @@ export const usePerformanceMonitor = (
         throw error;
       }
     },
-    [startTiming, endTiming]
+    [startTiming, endTiming],
   );
 
   // Measure render time — returns a cleanup function to call in the consumer's useEffect
@@ -136,7 +136,7 @@ export const usePerformanceMonitor = (
         if (trackInAnalytics) {
           analyticsService.trackPerformance(
             `${componentName}_render`,
-            renderTime
+            renderTime,
           );
         }
 
@@ -144,21 +144,21 @@ export const usePerformanceMonitor = (
           // 100ms render threshold
           console.warn(
             `Slow render detected: ${componentName} took ${renderTime.toFixed(
-              2
-            )}ms`
+              2,
+            )}ms`,
           );
         }
       });
 
       return () => cancelAnimationFrame(frame);
     },
-    [trackInAnalytics]
+    [trackInAnalytics],
   );
 
   // Get current active metrics
   const getActiveMetrics = useCallback(() => {
     const now = performance.now();
-    const active: Array<{ name: string; duration: number }> = [];
+    const active: { name: string; duration: number }[] = [];
 
     metricsRef.current.forEach((metric, name) => {
       active.push({
@@ -210,7 +210,7 @@ export const useApiMonitor = () => {
     async (
       url: string,
       options?: RequestInit,
-      metadata?: Record<string, any>
+      metadata?: Record<string, any>,
     ) => {
       return measureFunction(
         `api_${new URL(url).pathname.replace(/\//g, "_")}`,
@@ -227,7 +227,7 @@ export const useApiMonitor = () => {
             analyticsService.logError(
               "api_error",
               `HTTP ${response.status}`,
-              "API Call"
+              "API Call",
             );
           }
 
@@ -237,10 +237,10 @@ export const useApiMonitor = () => {
           url: new URL(url).pathname,
           method: options?.method || "GET",
           ...metadata,
-        }
+        },
       );
     },
-    [measureFunction]
+    [measureFunction],
   );
 
   return { monitoredFetch };
@@ -267,7 +267,7 @@ export const useImageLoadMonitor = () => {
 
       return imageId;
     },
-    [startTiming, endTiming]
+    [startTiming, endTiming],
   );
 
   return { monitorImageLoad };
@@ -289,12 +289,12 @@ export const useMemoryMonitor = () => {
         if (usedMB / limitMB > 0.8) {
           console.warn(
             `High memory usage: ${usedMB.toFixed(2)}MB / ${limitMB.toFixed(
-              2
-            )}MB`
+              2,
+            )}MB`,
           );
           sentryService.captureMessage(
             `High memory usage: ${usedMB.toFixed(2)}MB`,
-            "warning"
+            "warning",
           );
         }
       };
@@ -341,7 +341,7 @@ export const PerformanceUtils = {
       "getEntriesByName" in performance
     ) {
       const entries = performance.getEntriesByName(
-        url
+        url,
       ) as PerformanceResourceTiming[];
       if (entries.length > 0) {
         const entry = entries[entries.length - 1];

@@ -69,7 +69,7 @@ export default function CommunityTipsScreen() {
                 screen: "Subscription",
               }),
           },
-        ]
+        ],
       );
       return;
     }
@@ -77,7 +77,7 @@ export default function CommunityTipsScreen() {
     if (!title.trim() || !description.trim()) {
       Alert.alert(
         "Missing Information",
-        "Please provide both a title and description"
+        "Please provide both a title and description",
       );
       return;
     }

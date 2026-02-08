@@ -95,7 +95,7 @@ export default function FriendsScreen() {
             (friendsData: Friend[]) => {
               setFriends(friendsData);
               setUseFirebase(true);
-            }
+            },
           );
           setUnsubscribe(() => unsubscribeFn);
           return;
@@ -119,7 +119,7 @@ export default function FriendsScreen() {
       Alert.alert(
         "Firebase Not Configured",
         "Add your Firebase credentials to .env to enable real-time friends. For now, using local storage.",
-        [{ text: "OK" }]
+        [{ text: "OK" }],
       );
     }
     const sampleFriends: Friend[] = [
@@ -252,8 +252,8 @@ export default function FriendsScreen() {
             {update.status === "mobile"
               ? "is mobile again"
               : update.status === "recovering"
-              ? "is recovering"
-              : "is stuck"}
+                ? "is recovering"
+                : "is stuck"}
             {update.location ? ` • ${update.location}` : ""}
           </ThemedText>
         </View>
