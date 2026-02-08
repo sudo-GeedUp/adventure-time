@@ -177,8 +177,8 @@ export default function FriendsScreen() {
             {update.status === "mobile"
               ? "is mobile again"
               : update.status === "recovering"
-                ? "is recovering"
-                : "is stuck"}
+              ? "is recovering"
+              : "is stuck"}
             {update.location ? ` • ${update.location}` : ""}
           </ThemedText>
         </View>

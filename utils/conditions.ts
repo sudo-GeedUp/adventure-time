@@ -25,7 +25,7 @@ export interface ImpactAssessment {
 export function filterNearbyTips(
   tips: CommunityTip[],
   userLocation: { latitude: number; longitude: number },
-  radiusMiles: number,
+  radiusMiles: number
 ): CommunityTip[] {
   const tipsWithLocation = tips.filter((tip) => tip.location !== undefined);
 
@@ -35,7 +35,7 @@ export function filterNearbyTips(
   }));
 
   const nearbyTips = tipsWithDistance.filter(
-    (item) => item.distance <= radiusMiles,
+    (item) => item.distance <= radiusMiles
   );
 
   nearbyTips.sort((a, b) => a.distance - b.distance);
@@ -46,17 +46,17 @@ export function filterNearbyTips(
 export function analyzeTrailConditions(
   tips: CommunityTip[],
   userLocation: { latitude: number; longitude: number },
-  radiusMiles: number,
+  radiusMiles: number
 ): TrailConditionSummary {
   const nearbyTips = filterNearbyTips(tips, userLocation, radiusMiles);
 
   const trailConditionTips = nearbyTips.filter(
-    (tip) => tip.category === "trail_condition",
+    (tip) => tip.category === "trail_condition"
   );
 
   const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const recentTips = trailConditionTips.filter(
-    (tip) => tip.timestamp > sevenDaysAgo,
+    (tip) => tip.timestamp > sevenDaysAgo
   );
 
   let severity: "low" | "moderate" | "high" | "severe";
@@ -100,7 +100,9 @@ export function analyzeTrailConditions(
   const uniqueLocations = new Set<string>();
   recentTips.forEach((tip) => {
     if (tip.location) {
-      const locationKey = `${tip.location.latitude.toFixed(3)},${tip.location.longitude.toFixed(3)}`;
+      const locationKey = `${tip.location.latitude.toFixed(
+        3
+      )},${tip.location.longitude.toFixed(3)}`;
       uniqueLocations.add(locationKey);
     }
   });
@@ -117,7 +119,7 @@ export function analyzeTrailConditions(
 
 export function calculateImpactAssessment(
   weather: WeatherCondition | null,
-  trailConditions: TrailConditionSummary,
+  trailConditions: TrailConditionSummary
 ): ImpactAssessment {
   const riskFactors: string[] = [];
 
@@ -148,7 +150,9 @@ export function calculateImpactAssessment(
 
   if (trailConditions.affectedAreas > 0) {
     riskFactors.push(
-      `${trailConditions.affectedAreas} area${trailConditions.affectedAreas > 1 ? "s" : ""} with reported issues`,
+      `${trailConditions.affectedAreas} area${
+        trailConditions.affectedAreas > 1 ? "s" : ""
+      } with reported issues`
     );
   }
 

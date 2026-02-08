@@ -56,10 +56,10 @@ export default function AIResultsScreen() {
           result.severity === "low"
             ? 0.9
             : result.severity === "moderate"
-              ? 0.7
-              : result.severity === "high"
-                ? 0.5
-                : 0.3,
+            ? 0.7
+            : result.severity === "high"
+            ? 0.5
+            : 0.3,
         confidence: 0.85,
       };
 
@@ -131,8 +131,8 @@ export default function AIResultsScreen() {
     analysis.difficulty === "Easy"
       ? theme.success
       : analysis.difficulty === "Moderate"
-        ? theme.warning
-        : theme.error;
+      ? theme.warning
+      : theme.error;
 
   const confidencePercent = analysis.confidence
     ? Math.round(analysis.confidence * 100)
@@ -147,8 +147,8 @@ export default function AIResultsScreen() {
       ? analysis.recoverability >= 0.85
         ? theme.success
         : analysis.recoverability >= 0.65
-          ? theme.warning
-          : theme.error
+        ? theme.warning
+        : theme.error
       : theme.tabIconDefault;
 
   return (
@@ -225,7 +225,11 @@ export default function AIResultsScreen() {
                 style={[
                   styles.progressFill,
                   {
-                    width: `${typeof recoverabilityPercent === "number" ? recoverabilityPercent : 0}%`,
+                    width: `${
+                      typeof recoverabilityPercent === "number"
+                        ? recoverabilityPercent
+                        : 0
+                    }%`,
                     backgroundColor: recoverabilityColor,
                   },
                 ]}
@@ -240,8 +244,8 @@ export default function AIResultsScreen() {
               {analysis.recoverability >= 0.85
                 ? "Vehicle is likely recoverable with proper technique"
                 : analysis.recoverability >= 0.65
-                  ? "Vehicle may be recoverable, professional help recommended"
-                  : "Professional recovery equipment/service strongly recommended"}
+                ? "Vehicle may be recoverable, professional help recommended"
+                : "Professional recovery equipment/service strongly recommended"}
             </ThemedText>
           </View>
         )}

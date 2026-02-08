@@ -61,7 +61,7 @@ export default function RootNavigator() {
   }
 
   console.log(
-    "RootNavigator: Rendering navigator - going directly to MainTabs",
+    "RootNavigator: Rendering navigator - going directly to MainTabs"
   );
 
   return (

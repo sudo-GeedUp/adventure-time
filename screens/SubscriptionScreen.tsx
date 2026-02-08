@@ -24,7 +24,7 @@ export default function SubscriptionScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
   const processingRef = useRef(false);
   const [monthlyPackage, setMonthlyPackage] = useState<PurchasesPackage | null>(
-    null,
+    null
   );
   const [loadingOfferings, setLoadingOfferings] = useState(true);
 
@@ -52,7 +52,7 @@ export default function SubscriptionScreen() {
             priceString: "$4.99/month",
             price: 4.99,
             currencyCode: "USD",
-          }
+          },
         } as any);
       }
     } catch (error) {
@@ -67,7 +67,7 @@ export default function SubscriptionScreen() {
             priceString: "$4.99/month",
             price: 4.99,
             currencyCode: "USD",
-          }
+          },
         } as any);
       }
     } finally {
@@ -81,19 +81,19 @@ export default function SubscriptionScreen() {
 
     processingRef.current = true;
     setIsProcessing(true);
-    
+
     try {
       // Check if using mock data
       if (__DEV__ && monthlyPackage?.identifier.startsWith("mock-")) {
         // Mock purchase for development
         console.log("Processing mock subscription...");
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate delay
-        
+        await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate delay
+
         Alert.alert(
           "Welcome to Premium!",
-          "You now have access to all premium features including AI Scan, trail updates, and more!\n\n(Note: This is a mock subscription for development)",
+          "You now have access to all premium features including AI Scan, trail updates, and more!\n\n(Note: This is a mock subscription for development)"
         );
-        
+
         // Update subscription status
         refreshStatus();
       } else {
@@ -102,7 +102,7 @@ export default function SubscriptionScreen() {
         if (success) {
           Alert.alert(
             "Welcome to Premium!",
-            "You now have access to all premium features including AI Scan, trail updates, and more!",
+            "You now have access to all premium features including AI Scan, trail updates, and more!"
           );
         }
       }
@@ -110,7 +110,7 @@ export default function SubscriptionScreen() {
       if (!error.userCancelled) {
         Alert.alert(
           "Purchase Failed",
-          error.message || "Unable to complete purchase. Please try again.",
+          error.message || "Unable to complete purchase. Please try again."
         );
       }
     } finally {
@@ -125,24 +125,24 @@ export default function SubscriptionScreen() {
 
     processingRef.current = true;
     setIsProcessing(true);
-    
+
     try {
       const success = await restore();
       if (success) {
         Alert.alert(
           "Subscription Restored!",
-          "Your premium subscription has been restored successfully.",
+          "Your premium subscription has been restored successfully."
         );
       } else {
         Alert.alert(
           "No Subscription Found",
-          "No active subscription found for this account.",
+          "No active subscription found for this account."
         );
       }
     } catch (error) {
       Alert.alert(
         "Restore Failed",
-        "Unable to restore purchases. Please try again.",
+        "Unable to restore purchases. Please try again."
       );
     } finally {
       processingRef.current = false;
@@ -233,7 +233,7 @@ export default function SubscriptionScreen() {
             onPress={() =>
               Alert.alert(
                 "Manage Subscription",
-                "To manage your subscription, go to Settings > [Your Name] > Subscriptions on your device.",
+                "To manage your subscription, go to Settings > [Your Name] > Subscriptions on your device."
               )
             }
           >

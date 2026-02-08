@@ -72,7 +72,7 @@ export default function SignUpScreen() {
       Alert.alert(
         "Success!",
         "Your account has been created. Welcome to Adventure Time!",
-        [{ text: "OK" }],
+        [{ text: "OK" }]
       );
     } catch (error: any) {
       Alert.alert("Sign Up Failed", error.message);

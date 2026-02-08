@@ -245,7 +245,7 @@ class AnalyticsService {
       firebaseLogEvent(this.analytics, "performance_metric", {
         metric_name: name,
         duration,
-        unit: unit || 'ms',
+        unit: unit || "ms",
         timestamp: Date.now(),
       });
     } catch (error) {

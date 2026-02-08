@@ -272,7 +272,7 @@ export default function ExploreMapScreen() {
     if (allTrails.length === 0) {
       Alert.alert(
         "No Adventures Available",
-        "Please wait while we load nearby adventures.",
+        "Please wait while we load nearby adventures."
       );
       return;
     }
@@ -285,7 +285,11 @@ export default function ExploreMapScreen() {
     if (result) {
       Alert.alert(
         `${result.emoji} ${result.reason}`,
-        `We've picked "${result.trail.name}" for you!\n\nDifficulty: ${result.trail.difficulty}\nDistance: ${result.trail.distance.toFixed(1)} miles\n\nReady to start this adventure?`,
+        `We've picked "${result.trail.name}" for you!\n\nDifficulty: ${
+          result.trail.difficulty
+        }\nDistance: ${result.trail.distance.toFixed(
+          1
+        )} miles\n\nReady to start this adventure?`,
         [
           { text: "Pick Another", onPress: handleRandomAdventure },
           { text: "Cancel", style: "cancel" },
@@ -295,7 +299,7 @@ export default function ExploreMapScreen() {
               navigation.navigate("ActiveAdventure", { trail: result.trail });
             },
           },
-        ],
+        ]
       );
     }
   };
@@ -313,7 +317,7 @@ export default function ExploreMapScreen() {
         (t) =>
           t.name.toLowerCase().includes(query) ||
           t.description.toLowerCase().includes(query) ||
-          t.features.some((f) => f.toLowerCase().includes(query)),
+          t.features.some((f) => f.toLowerCase().includes(query))
       );
     }
 
@@ -332,7 +336,7 @@ export default function ExploreMapScreen() {
       filtered = filtered.filter(
         (a) =>
           a.name.toLowerCase().includes(query) ||
-          a.features.some((f) => f.toLowerCase().includes(query)),
+          a.features.some((f) => f.toLowerCase().includes(query))
       );
     }
 
@@ -347,7 +351,7 @@ export default function ExploreMapScreen() {
       filtered = filtered.filter(
         (u) =>
           u.name.toLowerCase().includes(query) ||
-          u.vehicleType.toLowerCase().includes(query),
+          u.vehicleType.toLowerCase().includes(query)
       );
     }
 
@@ -377,7 +381,7 @@ export default function ExploreMapScreen() {
             >
               <Feather name="map-pin" size={20} color="white" />
             </View>
-          </Marker>,
+          </Marker>
         );
       });
     }
@@ -401,7 +405,7 @@ export default function ExploreMapScreen() {
             >
               <Feather name="compass" size={20} color="white" />
             </View>
-          </Marker>,
+          </Marker>
         );
       });
     }
@@ -427,7 +431,7 @@ export default function ExploreMapScreen() {
             >
               <Feather name="user" size={20} color="white" />
             </View>
-          </Marker>,
+          </Marker>
         );
       });
     }
@@ -652,7 +656,7 @@ export default function ExploreMapScreen() {
                         {type.charAt(0).toUpperCase() + type.slice(1)}
                       </ThemedText>
                     </Pressable>
-                  ),
+                  )
                 )}
               </View>
             </View>
@@ -738,7 +742,7 @@ export default function ExploreMapScreen() {
                         {distance === "all" ? "All" : `${distance} mi`}
                       </ThemedText>
                     </Pressable>
-                  ),
+                  )
                 )}
               </View>
             </View>

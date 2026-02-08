@@ -44,7 +44,7 @@ export interface TrailRating {
 export class TrailReviewManager {
   // Add a new review
   static async addReview(
-    review: Omit<TrailReview, "id" | "timestamp" | "helpfulCount">,
+    review: Omit<TrailReview, "id" | "timestamp" | "helpfulCount">
   ): Promise<void> {
     try {
       const newReview: TrailReview = {
@@ -96,7 +96,7 @@ export class TrailReviewManager {
   static async getUserReviews(userId: string): Promise<TrailReview[]> {
     try {
       const userReviews = await AsyncStorage.getItem(
-        `${USER_REVIEWS_KEY}_${userId}`,
+        `${USER_REVIEWS_KEY}_${userId}`
       );
       return userReviews ? JSON.parse(userReviews) : [];
     } catch (error) {
@@ -116,7 +116,7 @@ export class TrailReviewManager {
       }
       await AsyncStorage.setItem(
         `${USER_REVIEWS_KEY}_${review.userId}`,
-        JSON.stringify(userReviews),
+        JSON.stringify(userReviews)
       );
     } catch (error) {
       console.error("Error adding to user reviews:", error);
@@ -203,7 +203,7 @@ export class TrailReviewManager {
   static async getTrailRating(trailId: string): Promise<TrailRating | null> {
     try {
       const ratings = await AsyncStorage.getItem(
-        "@adventure-time/trail_ratings",
+        "@adventure-time/trail_ratings"
       );
       if (ratings) {
         const allRatings = JSON.parse(ratings);
@@ -220,13 +220,13 @@ export class TrailReviewManager {
   private static async cacheTrailRating(rating: TrailRating): Promise<void> {
     try {
       const ratings = await AsyncStorage.getItem(
-        "@adventure-time/trail_ratings",
+        "@adventure-time/trail_ratings"
       );
       const allRatings = ratings ? JSON.parse(ratings) : {};
       allRatings[rating.trailId] = rating;
       await AsyncStorage.setItem(
         "@adventure-time/trail_ratings",
-        JSON.stringify(allRatings),
+        JSON.stringify(allRatings)
       );
     } catch (error) {
       console.error("Error caching trail rating:", error);
@@ -235,7 +235,7 @@ export class TrailReviewManager {
 
   // Get most common condition from array
   private static getMostCommonCondition(
-    conditions: string[],
+    conditions: string[]
   ): "Excellent" | "Good" | "Fair" | "Poor" | "Dangerous" {
     if (conditions.length === 0) return "Good";
 
@@ -283,7 +283,7 @@ export class TrailReviewManager {
       const userFiltered = userReviews.filter((r) => r.id !== reviewId);
       await AsyncStorage.setItem(
         `${USER_REVIEWS_KEY}_${userId}`,
-        JSON.stringify(userFiltered),
+        JSON.stringify(userFiltered)
       );
 
       // Update trail rating

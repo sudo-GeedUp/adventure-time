@@ -53,9 +53,13 @@ export default function AIScanScreen() {
   const { theme } = useTheme();
   const { isPremium } = useSubscription();
   const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([]);
-  const [stuckOfTheWeek, setStuckOfTheWeek] = useState<StuckOfTheWeek | null>(null);
+  const [stuckOfTheWeek, setStuckOfTheWeek] = useState<StuckOfTheWeek | null>(
+    null
+  );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
+    null
+  );
 
   useEffect(() => {
     loadScanHistory();
@@ -69,7 +73,7 @@ export default function AIScanScreen() {
         // Sort by difficulty score (higher = more stuck)
         const sorted = allScans.sort(
           (a: any, b: any) =>
-            (b.difficultyScore || 0) - (a.difficultyScore || 0),
+            (b.difficultyScore || 0) - (a.difficultyScore || 0)
         );
         setStuckOfTheWeek(sorted[0]);
       }
@@ -106,7 +110,7 @@ export default function AIScanScreen() {
     if (status !== "granted") {
       Alert.alert(
         "Permission Required",
-        "Camera permission is required to take photos for analysis.",
+        "Camera permission is required to take photos for analysis."
       );
       return false;
     }
@@ -127,7 +131,7 @@ export default function AIScanScreen() {
                 screen: "Subscription",
               }),
           },
-        ],
+        ]
       );
       return false;
     }
@@ -214,9 +218,9 @@ export default function AIScanScreen() {
           requiredEquipment: ["Traction boards", "Winch", "Tow straps"],
         };
       }
-      navigation.navigate("AIResults", { 
+      navigation.navigate("AIResults", {
         imageUri: result.assets[0].uri,
-        analysisResult: analysis
+        analysisResult: analysis,
       });
     }
   };
@@ -372,7 +376,10 @@ export default function AIScanScreen() {
                       styles.difficultyFill,
                       {
                         backgroundColor: theme.error,
-                        width: `${Math.min((stuckOfTheWeek.difficultyScore || 8) * 10, 100)}%`,
+                        width: `${Math.min(
+                          (stuckOfTheWeek.difficultyScore || 8) * 10,
+                          100
+                        )}%`,
                       },
                     ]}
                   />
@@ -402,7 +409,10 @@ export default function AIScanScreen() {
               styles.viewDetailsButton,
               { backgroundColor: theme.warning },
             ]}
-            onPress={() => stuckOfTheWeek.imageUri && handleScanPress(stuckOfTheWeek.imageUri)}
+            onPress={() =>
+              stuckOfTheWeek.imageUri &&
+              handleScanPress(stuckOfTheWeek.imageUri)
+            }
             android_ripple={{ color: "rgba(255,255,255,0.2)" }}
           >
             <ThemedText style={styles.viewDetailsText}>

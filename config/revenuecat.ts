@@ -7,10 +7,8 @@ import { Platform } from "react-native";
 
 // RevenueCat API Keys
 // WARNING: These are test keys only. Never use production keys in client-side code.
-const REVENUECAT_IOS_KEY =
-  process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY;
-const REVENUECAT_ANDROID_KEY =
-  process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY;
+const REVENUECAT_IOS_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY;
+const REVENUECAT_ANDROID_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY;
 
 // Fallback test key for development only
 const FALLBACK_TEST_KEY = __DEV__ ? "test_VuKiYKHZIagZNWUqTtxfCQColuV" : "";
@@ -44,14 +42,18 @@ export const initializeRevenueCat = async () => {
     if (!apiKey) {
       console.error("RevenueCat API key not configured");
       if (!__DEV__) {
-        console.error("Please set EXPO_PUBLIC_REVENUECAT_IOS_KEY and/or EXPO_PUBLIC_REVENUECAT_ANDROID_KEY in your environment");
+        console.error(
+          "Please set EXPO_PUBLIC_REVENUECAT_IOS_KEY and/or EXPO_PUBLIC_REVENUECAT_ANDROID_KEY in your environment"
+        );
       }
       return false;
     }
-    
+
     // Warn if using fallback key
     if (apiKey === FALLBACK_TEST_KEY && apiKey !== "") {
-      console.warn("WARNING: Using test RevenueCat key in development mode only!");
+      console.warn(
+        "WARNING: Using test RevenueCat key in development mode only!"
+      );
     }
 
     await Purchases.configure({ apiKey });
@@ -74,12 +76,14 @@ export const getOfferings = async (): Promise<PurchasesOffering | null> => {
     if (offerings.current !== null) {
       return offerings.current;
     }
-    
+
     // No current offering available
     if (__DEV__) {
-      console.warn("No current offering found - mock data will be used in SubscriptionScreen");
+      console.warn(
+        "No current offering found - mock data will be used in SubscriptionScreen"
+      );
     }
-    
+
     return null;
   } catch (error) {
     console.error("Error fetching offerings:", error);

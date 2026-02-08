@@ -10,7 +10,9 @@ interface ActiveAdventureScreenWebProps {
   // No props currently used, but interface added for clarity
 }
 
-export default function ActiveAdventureScreen(_props: ActiveAdventureScreenWebProps) {
+export default function ActiveAdventureScreen(
+  _props: ActiveAdventureScreenWebProps
+) {
   const { theme } = useTheme();
 
   return (

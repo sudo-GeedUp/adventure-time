@@ -42,7 +42,7 @@ class GeofenceManager {
   }
 
   async createTrailBoundary(
-    trailCoordinates: { latitude: number; longitude: number }[],
+    trailCoordinates: { latitude: number; longitude: number }[]
   ): Promise<Geofence> {
     // Calculate center point and radius from trail coordinates
     const center = this.calculateCenterPoint(trailCoordinates);
@@ -87,7 +87,7 @@ class GeofenceManager {
           currentPos.latitude,
           currentPos.longitude,
           geofence.center.latitude,
-          geofence.center.longitude,
+          geofence.center.longitude
         );
 
         const isInside = distance <= geofence.radiusMeters;
@@ -96,7 +96,7 @@ class GeofenceManager {
               this.lastKnownPosition.latitude,
               this.lastKnownPosition.longitude,
               geofence.center.latitude,
-              geofence.center.longitude,
+              geofence.center.longitude
             ) <= geofence.radiusMeters
           : false;
 
@@ -116,7 +116,7 @@ class GeofenceManager {
   private async triggerAlert(
     geofence: Geofence,
     type: "entered" | "exited",
-    location: { latitude: number; longitude: number },
+    location: { latitude: number; longitude: number }
   ): Promise<void> {
     const alert: GeofenceAlert = {
       id: `alert_${Date.now()}`,
@@ -149,7 +149,7 @@ class GeofenceManager {
     lat1: number,
     lon1: number,
     lat2: number,
-    lon2: number,
+    lon2: number
   ): number {
     const R = 6371e3;
     const φ1 = (lat1 * Math.PI) / 180;
@@ -166,14 +166,14 @@ class GeofenceManager {
   }
 
   private calculateCenterPoint(
-    coords: { latitude: number; longitude: number }[],
+    coords: { latitude: number; longitude: number }[]
   ): { latitude: number; longitude: number } {
     const sum = coords.reduce(
       (acc, coord) => ({
         latitude: acc.latitude + coord.latitude,
         longitude: acc.longitude + coord.longitude,
       }),
-      { latitude: 0, longitude: 0 },
+      { latitude: 0, longitude: 0 }
     );
 
     return {
@@ -184,7 +184,7 @@ class GeofenceManager {
 
   private calculateMaxRadius(
     center: { latitude: number; longitude: number },
-    coords: { latitude: number; longitude: number }[],
+    coords: { latitude: number; longitude: number }[]
   ): number {
     return Math.max(
       ...coords.map((coord) =>
@@ -192,9 +192,9 @@ class GeofenceManager {
           center.latitude,
           center.longitude,
           coord.latitude,
-          coord.longitude,
-        ),
-      ),
+          coord.longitude
+        )
+      )
     );
   }
 
@@ -231,11 +231,11 @@ class SunsetTimerManager {
 
   async startMonitoring(
     location: { latitude: number; longitude: number },
-    hoursBeforeSunset: number = 2,
+    hoursBeforeSunset: number = 2
   ): Promise<void> {
     const sunsetTime = await this.calculateSunset(location);
     const alertTime = new Date(
-      sunsetTime.getTime() - hoursBeforeSunset * 60 * 60 * 1000,
+      sunsetTime.getTime() - hoursBeforeSunset * 60 * 60 * 1000
     );
 
     this.alertInterval = setInterval(async () => {
@@ -270,7 +270,7 @@ class SunsetTimerManager {
 
   private async sendSunsetAlert(
     sunsetTime: Date,
-    hoursBeforeSunset: number,
+    hoursBeforeSunset: number
   ): Promise<void> {
     await Notifications.scheduleNotificationAsync({
       content: {
@@ -461,7 +461,7 @@ class FuelCalculator {
   calculateEstimate(
     fuelData: FuelData,
     trailDistanceMiles: number,
-    isOffroad: boolean = true,
+    isOffroad: boolean = true
   ): FuelEstimate {
     const mpg = isOffroad ? fuelData.avgMpgOffroad : fuelData.avgMpgOnroad;
     const currentGallons =

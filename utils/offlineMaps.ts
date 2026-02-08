@@ -34,7 +34,7 @@ export class OfflineMapsManager {
 
       await AsyncStorage.setItem(
         OFFLINE_TRAILS_KEY,
-        JSON.stringify(filteredTrails),
+        JSON.stringify(filteredTrails)
       );
       console.log(`Trail "${trail.name}" cached for offline use`);
     } catch (error) {
@@ -71,7 +71,7 @@ export class OfflineMapsManager {
       const filteredTrails = trails.filter((trail) => trail.id !== trailId);
       await AsyncStorage.setItem(
         OFFLINE_TRAILS_KEY,
-        JSON.stringify(filteredTrails),
+        JSON.stringify(filteredTrails)
       );
       console.log(`Trail "${trailId}" removed from cache`);
     } catch (error) {
@@ -82,7 +82,7 @@ export class OfflineMapsManager {
   // Get cached trails near location (for offline navigation)
   static async getTrailsNearLocation(
     location: TrailLocation,
-    radiusMiles: number,
+    radiusMiles: number
   ): Promise<OfflineTrail[]> {
     try {
       const cachedTrails = await this.getCachedTrails();
@@ -126,7 +126,7 @@ export class OfflineMapsManager {
 
       await AsyncStorage.setItem(
         OFFLINE_MAP_TILES_KEY,
-        JSON.stringify(existingTiles),
+        JSON.stringify(existingTiles)
       );
     } catch (error) {
       console.error("Error caching map tile:", error);
@@ -152,11 +152,11 @@ export class OfflineMapsManager {
       // Clear old trails
       const trails = await this.getCachedTrails();
       const validTrails = trails.filter(
-        (trail) => trail.cachedAt > thirtyDaysAgo,
+        (trail) => trail.cachedAt > thirtyDaysAgo
       );
       await AsyncStorage.setItem(
         OFFLINE_TRAILS_KEY,
-        JSON.stringify(validTrails),
+        JSON.stringify(validTrails)
       );
 
       // Clear old map tiles
@@ -164,7 +164,7 @@ export class OfflineMapsManager {
       const validTiles = tiles.filter((tile) => tile.cachedAt > thirtyDaysAgo);
       await AsyncStorage.setItem(
         OFFLINE_MAP_TILES_KEY,
-        JSON.stringify(validTiles),
+        JSON.stringify(validTiles)
       );
 
       console.log("Old offline cache data cleared");
@@ -176,7 +176,10 @@ export class OfflineMapsManager {
   // Clear all cached offline data
   static async clearAllCache(): Promise<void> {
     try {
-      await AsyncStorage.multiRemove([OFFLINE_TRAILS_KEY, OFFLINE_MAP_TILES_KEY]);
+      await AsyncStorage.multiRemove([
+        OFFLINE_TRAILS_KEY,
+        OFFLINE_MAP_TILES_KEY,
+      ]);
       console.log("All offline cache data cleared");
     } catch (error) {
       console.error("Error clearing all cache data:", error);

@@ -267,7 +267,7 @@ export default function ProfileScreen() {
 
         {(() => {
           const nextBadge = storage.getNextBadge(
-            profile.trailStats?.totalMiles || 0,
+            profile.trailStats?.totalMiles || 0
           );
           if (nextBadge) {
             const currentMiles = profile.trailStats?.totalMiles || 0;
@@ -691,7 +691,6 @@ export default function ProfileScreen() {
           />
         </Pressable>
       </View>
-
     </ScreenScrollView>
   );
 }

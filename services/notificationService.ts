@@ -49,7 +49,7 @@ class NotificationService {
 
       // Skip push token for now - requires Expo project configuration
       console.log(
-        "Push notifications initialized (token generation skipped - requires Expo project setup)",
+        "Push notifications initialized (token generation skipped - requires Expo project setup)"
       );
       return null;
     } catch (error) {
@@ -61,8 +61,8 @@ class NotificationService {
   setupListeners(
     onNotificationReceived?: (notification: Notifications.Notification) => void,
     onNotificationResponse?: (
-      response: Notifications.NotificationResponse,
-    ) => void,
+      response: Notifications.NotificationResponse
+    ) => void
   ) {
     this.notificationListener = Notifications.addNotificationReceivedListener(
       (notification) => {
@@ -70,7 +70,7 @@ class NotificationService {
         if (onNotificationReceived) {
           onNotificationReceived(notification);
         }
-      },
+      }
     );
 
     this.responseListener =
@@ -93,7 +93,7 @@ class NotificationService {
 
   async scheduleLocalNotification(
     notification: NotificationData,
-    seconds: number = 0,
+    seconds: number = 0
   ) {
     try {
       const trigger = seconds > 0 ? { seconds, repeats: false } : null;
@@ -125,7 +125,7 @@ class NotificationService {
   async sendTrailAlertNotification(
     trailName: string,
     alertType: string,
-    severity: string,
+    severity: string
   ) {
     return this.scheduleLocalNotification({
       type: "trail_alert",
@@ -164,7 +164,7 @@ class NotificationService {
 
   async sendAchievementNotification(
     achievementName: string,
-    description: string,
+    description: string
   ) {
     return this.scheduleLocalNotification({
       type: "achievement",

@@ -107,18 +107,18 @@ export default function PaywallScreen({ navigation }: any) {
         Alert.alert(
           "Welcome to Premium! 🎉",
           "You now have access to all premium features.",
-          [{ text: "Get Started", onPress: () => navigation.goBack() }],
+          [{ text: "Get Started", onPress: () => navigation.goBack() }]
         );
       } else {
         Alert.alert(
           "Purchase Cancelled",
-          "No worries! You can upgrade anytime.",
+          "No worries! You can upgrade anytime."
         );
       }
     } catch (error: any) {
       Alert.alert(
         "Purchase Failed",
-        error.message || "Please try again later.",
+        error.message || "Please try again later."
       );
     } finally {
       setPurchasing(false);
@@ -133,12 +133,12 @@ export default function PaywallScreen({ navigation }: any) {
         Alert.alert(
           "Purchases Restored! ✅",
           "Your premium subscription has been restored.",
-          [{ text: "Continue", onPress: () => navigation.goBack() }],
+          [{ text: "Continue", onPress: () => navigation.goBack() }]
         );
       } else {
         Alert.alert(
           "No Purchases Found",
-          "We couldn't find any previous purchases.",
+          "We couldn't find any previous purchases."
         );
       }
     } catch (error: any) {

@@ -110,7 +110,7 @@ class LiveLocationSharingManager {
         },
         async (location) => {
           await this.handleLocationUpdate(location, adventureId);
-        },
+        }
       );
     } catch (error) {
       console.error("Error starting location updates:", error);
@@ -132,7 +132,7 @@ class LiveLocationSharingManager {
 
   private async handleLocationUpdate(
     location: Location.LocationObject,
-    adventureId?: string,
+    adventureId?: string
   ): Promise<void> {
     if (!this.activeSession) return;
 
@@ -195,7 +195,7 @@ class LiveLocationSharingManager {
 
   async getLocationsNearby(
     currentLocation: { latitude: number; longitude: number },
-    radiusMiles: number = 10,
+    radiusMiles: number = 10
   ): Promise<SharedLocation[]> {
     const locations = await this.getSharedLocations();
 
@@ -204,14 +204,14 @@ class LiveLocationSharingManager {
         currentLocation.latitude,
         currentLocation.longitude,
         location.latitude,
-        location.longitude,
+        location.longitude
       );
       return distance <= radiusMiles * 1609.34; // Convert miles to meters
     });
   }
 
   async getFriendsLocations(
-    friendUserIds: string[],
+    friendUserIds: string[]
   ): Promise<SharedLocation[]> {
     const locations = await this.getSharedLocations();
     return locations.filter((l) => friendUserIds.includes(l.userId));
@@ -221,7 +221,7 @@ class LiveLocationSharingManager {
     lat1: number,
     lon1: number,
     lat2: number,
-    lon2: number,
+    lon2: number
   ): number {
     const R = 6371e3; // Earth's radius in meters
     const φ1 = (lat1 * Math.PI) / 180;
@@ -289,7 +289,7 @@ class LiveLocationSharingManager {
 
   async getEstimatedArrivalTime(
     destination: { latitude: number; longitude: number },
-    averageSpeedMph: number = 15,
+    averageSpeedMph: number = 15
   ): Promise<Date | null> {
     if (!this.activeSession?.lastLocation) return null;
 
@@ -297,7 +297,7 @@ class LiveLocationSharingManager {
       this.activeSession.lastLocation.latitude,
       this.activeSession.lastLocation.longitude,
       destination.latitude,
-      destination.longitude,
+      destination.longitude
     );
 
     const distanceMiles = distance / 1609.34;

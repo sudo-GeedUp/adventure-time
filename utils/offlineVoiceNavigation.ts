@@ -5,7 +5,7 @@ function calculateDistance(
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number,
+  lon2: number
 ): number {
   const R = 6371e3;
   const φ1 = (lat1 * Math.PI) / 180;
@@ -110,7 +110,7 @@ class OfflineVoiceNavigationManager {
       currentLocation.latitude,
       currentLocation.longitude,
       currentInstruction.location.latitude,
-      currentInstruction.location.longitude,
+      currentInstruction.location.longitude
     );
 
     // Check if we've reached the instruction point (within 30 meters)
@@ -128,7 +128,9 @@ class OfflineVoiceNavigationManager {
       this.lastSpokenInstruction !== currentInstructionIndex
     ) {
       await this.speakText(
-        `In ${Math.round(distanceToNext)} meters, ${this.getActionText(currentInstruction.action)}`,
+        `In ${Math.round(distanceToNext)} meters, ${this.getActionText(
+          currentInstruction.action
+        )}`
       );
       this.lastSpokenInstruction = currentInstructionIndex;
     }
@@ -184,7 +186,7 @@ class OfflineVoiceNavigationManager {
 
   private determineAction(
     index: number,
-    total: number,
+    total: number
   ): NavigationInstruction["action"] {
     // Simulate varied navigation actions
     const actions: NavigationInstruction["action"][] = [
@@ -206,7 +208,7 @@ class OfflineVoiceNavigationManager {
   private generateInstructionText(
     action: NavigationInstruction["action"],
     trail: Trail,
-    progress: number,
+    progress: number
   ): string {
     const actionTexts = {
       start: `Head towards ${trail.name}`,
@@ -263,7 +265,7 @@ class OfflineVoiceNavigationManager {
   }
 
   private async speakInstruction(
-    instruction: NavigationInstruction,
+    instruction: NavigationInstruction
   ): Promise<void> {
     if (!this.voiceEnabled) return;
 
@@ -272,7 +274,7 @@ class OfflineVoiceNavigationManager {
 
   private async speakDistanceUpdate(
     distance: number,
-    instruction: NavigationInstruction,
+    instruction: NavigationInstruction
   ): Promise<void> {
     if (!this.voiceEnabled) return;
 
@@ -310,7 +312,7 @@ class OfflineVoiceNavigationManager {
   }
 
   async setVoiceSettings(
-    settings: Partial<typeof this.voiceSettings>,
+    settings: Partial<typeof this.voiceSettings>
   ): Promise<void> {
     this.voiceSettings = { ...this.voiceSettings, ...settings };
   }

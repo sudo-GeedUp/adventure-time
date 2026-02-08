@@ -13,13 +13,13 @@ export interface RecoveryAnalysis {
 }
 
 export async function analyzeRecoverySituation(
-  imageUri: string,
+  imageUri: string
 ): Promise<RecoveryAnalysis> {
   if (!OPENAI_API_KEY) {
     Alert.alert(
       "AI Scan Unavailable",
       "OpenAI API key not configured. This feature requires a valid API key.",
-      [{ text: "OK" }],
+      [{ text: "OK" }]
     );
     throw new Error("OpenAI API key not configured");
   }
@@ -82,7 +82,7 @@ Focus on:
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        errorData.error?.message || `OpenAI API error: ${response.status}`,
+        errorData.error?.message || `OpenAI API error: ${response.status}`
       );
     }
 
@@ -99,7 +99,9 @@ Focus on:
     // Remove markdown code blocks if present
     if (jsonContent.startsWith("```")) {
       // Remove opening fence (```json or ```) and closing fence (```)
-      jsonContent = jsonContent.replace(/^```(?:json)?\n?/, "").replace(/\n?```\s*$/, "");
+      jsonContent = jsonContent
+        .replace(/^```(?:json)?\n?/, "")
+        .replace(/\n?```\s*$/, "");
     }
 
     const analysis: RecoveryAnalysis = JSON.parse(jsonContent.trim());
@@ -118,7 +120,7 @@ Focus on:
   } catch (error: any) {
     console.error("OpenAI API Error:", error);
     throw new Error(
-      error.message || "Failed to analyze image. Please try again.",
+      error.message || "Failed to analyze image. Please try again."
     );
   }
 }

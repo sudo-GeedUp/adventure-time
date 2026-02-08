@@ -5,7 +5,7 @@ export interface Coordinates {
 
 export function calculateDistance(
   coord1: Coordinates,
-  coord2: Coordinates,
+  coord2: Coordinates
 ): number {
   const R = 3959;
   const dLat = toRad(coord2.latitude - coord1.latitude);
@@ -30,7 +30,7 @@ function toRad(degrees: number): number {
 
 export function generateNearbyCoordinate(
   centerCoord: Coordinates,
-  maxDistanceMiles: number,
+  maxDistanceMiles: number
 ): Coordinates {
   const randomAngle = Math.random() * 2 * Math.PI;
   const randomDistance = Math.random() * maxDistanceMiles;

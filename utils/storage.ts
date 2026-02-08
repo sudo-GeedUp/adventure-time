@@ -292,7 +292,7 @@ export const storage = {
     updates.unshift(update);
     await AsyncStorage.setItem(
       KEYS.STATUS_UPDATES,
-      JSON.stringify(updates.slice(0, 50)),
+      JSON.stringify(updates.slice(0, 50))
     );
   },
 
@@ -325,7 +325,7 @@ export const storage = {
   },
 
   async addTrailMiles(
-    miles: number,
+    miles: number
   ): Promise<{ newBadges: Badge[]; profile: UserProfile }> {
     const profile = await this.getUserProfile();
     if (!profile) {
@@ -376,7 +376,7 @@ export const storage = {
 
   getEarnedBadges(earnedBadgeIds: string[]): Badge[] {
     return MILESTONE_BADGES.filter((badge) =>
-      earnedBadgeIds.includes(badge.id),
+      earnedBadgeIds.includes(badge.id)
     );
   },
 
@@ -430,7 +430,7 @@ export const storage = {
     try {
       await AsyncStorage.setItem(
         KEYS.EMERGENCY_CONTACTS,
-        JSON.stringify(contacts),
+        JSON.stringify(contacts)
       );
     } catch (error) {
       console.error("Error saving emergency contacts:", error);
@@ -453,7 +453,7 @@ export const storage = {
       history.unshift(item);
       await AsyncStorage.setItem(
         KEYS.SCAN_HISTORY,
-        JSON.stringify(history.slice(0, 20)),
+        JSON.stringify(history.slice(0, 20))
       );
     } catch (error) {
       console.error("Error saving scan history:", error);
@@ -476,7 +476,7 @@ export const storage = {
       requests.unshift(request);
       await AsyncStorage.setItem(
         KEYS.HELP_REQUESTS,
-        JSON.stringify(requests.slice(0, 50)),
+        JSON.stringify(requests.slice(0, 50))
       );
     } catch (error) {
       console.error("Error saving help request:", error);
@@ -485,7 +485,7 @@ export const storage = {
 
   async updateHelpRequestStatus(
     requestId: string,
-    status: "active" | "resolved" | "cancelled",
+    status: "active" | "resolved" | "cancelled"
   ): Promise<void> {
     try {
       const requests = await this.getHelpRequests();
@@ -494,7 +494,7 @@ export const storage = {
         requests[index].status = status;
         await AsyncStorage.setItem(
           KEYS.HELP_REQUESTS,
-          JSON.stringify(requests),
+          JSON.stringify(requests)
         );
       }
     } catch (error) {
@@ -525,7 +525,7 @@ export const storage = {
 
       await AsyncStorage.setItem(
         KEYS.NEARBY_OFFROADERS,
-        JSON.stringify(offroaders),
+        JSON.stringify(offroaders)
       );
     } catch (error) {
       console.error("Error adding nearby offroader:", error);
@@ -537,11 +537,11 @@ export const storage = {
       const offroaders = await this.getNearbyOffroaders();
       const cutoffTime = Date.now() - maxAgeMinutes * 60 * 1000;
       const activeOffroaders = offroaders.filter(
-        (o) => o.lastSeen > cutoffTime,
+        (o) => o.lastSeen > cutoffTime
       );
       await AsyncStorage.setItem(
         KEYS.NEARBY_OFFROADERS,
-        JSON.stringify(activeOffroaders),
+        JSON.stringify(activeOffroaders)
       );
     } catch (error) {
       console.error("Error removing old offroaders:", error);
@@ -553,7 +553,7 @@ export const storage = {
       const data = await AsyncStorage.getItem(KEYS.COMMUNITY_TIPS);
       const tips = data ? JSON.parse(data) : [];
       return tips.sort(
-        (a: CommunityTip, b: CommunityTip) => b.timestamp - a.timestamp,
+        (a: CommunityTip, b: CommunityTip) => b.timestamp - a.timestamp
       );
     } catch (error) {
       console.error("Error loading community tips:", error);
@@ -595,7 +595,7 @@ export const storage = {
   },
 
   async getConversation(
-    participantId: string,
+    participantId: string
   ): Promise<ChatConversation | null> {
     try {
       const conversations = await this.getChatConversations();
@@ -611,13 +611,13 @@ export const storage = {
   async createOrUpdateConversation(
     participantId: string,
     participantName: string,
-    participantVehicle: string,
+    participantVehicle: string
   ): Promise<ChatConversation> {
     try {
       const data = await AsyncStorage.getItem(KEYS.CHAT_CONVERSATIONS);
       const conversations: ChatConversation[] = data ? JSON.parse(data) : [];
       const index = conversations.findIndex(
-        (c) => c.participantId === participantId,
+        (c) => c.participantId === participantId
       );
 
       if (index !== -1) {
@@ -637,7 +637,7 @@ export const storage = {
       conversations.push(newConversation);
       await AsyncStorage.setItem(
         KEYS.CHAT_CONVERSATIONS,
-        JSON.stringify(conversations),
+        JSON.stringify(conversations)
       );
 
       return newConversation;
@@ -653,13 +653,13 @@ export const storage = {
     participantVehicle: string,
     senderId: string,
     senderName: string,
-    text: string,
+    text: string
   ): Promise<void> {
     try {
       const data = await AsyncStorage.getItem(KEYS.CHAT_CONVERSATIONS);
       const conversations: ChatConversation[] = data ? JSON.parse(data) : [];
       let index = conversations.findIndex(
-        (c) => c.participantId === participantId,
+        (c) => c.participantId === participantId
       );
 
       if (index === -1) {
@@ -690,7 +690,7 @@ export const storage = {
 
       await AsyncStorage.setItem(
         KEYS.CHAT_CONVERSATIONS,
-        JSON.stringify(conversations),
+        JSON.stringify(conversations)
       );
     } catch (error) {
       console.error("Error sending message:", error);
@@ -700,13 +700,13 @@ export const storage = {
 
   async markMessagesAsRead(
     participantId: string,
-    currentUserId: string,
+    currentUserId: string
   ): Promise<void> {
     try {
       const data = await AsyncStorage.getItem(KEYS.CHAT_CONVERSATIONS);
       const conversations: ChatConversation[] = data ? JSON.parse(data) : [];
       const index = conversations.findIndex(
-        (c) => c.participantId === participantId,
+        (c) => c.participantId === participantId
       );
 
       if (index !== -1) {
@@ -722,7 +722,7 @@ export const storage = {
           conversations[index].unreadCount = 0;
           await AsyncStorage.setItem(
             KEYS.CHAT_CONVERSATIONS,
-            JSON.stringify(conversations),
+            JSON.stringify(conversations)
           );
         }
       }
@@ -733,7 +733,7 @@ export const storage = {
 
   async sendSimulatedResponse(
     participantId: string,
-    participantName: string,
+    participantName: string
   ): Promise<void> {
     const simulatedResponses = [
       "Got it! I'm about 2 miles away, heading your direction.",
@@ -762,7 +762,7 @@ export const storage = {
         conversation.participantVehicle,
         participantId,
         participantName,
-        randomResponse,
+        randomResponse
       );
     } catch (error) {
       console.error("Error sending simulated response:", error);
@@ -874,7 +874,7 @@ export const storage = {
       const data = await AsyncStorage.getItem(KEYS.COMMUNITY_ADVENTURES);
       const adventures = data ? JSON.parse(data) : [];
       return adventures.sort(
-        (a: CompletedAdventure, b: CompletedAdventure) => b.endTime - a.endTime,
+        (a: CompletedAdventure, b: CompletedAdventure) => b.endTime - a.endTime
       );
     } catch (error) {
       console.error("Error loading community adventures:", error);
@@ -888,7 +888,7 @@ export const storage = {
       adventures.unshift(adventure);
       await AsyncStorage.setItem(
         KEYS.COMMUNITY_ADVENTURES,
-        JSON.stringify(adventures.slice(0, 100)),
+        JSON.stringify(adventures.slice(0, 100))
       );
     } catch (error) {
       console.error("Error saving completed adventure:", error);
@@ -898,7 +898,7 @@ export const storage = {
   async getAdventuresNearLocation(
     latitude: number,
     longitude: number,
-    radiusMiles: number = 50,
+    radiusMiles: number = 50
   ): Promise<CompletedAdventure[]> {
     try {
       const adventures = await this.getCommunityAdventures();

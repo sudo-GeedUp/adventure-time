@@ -341,7 +341,7 @@ const recoveryScenarios: Analysis[] = [
 ];
 
 export async function analyzeVehicleSituation(
-  imageUri: string,
+  imageUri: string
 ): Promise<Analysis> {
   await new Promise((resolve) => setTimeout(resolve, 1500));
 
@@ -351,7 +351,7 @@ export async function analyzeVehicleSituation(
 
 export function getScenarioByType(type: string): Analysis {
   const scenario = recoveryScenarios.find((s) =>
-    s.situationType.toLowerCase().includes(type.toLowerCase()),
+    s.situationType.toLowerCase().includes(type.toLowerCase())
   );
   return scenario || recoveryScenarios[0];
 }

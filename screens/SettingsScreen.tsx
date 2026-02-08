@@ -24,11 +24,11 @@ export default function SettingsScreen() {
             await OfflineMapsManager.clearAllCache();
             Alert.alert(
               "Cache Cleared",
-              "Offline guide cache has been cleared.",
+              "Offline guide cache has been cleared."
             );
           },
         },
-      ],
+      ]
     );
   };
 
@@ -46,7 +46,7 @@ export default function SettingsScreen() {
             Alert.alert("Data Cleared", "All app data has been deleted.");
           },
         },
-      ],
+      ]
     );
   };
 

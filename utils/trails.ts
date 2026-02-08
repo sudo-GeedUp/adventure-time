@@ -162,7 +162,7 @@ export const SAMPLE_ROUTES: Route[] = [
 
 export function getTrailsNearLocation(
   location: { latitude: number; longitude: number },
-  radiusMiles: number,
+  radiusMiles: number
 ): Trail[] {
   return SAMPLE_TRAILS.filter((trail) => {
     const lat1 = location.latitude;
@@ -188,14 +188,14 @@ export function getTrailsNearLocation(
 
 export function filterTrailsByDifficulty(
   trails: Trail[],
-  difficulty: "Easy" | "Moderate" | "Hard" | "Expert",
+  difficulty: "Easy" | "Moderate" | "Hard" | "Expert"
 ): Trail[] {
   return trails.filter((trail) => trail.difficulty === difficulty);
 }
 
 export function filterTrailsByLandType(
   trails: Trail[],
-  landType: "public" | "private" | "mixed",
+  landType: "public" | "private" | "mixed"
 ): Trail[] {
   return trails.filter((trail) => {
     if (landType === "private") return trail.landType === "private";

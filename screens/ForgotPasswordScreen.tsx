@@ -103,7 +103,10 @@ export default function ForgotPasswordScreen() {
                 setLoading(true);
                 try {
                   await authService.sendPasswordReset(email);
-                  Alert.alert("Email Sent", "A new reset link has been sent to your email.");
+                  Alert.alert(
+                    "Email Sent",
+                    "A new reset link has been sent to your email."
+                  );
                 } catch (error: any) {
                   Alert.alert("Error", error.message);
                 } finally {

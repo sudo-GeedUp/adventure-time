@@ -27,7 +27,7 @@ export interface LeaderboardPeriod {
 class LeaderboardManager {
   async getLeaderboard(
     period: "all-time" | "monthly" | "weekly" = "all-time",
-    friendUserIds?: string[],
+    friendUserIds?: string[]
   ): Promise<LeaderboardEntry[]> {
     try {
       // In production, this would fetch from a backend
@@ -54,7 +54,7 @@ class LeaderboardManager {
   }
 
   private async generateLeaderboardEntries(
-    friendUserIds?: string[],
+    friendUserIds?: string[]
   ): Promise<LeaderboardEntry[]> {
     // Get current user's stats
     const profile = await storage.getUserProfile();
@@ -97,7 +97,7 @@ class LeaderboardManager {
 
   async getUserRank(
     userId: string,
-    period: "all-time" | "monthly" | "weekly" = "all-time",
+    period: "all-time" | "monthly" | "weekly" = "all-time"
   ): Promise<number> {
     const leaderboard = await this.getLeaderboard(period);
     const entry = leaderboard.find((e) => e.userId === userId);
@@ -106,7 +106,7 @@ class LeaderboardManager {
 
   async getTopUsers(
     limit: number = 10,
-    period: "all-time" | "monthly" | "weekly" = "all-time",
+    period: "all-time" | "monthly" | "weekly" = "all-time"
   ): Promise<LeaderboardEntry[]> {
     const leaderboard = await this.getLeaderboard(period);
     return leaderboard.slice(0, limit);
@@ -148,7 +148,7 @@ const PHOTOS_KEY = "@trail_photos";
 
 class TrailPhotoFeedManager {
   async postPhoto(
-    photo: Omit<TrailPhoto, "id" | "timestamp" | "likes" | "comments">,
+    photo: Omit<TrailPhoto, "id" | "timestamp" | "likes" | "comments">
   ): Promise<TrailPhoto> {
     const newPhoto: TrailPhoto = {
       ...photo,
@@ -217,7 +217,7 @@ class TrailPhotoFeedManager {
     photoId: string,
     userId: string,
     userName: string,
-    text: string,
+    text: string
   ): Promise<PhotoComment> {
     const comment: PhotoComment = {
       id: `comment_${Date.now()}`,
@@ -241,7 +241,7 @@ class TrailPhotoFeedManager {
   async deletePhoto(photoId: string, userId: string): Promise<void> {
     const photos = await this.getAllPhotos();
     const filtered = photos.filter(
-      (p) => !(p.id === photoId && p.userId === userId),
+      (p) => !(p.id === photoId && p.userId === userId)
     );
     await AsyncStorage.setItem(PHOTOS_KEY, JSON.stringify(filtered));
   }
@@ -278,7 +278,7 @@ const CHALLENGES_KEY = "@group_challenges";
 
 class ChallengeManager {
   async createChallenge(
-    challenge: Omit<Challenge, "id" | "participants" | "isActive">,
+    challenge: Omit<Challenge, "id" | "participants" | "isActive">
   ): Promise<Challenge> {
     const newChallenge: Challenge = {
       ...challenge,
@@ -297,7 +297,7 @@ class ChallengeManager {
   async joinChallenge(
     challengeId: string,
     userId: string,
-    userName: string,
+    userName: string
   ): Promise<void> {
     const challenges = await this.getAllChallenges();
     const challenge = challenges.find((c) => c.id === challengeId);
@@ -316,14 +316,14 @@ class ChallengeManager {
   async updateProgress(
     challengeId: string,
     userId: string,
-    progress: number,
+    progress: number
   ): Promise<void> {
     const challenges = await this.getAllChallenges();
     const challenge = challenges.find((c) => c.id === challengeId);
 
     if (challenge) {
       const participant = challenge.participants.find(
-        (p) => p.userId === userId,
+        (p) => p.userId === userId
       );
       if (participant) {
         participant.progress = progress;
@@ -353,19 +353,19 @@ class ChallengeManager {
     const now = Date.now();
 
     return challenges.filter(
-      (c) => c.isActive && c.startDate <= now && c.endDate >= now,
+      (c) => c.isActive && c.startDate <= now && c.endDate >= now
     );
   }
 
   async getUserChallenges(userId: string): Promise<Challenge[]> {
     const challenges = await this.getAllChallenges();
     return challenges.filter((c) =>
-      c.participants.some((p) => p.userId === userId),
+      c.participants.some((p) => p.userId === userId)
     );
   }
 
   async getChallengeLeaderboard(
-    challengeId: string,
+    challengeId: string
   ): Promise<ChallengeParticipant[]> {
     const challenges = await this.getAllChallenges();
     const challenge = challenges.find((c) => c.id === challengeId);
@@ -373,7 +373,7 @@ class ChallengeManager {
     if (!challenge) return [];
 
     const sorted = [...challenge.participants].sort(
-      (a, b) => b.progress - a.progress,
+      (a, b) => b.progress - a.progress
     );
     sorted.forEach((p, index) => {
       p.rank = index + 1;
@@ -391,19 +391,21 @@ class ChallengeManager {
       0,
       23,
       59,
-      59,
+      59
     ).getTime();
 
     // Check if monthly challenge exists
     const challenges = await this.getAllChallenges();
     let monthlyChallenge = challenges.find(
-      (c) => c.startDate === monthStart && c.endDate === monthEnd,
+      (c) => c.startDate === monthStart && c.endDate === monthEnd
     );
 
     // Create if doesn't exist
     if (!monthlyChallenge) {
       monthlyChallenge = await this.createChallenge({
-        title: `${now.toLocaleString("default", { month: "long" })} Miles Challenge`,
+        title: `${now.toLocaleString("default", {
+          month: "long",
+        })} Miles Challenge`,
         description: "Complete 100 miles of off-road trails this month!",
         type: "distance",
         goal: 100,
@@ -447,7 +449,7 @@ const COMMENTS_KEY = "@trail_comments";
 
 class TrailDiscussionManager {
   async postComment(
-    comment: Omit<TrailComment, "id" | "timestamp" | "likes" | "replies">,
+    comment: Omit<TrailComment, "id" | "timestamp" | "likes" | "replies">
   ): Promise<TrailComment> {
     const newComment: TrailComment = {
       ...comment,
@@ -485,7 +487,7 @@ class TrailDiscussionManager {
     commentId: string,
     userId: string,
     userName: string,
-    text: string,
+    text: string
   ): Promise<TrailCommentReply> {
     const reply: TrailCommentReply = {
       id: `reply_${Date.now()}`,
@@ -519,7 +521,7 @@ class TrailDiscussionManager {
   async deleteComment(commentId: string, userId: string): Promise<void> {
     const comments = await this.getAllComments();
     const filtered = comments.filter(
-      (c) => !(c.id === commentId && c.userId === userId),
+      (c) => !(c.id === commentId && c.userId === userId)
     );
     await AsyncStorage.setItem(COMMENTS_KEY, JSON.stringify(filtered));
   }

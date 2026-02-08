@@ -29,7 +29,7 @@ export default function VehicleMaintenanceScreen() {
   const [maintenanceLog, setMaintenanceLog] = useState<MaintenanceItem[]>([]);
   const [schedule, setSchedule] = useState<MaintenanceSchedule[]>([]);
   const [dueMaintenance, setDueMaintenance] = useState<MaintenanceSchedule[]>(
-    [],
+    []
   );
   const [showAddModal, setShowAddModal] = useState(false);
   const [costAnalysis, setCostAnalysis] = useState<any>(null);

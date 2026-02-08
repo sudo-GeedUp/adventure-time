@@ -78,7 +78,7 @@ class GPXRecorder {
     if (this.activeTrack.trackPoints.length > 0) {
       const totalSpeed = this.activeTrack.trackPoints.reduce(
         (sum, pt) => sum + (pt.speed || 0),
-        0,
+        0
       );
       this.activeTrack.averageSpeed =
         totalSpeed / this.activeTrack.trackPoints.length;
@@ -118,7 +118,7 @@ class GPXRecorder {
         },
         (location) => {
           this.handleLocationUpdate(location);
-        },
+        }
       );
     } catch (error) {
       console.error("Error starting location tracking:", error);
@@ -172,7 +172,7 @@ class GPXRecorder {
         lastPoint.latitude,
         lastPoint.longitude,
         trackPoint.latitude,
-        trackPoint.longitude,
+        trackPoint.longitude
       );
       this.activeTrack.totalDistance += distance;
     }
@@ -183,7 +183,7 @@ class GPXRecorder {
   async addWaypoint(
     name: string,
     description?: string,
-    symbol?: string,
+    symbol?: string
   ): Promise<GPXWaypoint | null> {
     if (!this.activeTrack) return null;
 
@@ -227,7 +227,11 @@ class GPXRecorder {
      xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
   <metadata>
     <name>${this.escapeXml(track.name)}</name>
-    ${track.description ? `<desc>${this.escapeXml(track.description)}</desc>` : ""}
+    ${
+      track.description
+        ? `<desc>${this.escapeXml(track.description)}</desc>`
+        : ""
+    }
     <time>${new Date(track.startTime).toISOString()}</time>
   </metadata>`;
 
@@ -241,7 +245,7 @@ class GPXRecorder {
     <name>${this.escapeXml(wp.name)}</name>
     ${wp.description ? `<desc>${this.escapeXml(wp.description)}</desc>` : ""}
     ${wp.symbol ? `<sym>${this.escapeXml(wp.symbol)}</sym>` : ""}
-  </wpt>`,
+  </wpt>`
       )
       .join("");
 
@@ -254,14 +258,18 @@ class GPXRecorder {
         <time>${new Date(pt.timestamp).toISOString()}</time>
         ${pt.speed ? `<speed>${pt.speed}</speed>` : ""}
         ${pt.heading ? `<course>${pt.heading}</course>` : ""}
-      </trkpt>`,
+      </trkpt>`
       )
       .join("");
 
     const trackSection = `
   <trk>
     <name>${this.escapeXml(track.name)}</name>
-    ${track.description ? `<desc>${this.escapeXml(track.description)}</desc>` : ""}
+    ${
+      track.description
+        ? `<desc>${this.escapeXml(track.description)}</desc>`
+        : ""
+    }
     <trkseg>${trackPoints}
     </trkseg>
   </trk>`;
@@ -280,7 +288,10 @@ class GPXRecorder {
       throw new Error("Track not found");
     }
 
-    const fileName = `${track.name.replace(/[^a-z0-9]/gi, "_")}_${Date.now()}.gpx`;
+    const fileName = `${track.name.replace(
+      /[^a-z0-9]/gi,
+      "_"
+    )}_${Date.now()}.gpx`;
     // Use a temporary directory path for GPX files
     const filePath = `${fileName}`;
 
@@ -339,7 +350,7 @@ class GPXRecorder {
     lat1: number,
     lon1: number,
     lat2: number,
-    lon2: number,
+    lon2: number
   ): number {
     const R = 6371e3;
     const φ1 = (lat1 * Math.PI) / 180;

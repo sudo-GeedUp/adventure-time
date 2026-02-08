@@ -29,7 +29,7 @@ export default function PhotoCapture({
     if (cameraStatus !== "granted" || libraryStatus !== "granted") {
       Alert.alert(
         "Permissions Required",
-        "Please grant camera and photo library permissions to add photos.",
+        "Please grant camera and photo library permissions to add photos."
       );
       return false;
     }
@@ -43,7 +43,7 @@ export default function PhotoCapture({
     if (selectedPhotos.length >= maxPhotos) {
       Alert.alert(
         "Maximum Photos",
-        `You can only add up to ${maxPhotos} photos.`,
+        `You can only add up to ${maxPhotos} photos.`
       );
       return;
     }
@@ -74,7 +74,7 @@ export default function PhotoCapture({
     if (selectedPhotos.length >= maxPhotos) {
       Alert.alert(
         "Maximum Photos",
-        `You can only add up to ${maxPhotos} photos.`,
+        `You can only add up to ${maxPhotos} photos.`
       );
       return;
     }

@@ -46,7 +46,7 @@ export class TrailDifficultyCalculator {
   // Calculate personalized difficulty based on vehicle specs
   static calculateDifficulty(
     vehicleSpecs: VehicleSpecs,
-    trailRequirements: TrailRequirements,
+    trailRequirements: TrailRequirements
   ): DifficultyAssessment {
     const warnings: string[] = [];
     const recommendations: string[] = [];
@@ -60,12 +60,14 @@ export class TrailDifficultyCalculator {
     if (clearanceDiff < 0) {
       score -= Math.abs(clearanceDiff) * 5;
       warnings.push(
-        `Your ground clearance (${vehicleSpecs.groundClearance}") is ${Math.abs(clearanceDiff)}" below recommended`,
+        `Your ground clearance (${vehicleSpecs.groundClearance}") is ${Math.abs(
+          clearanceDiff
+        )}" below recommended`
       );
       if (clearanceDiff < -3) {
         canComplete = false;
         requiredModifications.push(
-          `Lift kit needed (min ${trailRequirements.minGroundClearance}" clearance)`,
+          `Lift kit needed (min ${trailRequirements.minGroundClearance}" clearance)`
         );
       }
     }
@@ -85,7 +87,7 @@ export class TrailDifficultyCalculator {
     if (approachDiff < 0) {
       score -= Math.abs(approachDiff) * 3;
       warnings.push(
-        `Low approach angle (${vehicleSpecs.approachAngle}°) - risk of front bumper damage`,
+        `Low approach angle (${vehicleSpecs.approachAngle}°) - risk of front bumper damage`
       );
       recommendations.push("Approach obstacles at an angle when possible");
     }
@@ -96,7 +98,7 @@ export class TrailDifficultyCalculator {
     if (departureDiff < 0) {
       score -= Math.abs(departureDiff) * 3;
       warnings.push(
-        `Low departure angle (${vehicleSpecs.departureAngle}°) - risk of rear damage`,
+        `Low departure angle (${vehicleSpecs.departureAngle}°) - risk of rear damage`
       );
       recommendations.push("Exit obstacles slowly and carefully");
     }
@@ -115,7 +117,7 @@ export class TrailDifficultyCalculator {
       score -= 15;
       warnings.push("Trail requires differential lockers for traction");
       requiredModifications.push(
-        "Install front/rear lockers or limited-slip differentials",
+        "Install front/rear lockers or limited-slip differentials"
       );
       recommendations.push("Maintain momentum through difficult sections");
     }
@@ -133,12 +135,12 @@ export class TrailDifficultyCalculator {
     if (tireDiff < 0) {
       score -= Math.abs(tireDiff) * 4;
       warnings.push(
-        `Larger tires recommended (current: ${vehicleSpecs.tireSize}")`,
+        `Larger tires recommended (current: ${vehicleSpecs.tireSize}")`
       );
       recommendations.push("Air down tires for better traction");
       if (tireDiff < -4) {
         requiredModifications.push(
-          `Upgrade to minimum ${trailRequirements.minTireSize}" tires`,
+          `Upgrade to minimum ${trailRequirements.minTireSize}" tires`
         );
       }
     }
@@ -188,7 +190,7 @@ export class TrailDifficultyCalculator {
 
     // Calculate confidence level based on how many specs we have
     const specsProvided = Object.values(vehicleSpecs).filter(
-      (v) => v !== undefined,
+      (v) => v !== undefined
     ).length;
     const confidenceLevel = specsProvided / Object.keys(vehicleSpecs).length;
 
@@ -205,7 +207,7 @@ export class TrailDifficultyCalculator {
 
   // Get trail requirements based on standard difficulty
   static getStandardTrailRequirements(
-    difficulty: "Easy" | "Moderate" | "Hard" | "Expert",
+    difficulty: "Easy" | "Moderate" | "Hard" | "Expert"
   ): TrailRequirements {
     const requirements: { [key: string]: TrailRequirements } = {
       Easy: {
@@ -356,7 +358,7 @@ export class TrailDifficultyCalculator {
   // Suggest modifications for trail
   static suggestModifications(
     currentSpecs: VehicleSpecs,
-    targetDifficulty: "Easy" | "Moderate" | "Hard" | "Expert",
+    targetDifficulty: "Easy" | "Moderate" | "Hard" | "Expert"
   ): {
     priority: "Essential" | "Recommended" | "Nice to Have";
     modification: string;
@@ -370,7 +372,9 @@ export class TrailDifficultyCalculator {
     if (currentSpecs.groundClearance < requirements.minGroundClearance) {
       suggestions.push({
         priority: "Essential",
-        modification: `Lift kit (${requirements.minGroundClearance - currentSpecs.groundClearance}" lift)`,
+        modification: `Lift kit (${
+          requirements.minGroundClearance - currentSpecs.groundClearance
+        }" lift)`,
         estimatedCost: "$1,500 - $3,000",
         difficultyImprovement: 20,
       });

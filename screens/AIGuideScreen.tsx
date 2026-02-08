@@ -110,7 +110,7 @@ export default function AIGuideScreen() {
     if (!aiGuideService.isAvailable()) {
       Alert.alert(
         "AI Guide Unavailable",
-        "The AI Guide requires an OpenAI API key to function. Please configure your API key in the settings.",
+        "The AI Guide requires an OpenAI API key to function. Please configure your API key in the settings."
       );
       return;
     }
@@ -172,7 +172,7 @@ export default function AIGuideScreen() {
             initializeGuide();
           },
         },
-      ],
+      ]
     );
   };
 
@@ -301,18 +301,18 @@ export default function AIGuideScreen() {
                     suggestion.type === "safety"
                       ? "alert-triangle"
                       : suggestion.type === "trail"
-                        ? "map-pin"
-                        : suggestion.type === "warning"
-                          ? "alert-circle"
-                          : "info"
+                      ? "map-pin"
+                      : suggestion.type === "warning"
+                      ? "alert-circle"
+                      : "info"
                   }
                   size={16}
                   color={
                     suggestion.priority === "critical"
                       ? theme.error
                       : suggestion.priority === "high"
-                        ? theme.warning
-                        : theme.primary
+                      ? theme.warning
+                      : theme.primary
                   }
                 />
                 <ThemedText style={styles.suggestionTitle}>

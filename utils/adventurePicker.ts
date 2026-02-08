@@ -20,7 +20,7 @@ export interface RandomAdventureResult {
  */
 export function pickRandomAdventure(
   trails: Trail[],
-  options: RandomAdventureOptions = {},
+  options: RandomAdventureOptions = {}
 ): RandomAdventureResult | null {
   if (trails.length === 0) {
     return null;
@@ -31,7 +31,7 @@ export function pickRandomAdventure(
   // Apply difficulty filter if specified
   if (options.difficulty) {
     filteredTrails = filteredTrails.filter(
-      (t) => t.difficulty === options.difficulty,
+      (t) => t.difficulty === options.difficulty
     );
   }
 
@@ -74,7 +74,7 @@ export function pickRandomAdventure(
  */
 export function pickSmartRandomAdventure(
   trails: Trail[],
-  options: RandomAdventureOptions = {},
+  options: RandomAdventureOptions = {}
 ): RandomAdventureResult | null {
   if (trails.length === 0) {
     return null;
@@ -85,7 +85,7 @@ export function pickSmartRandomAdventure(
   // Apply difficulty filter if specified
   if (options.difficulty) {
     filteredTrails = filteredTrails.filter(
-      (t) => t.difficulty === options.difficulty,
+      (t) => t.difficulty === options.difficulty
     );
   }
 
@@ -117,7 +117,7 @@ export function pickSmartRandomAdventure(
   // Calculate total weight
   const totalWeight = weightedTrails.reduce(
     (sum, item) => sum + item.weight,
-    0,
+    0
   );
 
   // Random selection based on weights
@@ -164,7 +164,7 @@ export function pickSmartRandomAdventure(
 export function pickMultipleRandomAdventures(
   trails: Trail[],
   count: number = 3,
-  options: RandomAdventureOptions = {},
+  options: RandomAdventureOptions = {}
 ): RandomAdventureResult[] {
   if (trails.length === 0) {
     return [];
@@ -178,7 +178,7 @@ export function pickMultipleRandomAdventures(
   // Apply difficulty filter if specified
   if (options.difficulty) {
     filteredTrails = filteredTrails.filter(
-      (t) => t.difficulty === options.difficulty,
+      (t) => t.difficulty === options.difficulty
     );
   }
 
