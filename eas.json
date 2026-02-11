@@ -18,9 +18,13 @@
       "ios": {
         "scheme": "ItsAdventureTime",
         "resourceClass": "m-medium"
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "production": {
+      "channel": "production",
       "ios": {
         "scheme": "ItsAdventureTime",
         "resourceClass": "m-medium"

@@ -1,12 +1,6 @@
 .env
-node_modules
-node_modules
-node_modules
-node_modules
-node_modules
-node_modules
-node_modules
-node_modules
-node_modules
-
 .env.local
+node_modules/
+.expo/
+android/
+ios/
