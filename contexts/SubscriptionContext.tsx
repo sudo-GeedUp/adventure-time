@@ -9,7 +9,6 @@ import { Platform } from "react-native";
 import Purchases, { CustomerInfo } from "react-native-purchases";
 import {
   initializeRevenueCat,
-  checkPremiumStatus,
   purchaseMonthlySubscription,
   restorePurchases,
   ENTITLEMENT_IDS,
@@ -42,7 +41,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
         setIsPremium(true);
         return;
       }
-      
+
       const info = await Purchases.getCustomerInfo();
       setCustomerInfo(info);
       const hasPremium =
