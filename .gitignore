@@ -4,3 +4,9 @@ node_modules/
 .expo/
 android/
 ios/
+*.ipa
+*.apk
+*.aab
+build-*.ipa
+build-*.apk
+build-*.aab
