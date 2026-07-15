@@ -13,9 +13,9 @@ const REVENUECAT_ANDROID_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY;
 // Fallback test key for development only
 const FALLBACK_TEST_KEY = __DEV__ ? "test_giauVpCRAVQIZDZJNmhNIhRDNaq" : "";
 
-// Product IDs
+// Product IDs - must match what's configured in RevenueCat dashboard AND App Store Connect
 export const PRODUCT_IDS = {
-  MONTHLY_SUBSCRIPTION: "com.adventuretime.premium.monthly",
+  MONTHLY_SUBSCRIPTION: "com.masongallegos.itsadventuretime.premium.monthly",
 };
 
 // Entitlement IDs (configured in RevenueCat dashboard)
@@ -72,20 +72,19 @@ export const initializeRevenueCat = async () => {
   }
 };
 
+export const OFFERING_ID = "com.masongallegos.itsadventuretime.premium.monthly";
+
 export const getOfferings = async (): Promise<PurchasesOffering | null> => {
   try {
     const offerings = await Purchases.getOfferings();
+    // Try current offering first, then fall back to our specific offering by ID
     if (offerings.current !== null) {
       return offerings.current;
     }
-
-    // No current offering available
-    if (__DEV__) {
-      console.warn(
-        "No current offering found - mock data will be used in SubscriptionScreen",
-      );
+    if (offerings.all[OFFERING_ID]) {
+      return offerings.all[OFFERING_ID];
     }
-
+    console.warn("No offering found in RevenueCat");
     return null;
   } catch (error) {
     console.error("Error fetching offerings:", error);
@@ -100,7 +99,6 @@ export const purchaseMonthlySubscription = async () => {
       throw new Error("No offerings available");
     }
 
-    // Find the monthly package
     const monthlyPackage = offerings.availablePackages.find(
       (pkg) => pkg.packageType === PACKAGE_TYPE.MONTHLY,
     );

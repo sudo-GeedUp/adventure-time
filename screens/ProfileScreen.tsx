@@ -625,9 +625,7 @@ export default function ProfileScreen() {
             styles.menuItem,
             { backgroundColor: theme.backgroundDefault },
           ]}
-          onPress={() =>
-            navigation.getParent()?.navigate("FriendsTab" as never)
-          }
+          onPress={() => navigation.navigate("Friends")}
           android_ripple={{ color: theme.backgroundSecondary }}
         >
           <View style={styles.menuItemContent}>

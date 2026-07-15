@@ -136,8 +136,29 @@ export default function NavigateScreen() {
   };
 
   const loadNearbyTrails = (currentLocation: any) => {
-    const nearbyTrails = getTrailsNearLocation(currentLocation.coords, 50);
-    const allTrails = [...nearbyTrails, ...communityTrails];
+    // Always include sample trails for testing, plus nearby trails
+    const nearbyTrails = getTrailsNearLocation(currentLocation.coords, 200); // Increased radius
+    // Remove duplicates by using a Map to ensure unique IDs
+    const allTrailsMap = new Map();
+    
+    // Add sample trails first
+    SAMPLE_TRAILS.forEach(trail => allTrailsMap.set(trail.id, trail));
+    
+    // Add nearby trails (only if not already present)
+    nearbyTrails.forEach(trail => {
+      if (!allTrailsMap.has(trail.id)) {
+        allTrailsMap.set(trail.id, trail);
+      }
+    });
+    
+    // Add community trails (only if not already present)
+    communityTrails.forEach(trail => {
+      if (!allTrailsMap.has(trail.id)) {
+        allTrailsMap.set(trail.id, trail);
+      }
+    });
+    
+    const allTrails = Array.from(allTrailsMap.values());
     const sortedByDistance = allTrails.sort((a, b) => {
       const distA = calculateDistance(currentLocation.coords, a.location);
       const distB = calculateDistance(currentLocation.coords, b.location);
@@ -145,6 +166,7 @@ export default function NavigateScreen() {
     });
     setTrails(sortedByDistance);
     setIsLoading(false);
+    console.log("Loaded trails:", sortedByDistance.length, "trails found");
   };
 
   const handleRandomAdventure = () => {
@@ -219,10 +241,8 @@ export default function NavigateScreen() {
         (trail) =>
           trail.name.toLowerCase().includes(query) ||
           trail.description.toLowerCase().includes(query) ||
-          // Search by location coordinates (for city/region searches)
-          `${trail.location.latitude},${trail.location.longitude}`.includes(
-            query,
-          ) ||
+          // Search by difficulty
+          trail.difficulty.toLowerCase().includes(query) ||
           // Search by features (rock crawling, scenic, etc.)
           trail.features.some((feature) =>
             feature.toLowerCase().includes(query),
@@ -248,6 +268,7 @@ export default function NavigateScreen() {
     }
 
     setFilteredTrails(filtered);
+    console.log("Filtered trails:", filtered.length, "trails match search");
   };
 
   const loadCachedTrailsStatus = async () => {
@@ -976,16 +997,18 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: Spacing.sm,
     marginTop: Spacing.md,
   },
   startButton: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: "40%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.md,
     gap: Spacing.sm,
   },
@@ -994,12 +1017,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   navigationButton: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: "40%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.md,
     gap: Spacing.sm,
   },

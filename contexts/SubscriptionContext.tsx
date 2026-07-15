@@ -42,6 +42,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
         setIsPremium(true);
         return;
       }
+      
       const info = await Purchases.getCustomerInfo();
       setCustomerInfo(info);
       const hasPremium =
@@ -54,6 +55,8 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   useEffect(() => {
+    let customerInfoListener: any = null;
+
     const initSubscriptions = async () => {
       try {
         if (Platform.OS === "web") {
@@ -67,6 +70,16 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
         const initialized = await initializeRevenueCat();
         if (initialized) {
           await refreshStatus();
+
+          // Listen for customer info updates (handles async purchase completions)
+          customerInfoListener = Purchases.addCustomerInfoUpdateListener(
+            (info) => {
+              setCustomerInfo(info);
+              const hasPremium =
+                info.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined;
+              setIsPremium(hasPremium);
+            },
+          );
         } else {
           // If RevenueCat fails to initialize on mobile, default to non-premium
           console.warn("RevenueCat not initialized, defaulting to non-premium");
@@ -82,6 +95,12 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
     };
 
     initSubscriptions();
+
+    return () => {
+      if (customerInfoListener) {
+        customerInfoListener.remove();
+      }
+    };
   }, []);
 
   const purchaseSubscription = async (): Promise<boolean> => {

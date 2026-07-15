@@ -40,81 +40,34 @@ export default function SubscriptionScreen() {
           (pkg) => pkg.packageType === PACKAGE_TYPE.MONTHLY,
         );
         setMonthlyPackage(monthly || null);
-      } else if (__DEV__) {
-        // Mock package for development
-        console.log("Using mock subscription data for development");
-        setMonthlyPackage({
-          identifier: "mock-monthly",
-          packageType: "MONTHLY",
-          product: {
-            identifier: "com.adventuretime.premium.monthly",
-            priceString: "$4.99/month",
-            price: 4.99,
-            currencyCode: "USD",
-          },
-        } as any);
       }
     } catch (error) {
       console.error("Error loading offerings:", error);
-      if (__DEV__) {
-        // Fallback to mock data
-        setMonthlyPackage({
-          identifier: "mock-monthly",
-          packageType: "MONTHLY",
-          product: {
-            identifier: "com.adventuretime.premium.monthly",
-            priceString: "$4.99/month",
-            price: 4.99,
-            currencyCode: "USD",
-          },
-        } as any);
-      }
     } finally {
       setLoadingOfferings(false);
     }
   };
 
   const handlePurchase = async () => {
-    // Prevent multiple simultaneous purchases
     if (processingRef.current) return;
 
     processingRef.current = true;
     setIsProcessing(true);
 
     try {
-      // Check if using mock data
-      if (__DEV__ && monthlyPackage?.identifier.startsWith("mock-")) {
-        // Mock purchase for development
-        console.log("Processing mock subscription...");
-        await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate delay
-
+      const success = await purchaseSubscription();
+      if (success) {
         Alert.alert(
           "Welcome to Premium!",
-          "You now have access to all premium features including AI Scan, trail updates, and more!\n\n(Note: This is a mock subscription for development)",
-        );
-
-        // Update subscription status
-        refreshStatus();
-      } else {
-        // Real purchase flow
-        const success = await purchaseSubscription();
-        if (success) {
-          Alert.alert(
-            "Welcome to Premium!",
-            "You now have access to all premium features including AI Scan, trail updates, and more!",
-          );
-        }
-      }
-    } catch (error: any) {
-      if (!error.userCancelled) {
-        Alert.alert(
-          "Purchase Failed",
-          error.message || "Unable to complete purchase. Please try again.",
+          "You now have access to all premium features including AI Scan, trail updates, and more!",
         );
       }
+    } catch (error) {
+      console.error("Purchase failed:", error);
+      Alert.alert("Purchase Failed", "Unable to complete purchase. Please try again.");
     } finally {
-      processingRef.current = false;
       setIsProcessing(false);
+      processingRef.current = false;
     }
   };
 
