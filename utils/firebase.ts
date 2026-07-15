@@ -1,4 +1,4 @@
-import { initializeApp, getApps, FirebaseApp } from "firebase/app";
+import { initializeApp, getApp, getApps, FirebaseApp } from "firebase/app";
 import {
   getDatabase,
   ref,
@@ -40,23 +40,32 @@ export function initializeFirebase() {
   try {
     if (!firebaseConfig.apiKey) {
       console.log("Firebase config not set up. Using local storage mode.");
+      isFirebaseEnabled = false;
       return false;
     }
 
     if (getApps().length === 0) {
       app = initializeApp(firebaseConfig);
-      database = getDatabase(app);
-      storageInstance = getStorage(app);
-      isFirebaseEnabled = true;
       console.log("Firebase initialized successfully");
-      return true;
+    } else {
+      app = getApp();
+      console.log("Firebase already initialized, using existing app");
     }
+
+    database = getDatabase(app);
+    storageInstance = getStorage(app);
+    isFirebaseEnabled = true;
     return true;
   } catch (error) {
     console.error("Error initializing Firebase:", error);
+    isFirebaseEnabled = false;
     return false;
   }
 }
+
+// Auto-initialize when this module is imported so authService and other
+// consumers immediately find Firebase available.
+initializeFirebase();
 
 // Check if Firebase is available
 export function isFirebaseAvailable(): boolean {

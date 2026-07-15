@@ -6,6 +6,7 @@ import {
   TextInput,
   Switch,
   Image,
+  Modal,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -59,6 +60,9 @@ export default function ProfileScreen() {
   const [emergencyContacts, setEmergencyContacts] = useState<
     EmergencyContact[]
   >([]);
+  const [isContactModalVisible, setIsContactModalVisible] = useState(false);
+  const [contactName, setContactName] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
   const isInitialLoad = useRef(true);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -105,6 +109,29 @@ export default function ProfileScreen() {
   const loadEmergencyContacts = async () => {
     const contacts = await storage.getEmergencyContacts();
     setEmergencyContacts(contacts);
+  };
+
+  const handleAddContact = async () => {
+    if (!contactName.trim() || !contactPhone.trim()) {
+      return;
+    }
+    const newContact: EmergencyContact = {
+      id: `contact_${Date.now()}`,
+      name: contactName.trim(),
+      phone: contactPhone.trim(),
+    };
+    const updatedContacts = [...emergencyContacts, newContact];
+    await storage.saveEmergencyContacts(updatedContacts);
+    setEmergencyContacts(updatedContacts);
+    setContactName("");
+    setContactPhone("");
+    setIsContactModalVisible(false);
+  };
+
+  const handleRemoveContact = async (id: string) => {
+    const updatedContacts = emergencyContacts.filter((c) => c.id !== id);
+    await storage.saveEmergencyContacts(updatedContacts);
+    setEmergencyContacts(updatedContacts);
   };
 
   const handleSaveProfile = async () => {
@@ -575,7 +602,10 @@ export default function ProfileScreen() {
           <ThemedText style={[Typography.h4, styles.sectionTitle]}>
             Emergency Contacts
           </ThemedText>
-          <Pressable style={styles.addButton}>
+          <Pressable
+            style={styles.addButton}
+            onPress={() => setIsContactModalVisible(true)}
+          >
             <Feather name="plus-circle" size={24} color={theme.primary} />
           </Pressable>
         </View>
@@ -610,7 +640,9 @@ export default function ProfileScreen() {
                   {contact.phone}
                 </ThemedText>
               </View>
-              <Feather name="phone" size={20} color={theme.success} />
+              <Pressable onPress={() => handleRemoveContact(contact.id)}>
+                <Feather name="trash-2" size={20} color={theme.error} />
+              </Pressable>
             </View>
           ))
         )}
@@ -632,6 +664,32 @@ export default function ProfileScreen() {
             <Feather name="users" size={24} color={theme.primary} />
             <ThemedText style={styles.menuItemText}>
               Friends & Community
+            </ThemedText>
+          </View>
+          <Feather
+            name="chevron-right"
+            size={24}
+            color={theme.tabIconDefault}
+          />
+        </Pressable>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText style={[Typography.h4, styles.sectionTitle]}>
+          Adventures
+        </ThemedText>
+        <Pressable
+          style={[
+            styles.menuItem,
+            { backgroundColor: theme.backgroundDefault },
+          ]}
+          onPress={() => navigation.navigate("MyAdventures")}
+          android_ripple={{ color: theme.backgroundSecondary }}
+        >
+          <View style={styles.menuItemContent}>
+            <Feather name="map" size={24} color={theme.primary} />
+            <ThemedText style={styles.menuItemText}>
+              My Adventures & Saved Maps
             </ThemedText>
           </View>
           <Feather
@@ -689,6 +747,75 @@ export default function ProfileScreen() {
           />
         </Pressable>
       </View>
+
+      <Modal
+        animationType="slide"
+        transparent
+        visible={isContactModalVisible}
+        onRequestClose={() => setIsContactModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
+            <ThemedText style={[Typography.h3, styles.modalTitle]}>
+              Add Emergency Contact
+            </ThemedText>
+            <View
+              style={[
+                styles.input,
+                { backgroundColor: theme.backgroundSecondary },
+              ]}
+            >
+              <TextInput
+                style={styles.textInput}
+                placeholder="Contact name"
+                placeholderTextColor={theme.tabIconDefault}
+                value={contactName}
+                onChangeText={setContactName}
+                autoFocus
+              />
+            </View>
+            <View
+              style={[
+                styles.input,
+                { backgroundColor: theme.backgroundSecondary },
+              ]}
+            >
+              <TextInput
+                style={styles.textInput}
+                placeholder="Phone number"
+                placeholderTextColor={theme.tabIconDefault}
+                value={contactPhone}
+                onChangeText={setContactPhone}
+                keyboardType="phone-pad"
+              />
+            </View>
+            <View style={styles.modalActions}>
+              <Pressable
+                style={[
+                  styles.modalButton,
+                  { backgroundColor: theme.backgroundSecondary },
+                ]}
+                onPress={() => setIsContactModalVisible(false)}
+              >
+                <ThemedText style={{ color: theme.tabIconDefault }}>
+                  Cancel
+                </ThemedText>
+              </Pressable>
+              <Pressable
+                style={[styles.modalButton, { backgroundColor: theme.primary }]}
+                onPress={handleAddContact}
+              >
+                <ThemedText style={{ color: "white" }}>Save</ThemedText>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScreenScrollView>
   );
 }
@@ -733,6 +860,39 @@ const styles = StyleSheet.create({
   },
   addButton: {
     padding: Spacing.xs,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    padding: Spacing.lg,
+  },
+  modalContent: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xl,
+  },
+  modalTitle: {
+    marginBottom: Spacing.lg,
+    textAlign: "center",
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: Spacing.md,
+    marginTop: Spacing.md,
+  },
+  modalButton: {
+    flex: 1,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignItems: "center",
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
   },
   emptyCard: {
     padding: Spacing["3xl"],

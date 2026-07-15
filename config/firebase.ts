@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { getApp, getApps, initializeApp } from "firebase/app";
 import {
   getAuth,
   setPersistence,
@@ -30,10 +30,10 @@ export const initializeFirebase = async () => {
       return null;
     }
 
-    app = initializeApp(firebaseConfig);
-    
+    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+
     // Initialize auth for web environment (browser)
-    if (typeof window !== 'undefined' && window.location) {
+    if (typeof window !== "undefined" && window.location) {
       // Web browser environment
       auth = getAuth(app);
       try {
@@ -45,7 +45,7 @@ export const initializeFirebase = async () => {
       // Native or other environment
       auth = getAuth(app);
     }
-    
+
     db = getDatabase(app);
     firestore = getFirestore(app);
 

@@ -364,12 +364,22 @@ class AuthService {
     const user = this.getCurrentUser();
     if (!user) throw new Error("No user logged in");
 
-    const profile = await this.getUserProfile(user.uid);
-    if (profile) {
-      profile.isPremium = isPremium;
-      profile.premiumExpiresAt = expiresAt;
-      await this.saveUserProfile(profile);
+    let profile = await this.getUserProfile(user.uid);
+    if (!profile) {
+      // Create a minimal profile for anonymous users if one doesn't exist
+      profile = {
+        uid: user.uid,
+        email: user.email || "",
+        displayName: user.displayName || "",
+        createdAt: Date.now(),
+        lastLogin: Date.now(),
+        isPremium: false,
+      };
     }
+
+    profile.isPremium = isPremium;
+    profile.premiumExpiresAt = expiresAt;
+    await this.saveUserProfile(profile);
   }
 }
 

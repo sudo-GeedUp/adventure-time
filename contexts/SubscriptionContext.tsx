@@ -13,6 +13,8 @@ import {
   restorePurchases,
   ENTITLEMENT_IDS,
 } from "@/config/revenuecat";
+import { useAuth } from "@/contexts/AuthContext";
+import { authService } from "@/services/authService";
 
 interface SubscriptionContextType {
   isPremium: boolean;
@@ -30,9 +32,29 @@ const SubscriptionContext = createContext<SubscriptionContextType | undefined>(
 export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  const { refreshProfile } = useAuth();
   const [isPremium, setIsPremium] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
+
+  const syncPremiumToAuth = async (info: CustomerInfo) => {
+    try {
+      const user = authService.getCurrentUser();
+      if (!user) return;
+
+      const entitlement = info.entitlements.active[ENTITLEMENT_IDS.PREMIUM];
+      const hasPremium = entitlement !== undefined;
+      const expiresAt =
+        entitlement && entitlement.expirationDateMillis
+          ? entitlement.expirationDateMillis
+          : undefined;
+
+      await authService.setPremiumStatus(hasPremium, expiresAt);
+      await refreshProfile();
+    } catch (error) {
+      console.error("Error syncing premium status to auth:", error);
+    }
+  };
 
   const refreshStatus = async () => {
     try {
@@ -47,6 +69,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
       const hasPremium =
         info.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined;
       setIsPremium(hasPremium);
+      await syncPremiumToAuth(info);
     } catch (error) {
       console.error("Error refreshing subscription status:", error);
       setIsPremium(false);
@@ -77,6 +100,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
               const hasPremium =
                 info.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined;
               setIsPremium(hasPremium);
+              syncPremiumToAuth(info);
             },
           );
         } else {
@@ -100,6 +124,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
         customerInfoListener.remove();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const purchaseSubscription = async (): Promise<boolean> => {

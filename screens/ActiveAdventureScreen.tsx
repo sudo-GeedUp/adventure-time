@@ -541,6 +541,24 @@ export default function ActiveAdventureScreen() {
     return () => clearInterval(interval);
   }, [isTracking, session]);
 
+  const MAX_SPEED_MPH = 200;
+  const MAX_GPS_ACCURACY_METERS = 100;
+
+  const clampSpeed = (speedMph: number) => {
+    if (!Number.isFinite(speedMph) || speedMph < 0) return 0;
+    return Math.min(speedMph, MAX_SPEED_MPH);
+  };
+
+  const medianSpeed = (readings: number[]) => {
+    if (readings.length === 0) return 0;
+    const sorted = [...readings].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    if (sorted.length % 2 === 0) {
+      return (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+    return sorted[mid];
+  };
+
   // Track location every 5 seconds
   useEffect(() => {
     if (!isTracking) return;
@@ -577,11 +595,15 @@ export default function ActiveAdventureScreen() {
             let addedDistance = 0;
             let calculatedSpeed = 0;
 
+            const accuracy = location.coords.accuracy;
+            const isAccurate =
+              accuracy == null || accuracy <= MAX_GPS_ACCURACY_METERS;
+
             if (lastLocation) {
               addedDistance = calculateDistance(lastLocation, newLocation);
               // Calculate speed from distance if GPS speed is invalid
               const timeDiff = (Date.now() - lastLocation.timestamp) / 1000; // seconds
-              if (timeDiff > 0 && addedDistance > 0) {
+              if (timeDiff > 0.5 && addedDistance > 0 && isAccurate) {
                 // Speed in mph: (miles / seconds) * 3600
                 calculatedSpeed = (addedDistance / timeDiff) * 3600;
               }
@@ -592,10 +614,16 @@ export default function ActiveAdventureScreen() {
 
             // Use GPS speed if valid, otherwise use calculated speed
             let rawSpeed = 0;
-            if (location.coords.speed && location.coords.speed >= 0) {
-              rawSpeed = location.coords.speed * 2.237; // m/s to mph
-            } else if (calculatedSpeed > 0) {
-              rawSpeed = calculatedSpeed;
+            const gpsSpeedMps = location.coords.speed;
+            if (
+              gpsSpeedMps != null &&
+              Number.isFinite(gpsSpeedMps) &&
+              gpsSpeedMps >= 0 &&
+              isAccurate
+            ) {
+              rawSpeed = clampSpeed(gpsSpeedMps * 2.237); // m/s to mph
+            } else if (calculatedSpeed > 0 && isAccurate) {
+              rawSpeed = clampSpeed(calculatedSpeed);
             }
             // No mock speed - use 0 if GPS data is invalid
             // Note: In iOS Simulator, GPS speed is often null/0 - this is normal
@@ -609,10 +637,8 @@ export default function ActiveAdventureScreen() {
             speedHistoryRef.current = newSpeedHistory;
             setSpeedHistory(newSpeedHistory);
 
-            // Calculate average speed for smooth display
-            const smoothedSpeed =
-              newSpeedHistory.reduce((a, b) => a + b, 0) /
-              newSpeedHistory.length;
+            // Calculate median speed for smooth display (reduces outlier spikes)
+            const smoothedSpeed = medianSpeed(newSpeedHistory);
 
             const currentAltitude = location.coords.altitude || 0;
 

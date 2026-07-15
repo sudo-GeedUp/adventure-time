@@ -109,8 +109,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshProfile = async () => {
-    if (user) {
-      const profile = await authService.getUserProfile(user.uid);
+    const currentUser = authService.getCurrentUser();
+    if (currentUser) {
+      const profile = await authService.getUserProfile(currentUser.uid);
       setUserProfile(profile);
 
       const premiumStatus = await authService.checkPremiumStatus();

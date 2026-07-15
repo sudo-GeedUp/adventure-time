@@ -6,6 +6,7 @@ import SettingsScreen from "@/screens/SettingsScreen";
 import SubscriptionScreen from "@/screens/SubscriptionScreen";
 import VehicleMaintenanceScreen from "@/screens/VehicleMaintenanceScreen";
 import FriendsScreen from "@/screens/FriendsScreen";
+import MyAdventuresScreen from "@/screens/MyAdventuresScreen";
 import { useTheme } from "@/hooks/useTheme";
 import { getCommonScreenOptions } from "@/navigation/screenOptions";
 
@@ -15,6 +16,7 @@ export type ProfileStackParamList = {
   Subscription: undefined;
   VehicleMaintenance: undefined;
   Friends: undefined;
+  MyAdventures: undefined;
 };
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
@@ -57,6 +59,13 @@ export default function ProfileStackNavigator() {
         component={FriendsScreen}
         options={{
           title: "Friends & Community",
+        }}
+      />
+      <Stack.Screen
+        name="MyAdventures"
+        component={MyAdventuresScreen}
+        options={{
+          title: "My Adventures & Saved Maps",
         }}
       />
     </Stack.Navigator>
