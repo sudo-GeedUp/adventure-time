@@ -23,7 +23,8 @@
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Its Adventure Time needs your location to track your adventures even when the app is in the background.",
         "NSCameraUsageDescription": "Its Adventure Time needs camera access for AI Recovery Scan to analyze recovery situations and provide equipment recommendations.",
         "NSPhotoLibraryUsageDescription": "Its Adventure Time needs photo library access to save and analyze recovery situation photos.",
-        "NSPhotoLibraryAddUsageDescription": "Its Adventure Time needs permission to save photos to your library."
+        "NSPhotoLibraryAddUsageDescription": "Its Adventure Time needs permission to save photos to your library.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
