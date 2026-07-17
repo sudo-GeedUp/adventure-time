@@ -17,7 +17,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.masongallegos.itsadventuretime",
-      "buildNumber": "6",
+      "buildNumber": "7",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Its Adventure Time needs your location to track your off-road adventures, show nearby trails, and provide GPS navigation to trailheads.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Its Adventure Time needs your location to track your adventures even when the app is in the background.",
