@@ -2,8 +2,13 @@ import Purchases, { LOG_LEVEL, PurchasesOffering } from 'react-native-purchases'
 import { Platform } from 'react-native';
 
 // RevenueCat API Keys
-const REVENUECAT_IOS_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || 'test_VuKiYKHZIagZNWUqTtxfCQColuV';
+// Use platform-specific public SDK keys from the RevenueCat dashboard.
+// iOS production keys start with `appl_`; Android keys start with `goog_`.
+// Test Store keys (`test_`) will crash in release builds and must not be used.
+const REVENUECAT_IOS_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || '';
 const REVENUECAT_ANDROID_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || '';
+
+const isTestApiKey = (key: string | undefined) => !!key && key.startsWith('test_');
 
 // Product IDs
 export const PRODUCT_IDS = {
@@ -23,24 +28,29 @@ export const initializeRevenueCat = async () => {
       return false;
     }
 
-    // Configure RevenueCat
-    Purchases.setLogLevel(LOG_LEVEL.VERBOSE); // Set to INFO in production
-    
     const apiKey = Platform.select({
       ios: REVENUECAT_IOS_KEY,
       android: REVENUECAT_ANDROID_KEY,
     });
 
     if (!apiKey) {
-      console.error('RevenueCat API key not configured');
+      console.warn('RevenueCat API key not configured; subscription features disabled.');
       return false;
     }
 
+    if (isTestApiKey(apiKey)) {
+      console.warn('RevenueCat Test Store API key detected in a release build. Skipping RevenueCat to prevent a crash. Set EXPO_PUBLIC_REVENUECAT_IOS_KEY to your iOS public SDK key (appl_...).');
+      return false;
+    }
+
+    // Configure RevenueCat
+    Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.VERBOSE : LOG_LEVEL.INFO);
+
     await Purchases.configure({ apiKey });
-    
+
     // Optional: Set user ID if you have your own user system
     // await Purchases.logIn(userId);
-    
+
     return true;
   } catch (error) {
     console.error('Failed to initialize RevenueCat:', error);
