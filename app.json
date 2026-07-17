@@ -1,7 +1,8 @@
 {
   "expo": {
     "name": "Its Adventure Time",
-    "slug": "adventure-time",
+    "slug": "my-app",
+    "owner": "sinjingallegos",
     "version": "1.0.5",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -55,12 +56,12 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "7c1e1824-4d93-4589-a286-9116128da97e"
+        "projectId": "02cac41b-21af-4ee7-bda0-26b4042a9013"
       }
     },
     "runtimeVersion": "1.0.5",
     "updates": {
-      "url": "https://u.expo.dev/7c1e1824-4d93-4589-a286-9116128da97e"
+      "url": "https://u.expo.dev/02cac41b-21af-4ee7-bda0-26b4042a9013"
     }
   }
 }
