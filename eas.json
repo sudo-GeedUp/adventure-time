@@ -1,0 +1,38 @@
+{
+  "cli": {
+    "version": ">= 5.2.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "scheme": "ItsAdventureTime",
+        "resourceClass": "m-medium"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "ios": {
+        "scheme": "ItsAdventureTime",
+        "resourceClass": "m-medium"
+      }
+    },
+    "production": {
+      "ios": {
+        "scheme": "ItsAdventureTime",
+        "resourceClass": "m-medium"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "sinjin.gallegos@aol.com",
+        "appleTeamId": "2AU7KFCM84"
+      }
+    }
+  }
+}
