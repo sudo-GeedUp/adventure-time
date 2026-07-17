@@ -29,6 +29,7 @@
     },
     "android": {
       "package": "com.masongallegos.itsadventuretime",
+      "versionCode": 7,
       "adaptiveIcon": {
         "backgroundColor": "#FF6B35",
         "foregroundImage": "./assets/images/icon.png"
