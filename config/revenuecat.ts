@@ -1,30 +1,51 @@
-import Purchases, { LOG_LEVEL, PurchasesOffering } from 'react-native-purchases';
-import { Platform } from 'react-native';
+import Purchases, {
+  LOG_LEVEL,
+  PurchasesOffering,
+} from "react-native-purchases";
+import { Platform } from "react-native";
 
 // RevenueCat API Keys
 // Use platform-specific public SDK keys from the RevenueCat dashboard.
 // iOS production keys start with `appl_`; Android keys start with `goog_`.
 // Test Store keys (`test_`) will crash in release builds and must not be used.
-const REVENUECAT_IOS_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || '';
-const REVENUECAT_ANDROID_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || '';
+const REVENUECAT_IOS_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || "";
+const REVENUECAT_ANDROID_KEY =
+  process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || "";
 
-const isTestApiKey = (key: string | undefined) => !!key && key.startsWith('test_');
+const isTestApiKey = (key: string | undefined) =>
+  !!key && key.startsWith("test_");
+
+let revenueCatConfigured = false;
+
+export const isRevenueCatConfigured = () => revenueCatConfigured;
+
+export const getRevenueCatInitError = () => {
+  if (Platform.OS === "web") return null;
+  const apiKey = Platform.select({
+    ios: REVENUECAT_IOS_KEY,
+    android: REVENUECAT_ANDROID_KEY,
+  });
+  if (!apiKey) return "RevenueCat API key is not configured.";
+  if (isTestApiKey(apiKey))
+    return "RevenueCat Test Store key is not allowed in release builds.";
+  return null;
+};
 
 // Product IDs
 export const PRODUCT_IDS = {
-  MONTHLY_SUBSCRIPTION: 'com.adventuretime.premium.monthly',
+  MONTHLY_SUBSCRIPTION: "com.adventuretime.premium.monthly",
 };
 
 // Entitlement IDs (configured in RevenueCat dashboard)
 export const ENTITLEMENT_IDS = {
-  PREMIUM: 'premium',
+  PREMIUM: "premium",
 };
 
 export const initializeRevenueCat = async () => {
   try {
     // RevenueCat is not supported on web
-    if (Platform.OS === 'web') {
-      console.log('RevenueCat not available on web platform');
+    if (Platform.OS === "web") {
+      console.log("RevenueCat not available on web platform");
       return false;
     }
 
@@ -34,12 +55,16 @@ export const initializeRevenueCat = async () => {
     });
 
     if (!apiKey) {
-      console.warn('RevenueCat API key not configured; subscription features disabled.');
+      console.warn(
+        "RevenueCat API key not configured; subscription features disabled.",
+      );
       return false;
     }
 
     if (isTestApiKey(apiKey)) {
-      console.warn('RevenueCat Test Store API key detected in a release build. Skipping RevenueCat to prevent a crash. Set EXPO_PUBLIC_REVENUECAT_IOS_KEY to your iOS public SDK key (appl_...).');
+      console.warn(
+        "RevenueCat Test Store API key detected in a release build. Skipping RevenueCat to prevent a crash. Set EXPO_PUBLIC_REVENUECAT_IOS_KEY to your iOS public SDK key (appl_...).",
+      );
       return false;
     }
 
@@ -47,13 +72,14 @@ export const initializeRevenueCat = async () => {
     Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.VERBOSE : LOG_LEVEL.INFO);
 
     await Purchases.configure({ apiKey });
+    revenueCatConfigured = true;
 
     // Optional: Set user ID if you have your own user system
     // await Purchases.logIn(userId);
 
     return true;
   } catch (error) {
-    console.error('Failed to initialize RevenueCat:', error);
+    console.error("Failed to initialize RevenueCat:", error);
     return false;
   }
 };
@@ -66,32 +92,39 @@ export const getOfferings = async (): Promise<PurchasesOffering | null> => {
     }
     return null;
   } catch (error) {
-    console.error('Error fetching offerings:', error);
+    console.error("Error fetching offerings:", error);
     return null;
   }
 };
 
 export const purchaseMonthlySubscription = async () => {
   try {
+    if (!revenueCatConfigured) {
+      throw new Error(
+        getRevenueCatInitError() || "RevenueCat is not configured.",
+      );
+    }
     const offerings = await getOfferings();
     if (!offerings) {
-      throw new Error('No offerings available');
+      throw new Error("No offerings available");
     }
-    
+
     // Find the monthly package
     const monthlyPackage = offerings.availablePackages.find(
-      pkg => pkg.product.identifier === PRODUCT_IDS.MONTHLY_SUBSCRIPTION
+      (pkg) => pkg.product.identifier === PRODUCT_IDS.MONTHLY_SUBSCRIPTION,
     );
-    
+
     if (!monthlyPackage) {
-      throw new Error('Monthly subscription not available');
+      throw new Error("Monthly subscription not available");
     }
-    
+
     const { customerInfo } = await Purchases.purchasePackage(monthlyPackage);
-    return customerInfo.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined;
+    return (
+      customerInfo.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined
+    );
   } catch (error: any) {
     if (!error.userCancelled) {
-      console.error('Purchase error:', error);
+      console.error("Purchase error:", error);
       throw error;
     }
     return false;
@@ -100,10 +133,17 @@ export const purchaseMonthlySubscription = async () => {
 
 export const restorePurchases = async () => {
   try {
+    if (!revenueCatConfigured) {
+      throw new Error(
+        getRevenueCatInitError() || "RevenueCat is not configured.",
+      );
+    }
     const customerInfo = await Purchases.restorePurchases();
-    return customerInfo.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined;
+    return (
+      customerInfo.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined
+    );
   } catch (error) {
-    console.error('Restore error:', error);
+    console.error("Restore error:", error);
     throw error;
   }
 };
@@ -111,9 +151,11 @@ export const restorePurchases = async () => {
 export const checkPremiumStatus = async () => {
   try {
     const customerInfo = await Purchases.getCustomerInfo();
-    return customerInfo.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined;
+    return (
+      customerInfo.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined
+    );
   } catch (error) {
-    console.error('Error checking premium status:', error);
+    console.error("Error checking premium status:", error);
     return false;
   }
 };

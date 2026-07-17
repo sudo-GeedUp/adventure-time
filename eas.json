@@ -7,6 +7,7 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "environment": "development",
       "ios": {
         "scheme": "ItsAdventureTime",
         "resourceClass": "m-medium"
@@ -15,12 +16,14 @@
     "preview": {
       "distribution": "internal",
       "channel": "preview",
+      "environment": "preview",
       "ios": {
         "scheme": "ItsAdventureTime",
         "resourceClass": "m-medium"
       }
     },
     "production": {
+      "environment": "production",
       "ios": {
         "scheme": "ItsAdventureTime",
         "resourceClass": "m-medium"
