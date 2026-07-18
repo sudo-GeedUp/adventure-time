@@ -13,7 +13,7 @@ import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
-import { getOfferings } from "@/config/revenuecat";
+import { getOfferings, PRODUCT_IDS } from "@/config/revenuecat";
 
 export default function SubscriptionScreen() {
   const { theme } = useTheme();
@@ -37,7 +37,7 @@ export default function SubscriptionScreen() {
         const monthly = offerings.availablePackages.find(
           (pkg) =>
             pkg.packageType === "MONTHLY" ||
-            pkg.product.identifier === "com.adventuretime.premium.monthly",
+            pkg.product.identifier === PRODUCT_IDS.MONTHLY_SUBSCRIPTION,
         );
         setMonthlyPackage(monthly || null);
       }
@@ -53,7 +53,9 @@ export default function SubscriptionScreen() {
 
     setIsProcessing(true);
     try {
-      const success = await purchaseSubscription();
+      const productIdentifier =
+        monthlyPackage?.product.identifier || PRODUCT_IDS.MONTHLY_SUBSCRIPTION;
+      const success = await purchaseSubscription(productIdentifier);
       if (success) {
         Alert.alert(
           "Welcome to Premium!",

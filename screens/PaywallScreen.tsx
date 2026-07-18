@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useTheme } from "@/hooks/useTheme";
+import { PRODUCT_IDS } from "@/config/revenuecat";
 
 interface SubscriptionPlan {
   id: string;
@@ -102,7 +103,11 @@ export default function PaywallScreen({ navigation }: any) {
   const handlePurchase = async () => {
     setPurchasing(true);
     try {
-      const success = await purchaseSubscription();
+      const productIdentifier =
+        selectedPlan === "yearly"
+          ? PRODUCT_IDS.YEARLY_SUBSCRIPTION
+          : PRODUCT_IDS.MONTHLY_SUBSCRIPTION;
+      const success = await purchaseSubscription(productIdentifier);
       if (success) {
         Alert.alert(
           "Welcome to Premium! 🎉",

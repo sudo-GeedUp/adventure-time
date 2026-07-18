@@ -32,8 +32,10 @@ export const getRevenueCatInitError = () => {
 };
 
 // Product IDs
+// These must exactly match product identifiers in App Store Connect / RevenueCat.
 export const PRODUCT_IDS = {
-  MONTHLY_SUBSCRIPTION: "com.adventuretime.premium.monthly",
+  MONTHLY_SUBSCRIPTION: "com.masongallegos.itsadventuretime.premium.monthly.v2",
+  YEARLY_SUBSCRIPTION: "com.masongallegos.itsadventuretime.premium.yearly.v2",
 };
 
 // Entitlement IDs (configured in RevenueCat dashboard)
@@ -97,7 +99,9 @@ export const getOfferings = async (): Promise<PurchasesOffering | null> => {
   }
 };
 
-export const purchaseMonthlySubscription = async () => {
+export const purchaseSubscription = async (
+  productIdentifier: string = PRODUCT_IDS.MONTHLY_SUBSCRIPTION,
+) => {
   try {
     if (!revenueCatConfigured) {
       throw new Error(
@@ -106,22 +110,25 @@ export const purchaseMonthlySubscription = async () => {
     }
     const offerings = await getOfferings();
     if (!offerings) {
-      throw new Error("No offerings available");
+      throw new Error(
+        "No subscription offerings available. " +
+          "Verify your RevenueCat offering is linked to products in App Store Connect.",
+      );
     }
 
-    // Find the monthly package
-    const monthlyPackage = offerings.availablePackages.find(
-      (pkg) => pkg.product.identifier === PRODUCT_IDS.MONTHLY_SUBSCRIPTION,
+    const packageToBuy = offerings.availablePackages.find(
+      (pkg) => pkg.product.identifier === productIdentifier,
     );
 
-    if (!monthlyPackage) {
-      throw new Error("Monthly subscription not available");
+    if (!packageToBuy) {
+      throw new Error(
+        `Subscription product "${productIdentifier}" was not found in the current offering. ` +
+          "Check that the product ID matches App Store Connect / RevenueCat and is approved.",
+      );
     }
 
-    const { customerInfo } = await Purchases.purchasePackage(monthlyPackage);
-    return (
-      customerInfo.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined
-    );
+    const { customerInfo } = await Purchases.purchasePackage(packageToBuy);
+    return !!customerInfo.entitlements.active[ENTITLEMENT_IDS.PREMIUM];
   } catch (error: any) {
     if (!error.userCancelled) {
       console.error("Purchase error:", error);
@@ -131,6 +138,9 @@ export const purchaseMonthlySubscription = async () => {
   }
 };
 
+export const purchaseMonthlySubscription = async () =>
+  purchaseSubscription(PRODUCT_IDS.MONTHLY_SUBSCRIPTION);
+
 export const restorePurchases = async () => {
   try {
     if (!revenueCatConfigured) {
@@ -139,9 +149,7 @@ export const restorePurchases = async () => {
       );
     }
     const customerInfo = await Purchases.restorePurchases();
-    return (
-      customerInfo.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined
-    );
+    return !!customerInfo.entitlements.active[ENTITLEMENT_IDS.PREMIUM];
   } catch (error) {
     console.error("Restore error:", error);
     throw error;
@@ -151,9 +159,7 @@ export const restorePurchases = async () => {
 export const checkPremiumStatus = async () => {
   try {
     const customerInfo = await Purchases.getCustomerInfo();
-    return (
-      customerInfo.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined
-    );
+    return !!customerInfo.entitlements.active[ENTITLEMENT_IDS.PREMIUM];
   } catch (error) {
     console.error("Error checking premium status:", error);
     return false;

@@ -9,9 +9,10 @@ import { Platform } from "react-native";
 import Purchases, { CustomerInfo } from "react-native-purchases";
 import {
   initializeRevenueCat,
-  purchaseMonthlySubscription,
+  purchaseSubscription as purchaseSubscriptionFromRevenueCat,
   restorePurchases,
   ENTITLEMENT_IDS,
+  PRODUCT_IDS,
   getRevenueCatInitError,
 } from "@/config/revenuecat";
 
@@ -19,7 +20,7 @@ interface SubscriptionContextType {
   isPremium: boolean;
   isLoading: boolean;
   customerInfo: CustomerInfo | null;
-  purchaseSubscription: () => Promise<boolean>;
+  purchaseSubscription: (productIdentifier?: string) => Promise<boolean>;
   restore: () => Promise<boolean>;
   refreshStatus: () => Promise<void>;
 }
@@ -44,8 +45,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
       }
       const info = await Purchases.getCustomerInfo();
       setCustomerInfo(info);
-      const hasPremium =
-        info.entitlements.active[ENTITLEMENT_IDS.PREMIUM] !== undefined;
+      const hasPremium = !!info.entitlements.active[ENTITLEMENT_IDS.PREMIUM];
       setIsPremium(hasPremium);
     } catch (error) {
       console.error("Error refreshing subscription status:", error);
@@ -86,8 +86,10 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
     initSubscriptions();
   }, []);
 
-  const purchaseSubscription = async (): Promise<boolean> => {
-    const success = await purchaseMonthlySubscription();
+  const purchaseSubscription = async (
+    productIdentifier: string = PRODUCT_IDS.MONTHLY_SUBSCRIPTION,
+  ): Promise<boolean> => {
+    const success = await purchaseSubscriptionFromRevenueCat(productIdentifier);
     if (success) {
       await refreshStatus();
     }

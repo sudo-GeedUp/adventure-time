@@ -33,6 +33,7 @@
   "submit": {
     "production": {
       "ios": {
+        "ascAppId": "6758251454",
         "appleId": "sinjin.gallegos@aol.com",
         "appleTeamId": "2AU7KFCM84"
       }

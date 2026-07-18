@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Platform } from "react-native";
+import { StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -18,8 +18,6 @@ import { sentryService } from "@/services/sentryService";
 import { analyticsService } from "@/services/analyticsService";
 import { notificationService } from "@/services/notificationService";
 
-import Purchases from "react-native-purchases";
-
 export default function App() {
   const [showSpecialThanks, setShowSpecialThanks] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -28,18 +26,7 @@ export default function App() {
     // Render app immediately for testing
     setIsInitialized(true);
 
-    // Initialize RevenueCat
-    try {
-      Purchases.configure({
-        apiKey: Platform.select({
-          ios: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY,
-          android: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY,
-        }),
-      });
-      console.log("RevenueCat initialized");
-    } catch (error) {
-      console.log("RevenueCat failed to initialize:", error);
-    }
+    // RevenueCat is initialized inside SubscriptionProvider
 
     // Initialize services in background (non-blocking)
     const init = async () => {

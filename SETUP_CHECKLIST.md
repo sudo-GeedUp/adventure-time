@@ -71,7 +71,7 @@ EXPO_PUBLIC_REVENUECAT_ANDROID_KEY=
 1. Create RevenueCat account
 2. Create new project
 3. Configure iOS and Android apps
-4. Set up products (monthly subscription: `com.adventuretime.premium.monthly`)
+4. Set up products (monthly: `com.masongallegos.itsadventuretime.premium.monthly.v2`, yearly: `com.masongallegos.itsadventuretime.premium.yearly.v2`)
 5. Copy API keys from Settings
 
 ## 📱 Platform Testing Setup
