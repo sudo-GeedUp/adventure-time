@@ -16,7 +16,7 @@ export default {
         "expo-location",
         {
           locationWhenInUsePermission:
-            "Its Adventure Time uses your location to show your position on the live trail map and nearby trails while you ride. For example, during an active adventure we record your route, speed, and distance so you can review your trip, and you can share your current location with emergency contacts if needed.",
+            "Its Adventure Time uses your location for the live trail map, nearby trail and offroader discovery, route and distance tracking during adventures, turn-by-turn voice guidance, AR trail markers, live convoy sharing, and emergency SOS. For example, when you start an adventure your GPS coordinates are recorded along the route, and if you trigger SOS your current location is shared with emergency contacts.",
           locationAlwaysAndWhenInUsePermission: false,
           locationAlwaysPermission: false,
           isIosBackgroundLocationEnabled: false,
@@ -37,7 +37,7 @@ export default {
 
     ios: {
       bundleIdentifier: "com.masongallegos.itsadventuretime",
-      buildNumber: "5",
+      buildNumber: "6",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },
