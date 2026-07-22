@@ -1,0 +1,21 @@
+2026-07-22 17:02:57.011 xcodebuild[75859:476407] [MT] IDEDistribution: -[IDEDistributionLogging _createLoggingBundleAtPath:]: Created bundle at path "/var/folders/qt/kpfgjxmx6m5clksryb0r58gw0000gn/T/ItsAdventureTime_2026-07-22_17-02-57.009.xcdistributionlogs".
+2026-07-22 17:02:57.307 xcodebuild[75859:476407] [MT] IDEDistribution: Command line name "app-store" is deprecated. Use "app-store-connect" instead.
+error: exportArchive No Accounts
+
+error: exportArchive No signing certificate "iOS Distribution" found
+
+error: exportArchive No Accounts
+
+error: exportArchive No signing certificate "iOS Distribution" found
+
+error: exportArchive No Accounts
+
+error: exportArchive No signing certificate "iOS Distribution" found
+
+error: exportArchive No Accounts
+
+error: exportArchive No signing certificate "iOS Distribution" found
+
+** EXPORT FAILED **
+
+EXPORT_EXIT=70

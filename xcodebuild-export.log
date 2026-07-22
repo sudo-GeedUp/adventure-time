@@ -1,6 +1,0 @@
-2026-07-21 02:36:54.996 xcodebuild[47876:3751736] [MT] IDEDistribution: -[IDEDistributionLogging _createLoggingBundleAtPath:]: Created bundle at path "/var/folders/qt/kpfgjxmx6m5clksryb0r58gw0000gn/T/ItsAdventureTime_2026-07-21_02-36-54.994.xcdistributionlogs".
-2026-07-21 02:36:55.057 xcodebuild[47876:3751847]  DVTDeveloperAccountManager: Failed to load credentials for 23744F69-4CC1-4B0C-81B3-046A25358506: Error Domain=DVTDeveloperAccountCredentialsError Code=0 "Invalid credentials in keychain for 23744F69-4CC1-4B0C-81B3-046A25358506, missing Xcode-Username" UserInfo={NSLocalizedDescription=Invalid credentials in keychain for 23744F69-4CC1-4B0C-81B3-046A25358506, missing Xcode-Username}
-2026-07-21 02:36:55.192 xcodebuild[47876:3751736] [MT] IDEDistribution: Command line name "app-store" is deprecated. Use "app-store-connect" instead.
-Exported ItsAdventureTime to: /Users/sinjin/its-adventure-time/build-export
-** EXPORT SUCCEEDED **
-

@@ -1,0 +1,5 @@
+2026-07-22 01:18:49.481 xcodebuild[22087:201911] [MT] IDEDistribution: -[IDEDistributionLogging _createLoggingBundleAtPath:]: Created bundle at path "/var/folders/qt/kpfgjxmx6m5clksryb0r58gw0000gn/T/ItsAdventureTime_2026-07-22_01-18-49.480.xcdistributionlogs".
+2026-07-22 01:18:49.649 xcodebuild[22087:201911] [MT] IDEDistribution: Command line name "app-store" is deprecated. Use "app-store-connect" instead.
+Exported ItsAdventureTime to: /Users/sinjin/its-adventure-time/build
+** EXPORT SUCCEEDED **
+

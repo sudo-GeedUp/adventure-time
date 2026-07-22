@@ -25,6 +25,7 @@
     },
     "production": {
       "environment": "production",
+      "channel": "production",
       "ios": {
         "scheme": "ItsAdventureTime",
         "resourceClass": "m-medium"
