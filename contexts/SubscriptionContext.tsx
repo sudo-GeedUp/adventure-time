@@ -15,6 +15,8 @@ import {
   PRODUCT_IDS,
   getRevenueCatInitError,
 } from "@/config/revenuecat";
+import { authService } from "@/services/authService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SubscriptionContextType {
   isPremium: boolean;
@@ -32,28 +34,33 @@ const SubscriptionContext = createContext<SubscriptionContextType | undefined>(
 export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  const { user } = useAuth();
   const [isPremium, setIsPremium] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
 
   const refreshStatus = async () => {
+    if (Platform.OS === "web") {
+      // Web users get free access (no IAP on web)
+      setIsPremium(true);
+      return;
+    }
+
     try {
-      if (Platform.OS === "web") {
-        // Web users get free access (no IAP on web)
-        setIsPremium(true);
-        return;
-      }
       const info = await Purchases.getCustomerInfo();
       setCustomerInfo(info);
       const hasPremium = !!info.entitlements.active[ENTITLEMENT_IDS.PREMIUM];
       setIsPremium(hasPremium);
     } catch (error) {
       console.error("Error refreshing subscription status:", error);
-      setIsPremium(false);
+      // Don't clobber premium state on error; the SDK listener or a later refresh will update it.
     }
   };
 
   useEffect(() => {
+    let customerInfoUpdateListener: ((info: CustomerInfo) => void) | null =
+      null;
+
     const initSubscriptions = async () => {
       try {
         if (Platform.OS === "web") {
@@ -66,6 +73,13 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
         // Initialize RevenueCat for mobile platforms
         const initialized = await initializeRevenueCat();
         if (initialized) {
+          // Listen for background customer-info updates (pushes, restores, renewals)
+          customerInfoUpdateListener = (info: CustomerInfo) => {
+            setCustomerInfo(info);
+            setIsPremium(!!info.entitlements.active[ENTITLEMENT_IDS.PREMIUM]);
+          };
+          Purchases.addCustomerInfoUpdateListener(customerInfoUpdateListener);
+
           await refreshStatus();
         } else {
           const initError = getRevenueCatInitError();
@@ -73,35 +87,83 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
             "RevenueCat not initialized:",
             initError || "Unknown initialization failure",
           );
-          setIsPremium(false);
         }
       } catch (error) {
         console.error("Error initializing subscriptions:", error);
-        setIsPremium(false);
       } finally {
         setIsLoading(false);
       }
     };
 
     initSubscriptions();
+
+    return () => {
+      if (customerInfoUpdateListener) {
+        Purchases.removeCustomerInfoUpdateListener(customerInfoUpdateListener);
+      }
+    };
   }, []);
+
+  const updatePremiumFromCustomerInfo = (
+    info: CustomerInfo | null,
+  ): boolean => {
+    const activeEntitlements = Object.keys(info?.entitlements?.active ?? {});
+    const hasPremium = !!info?.entitlements.active[ENTITLEMENT_IDS.PREMIUM];
+    console.warn(
+      "[SubscriptionContext] active entitlements:",
+      activeEntitlements,
+      "expected premium key:",
+      ENTITLEMENT_IDS.PREMIUM,
+      "hasPremium:",
+      hasPremium,
+    );
+    setIsPremium(hasPremium);
+    setCustomerInfo(info);
+    return hasPremium;
+  };
+
+  // Sync RevenueCat premium state to the local auth profile so AuthContext stays consistent
+  useEffect(() => {
+    const syncAuthPremium = async () => {
+      try {
+        if (!user) return;
+
+        const entitlement =
+          customerInfo?.entitlements.active[ENTITLEMENT_IDS.PREMIUM];
+        const expiresAt = entitlement?.expirationDateMillis ?? undefined;
+        await authService.setPremiumStatus(isPremium, expiresAt);
+      } catch (error) {
+        console.error("Error syncing premium status to auth profile:", error);
+      }
+    };
+
+    syncAuthPremium();
+  }, [isPremium, customerInfo, user]);
 
   const purchaseSubscription = async (
     productIdentifier: string = PRODUCT_IDS.MONTHLY_SUBSCRIPTION,
   ): Promise<boolean> => {
-    const success = await purchaseSubscriptionFromRevenueCat(productIdentifier);
-    if (success) {
-      await refreshStatus();
+    const customerInfo =
+      await purchaseSubscriptionFromRevenueCat(productIdentifier);
+    const hasPremium = updatePremiumFromCustomerInfo(customerInfo);
+    if (customerInfo) {
+      // Background refresh for any additional metadata; don't block or clobber the purchase result
+      refreshStatus().catch((error) => {
+        console.warn("Background subscription refresh failed:", error);
+      });
     }
-    return success;
+    return hasPremium;
   };
 
   const restore = async (): Promise<boolean> => {
-    const success = await restorePurchases();
-    if (success) {
-      await refreshStatus();
+    const customerInfo = await restorePurchases();
+    const hasPremium = updatePremiumFromCustomerInfo(customerInfo);
+    if (customerInfo) {
+      refreshStatus().catch((error) => {
+        console.warn("Background subscription refresh failed:", error);
+      });
     }
-    return success;
+    return hasPremium;
   };
 
   return (

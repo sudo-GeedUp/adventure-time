@@ -1,5 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Image, ActivityIndicator, Pressable } from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  View,
+  StyleSheet,
+  Image,
+  ActivityIndicator,
+  Pressable,
+  Switch,
+  Alert,
+} from "react-native";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
@@ -9,6 +17,7 @@ import { AIScanStackParamList } from "@/navigation/AIScanStackNavigator";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage } from "@/utils/storage";
 import { analyzeRecoverySituation, RecoveryAnalysis } from "@/services/openai";
+import { ScanSubmissionsService, isFirebaseAvailable } from "@/utils/firebase";
 
 type AIResultsScreenRouteProp = RouteProp<AIScanStackParamList, "AIResults">;
 
@@ -18,19 +27,18 @@ export default function AIResultsScreen() {
   const { theme } = useTheme();
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [analysis, setAnalysis] = useState<any>(null);
+  const [rawResult, setRawResult] = useState<RecoveryAnalysis | null>(null);
+  const [shareWithCommunity, setShareWithCommunity] = useState(false);
+  const [hasShared, setHasShared] = useState(false);
 
   const { imageUri } = route.params;
 
-  useEffect(() => {
-    performAnalysis();
-  }, []);
-
-  const performAnalysis = async () => {
+  const performAnalysis = useCallback(async () => {
     setIsAnalyzing(true);
-    
+
     try {
       const result = await analyzeRecoverySituation(imageUri);
-      
+
       // Transform the new API response to match the existing UI format
       const transformedResult = {
         situationType: result.situation,
@@ -41,13 +49,22 @@ export default function AIResultsScreen() {
           description: rec,
         })),
         tips: result.safetyWarnings,
-        warning: result.severity === "critical" || result.severity === "high" 
-          ? "This is a high-risk situation. Consider requesting professional assistance."
-          : undefined,
-        recoverability: result.severity === "low" ? 0.9 : result.severity === "moderate" ? 0.7 : result.severity === "high" ? 0.5 : 0.3,
+        warning:
+          result.severity === "critical" || result.severity === "high"
+            ? "This is a high-risk situation. Consider requesting professional assistance."
+            : undefined,
+        recoverability:
+          result.severity === "low"
+            ? 0.9
+            : result.severity === "moderate"
+              ? 0.7
+              : result.severity === "high"
+                ? 0.5
+                : 0.3,
         confidence: 0.85,
       };
-      
+
+      setRawResult(result);
       setAnalysis(transformedResult);
 
       await storage.addScanHistory({
@@ -65,29 +82,83 @@ export default function AIResultsScreen() {
         steps: [
           {
             title: "Assess Safely",
-            description: "Exit the vehicle and carefully assess the terrain and vehicle position."
-          }
+            description:
+              "Exit the vehicle and carefully assess the terrain and vehicle position.",
+          },
         ],
-        warning: error.message || "Unable to complete analysis. Please check your API key configuration.",
+        warning:
+          error.message ||
+          "Unable to complete analysis. Please check your API key configuration.",
       });
     } finally {
       setIsAnalyzing(false);
     }
-  };
+  }, [imageUri]);
+
+  useEffect(() => {
+    performAnalysis();
+  }, [performAnalysis]);
 
   const handleRequestHelp = () => {
     // Navigate to Explore tab where users can find nearby offroaders for help
     (navigation as any).navigate("NearbyTab");
   };
 
+  const handleShareToggle = async (value: boolean) => {
+    if (hasShared || !value) {
+      setShareWithCommunity(hasShared);
+      return;
+    }
+
+    if (!isFirebaseAvailable() || !rawResult) {
+      setShareWithCommunity(false);
+      return;
+    }
+
+    try {
+      const userProfile = await storage.getUserProfile();
+      const difficultyToScore: Record<string, number> = {
+        Easy: 2,
+        Moderate: 4,
+        Hard: 7,
+        Expert: 10,
+      };
+      const difficultyScore =
+        difficultyToScore[rawResult.estimatedDifficulty] || 5;
+
+      await ScanSubmissionsService.submitScan({
+        imageUri,
+        situationType: rawResult.situation,
+        description: rawResult.recommendations.join("\n"),
+        difficultyScore,
+        userName: userProfile?.name || "Anonymous",
+        userId: userProfile?.id || "anonymous",
+      });
+
+      setHasShared(true);
+      setShareWithCommunity(true);
+    } catch (error) {
+      console.error("Error sharing scan:", error);
+      setShareWithCommunity(false);
+      Alert.alert("Error", "Could not share scan with community.");
+    }
+  };
+
   if (isAnalyzing) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: theme.backgroundRoot }]}>
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: theme.backgroundRoot },
+        ]}
+      >
         <ActivityIndicator size="large" color={theme.primary} />
         <ThemedText style={[Typography.h4, styles.loadingText]}>
           Analyzing your situation...
         </ThemedText>
-        <ThemedText style={[styles.loadingDescription, { color: theme.tabIconDefault }]}>
+        <ThemedText
+          style={[styles.loadingDescription, { color: theme.tabIconDefault }]}
+        >
           Our AI is examining the photo and generating recovery recommendations
         </ThemedText>
       </View>
@@ -106,8 +177,8 @@ export default function AIResultsScreen() {
     analysis.difficulty === "Easy"
       ? theme.success
       : analysis.difficulty === "Moderate"
-      ? theme.warning
-      : theme.error;
+        ? theme.warning
+        : theme.error;
 
   const confidencePercent = analysis.confidence
     ? Math.round(analysis.confidence * 100)
@@ -122,29 +193,52 @@ export default function AIResultsScreen() {
       ? analysis.recoverability >= 0.85
         ? theme.success
         : analysis.recoverability >= 0.65
-        ? theme.warning
-        : theme.error
+          ? theme.warning
+          : theme.error
       : theme.tabIconDefault;
 
   return (
     <ScreenScrollView>
-      <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
+      <Image
+        source={{ uri: imageUri }}
+        style={styles.image}
+        resizeMode="cover"
+      />
 
-      <View style={[styles.summaryCard, { backgroundColor: theme.backgroundDefault }]}>
+      <View
+        style={[
+          styles.summaryCard,
+          { backgroundColor: theme.backgroundDefault },
+        ]}
+      >
         <View style={styles.summaryHeader}>
           <View style={styles.titleSection}>
             <ThemedText style={[Typography.h3, styles.situationType]}>
               {analysis.situationType}
             </ThemedText>
             <View style={styles.badgesRow}>
-              <View style={[styles.badge, { backgroundColor: difficultyColor + "20" }]}>
-                <ThemedText style={[styles.badgeText, { color: difficultyColor }]}>
+              <View
+                style={[
+                  styles.badge,
+                  { backgroundColor: difficultyColor + "20" },
+                ]}
+              >
+                <ThemedText
+                  style={[styles.badgeText, { color: difficultyColor }]}
+                >
                   {analysis.difficulty}
                 </ThemedText>
               </View>
               {analysis.confidence !== undefined && (
-                <View style={[styles.badge, { backgroundColor: theme.primary + "20" }]}>
-                  <ThemedText style={[styles.badgeText, { color: theme.primary }]}>
+                <View
+                  style={[
+                    styles.badge,
+                    { backgroundColor: theme.primary + "20" },
+                  ]}
+                >
+                  <ThemedText
+                    style={[styles.badgeText, { color: theme.primary }]}
+                  >
                     {confidencePercent}% Confident
                   </ThemedText>
                 </View>
@@ -156,14 +250,23 @@ export default function AIResultsScreen() {
         {analysis.recoverability !== undefined && (
           <View style={[styles.recoverabilityBar, { marginTop: Spacing.lg }]}>
             <View style={styles.recoverabilityLabel}>
-              <ThemedText style={[Typography.label, { color: recoverabilityColor }]}>
+              <ThemedText
+                style={[Typography.label, { color: recoverabilityColor }]}
+              >
                 Recoverability Score
               </ThemedText>
-              <ThemedText style={[Typography.h3, { color: recoverabilityColor }]}>
+              <ThemedText
+                style={[Typography.h3, { color: recoverabilityColor }]}
+              >
                 {recoverabilityPercent}%
               </ThemedText>
             </View>
-            <View style={[styles.progressBar, { backgroundColor: theme.backgroundSecondary }]}>
+            <View
+              style={[
+                styles.progressBar,
+                { backgroundColor: theme.backgroundSecondary },
+              ]}
+            >
               <View
                 style={[
                   styles.progressFill,
@@ -183,8 +286,8 @@ export default function AIResultsScreen() {
               {analysis.recoverability >= 0.85
                 ? "Vehicle is likely recoverable with proper technique"
                 : analysis.recoverability >= 0.65
-                ? "Vehicle may be recoverable, professional help recommended"
-                : "Professional recovery equipment/service strongly recommended"}
+                  ? "Vehicle may be recoverable, professional help recommended"
+                  : "Professional recovery equipment/service strongly recommended"}
             </ThemedText>
           </View>
         )}
@@ -195,11 +298,18 @@ export default function AIResultsScreen() {
           <ThemedText style={[Typography.h4, styles.sectionTitle]}>
             Recommended Equipment
           </ThemedText>
-          <View style={[styles.equipmentGrid, { backgroundColor: theme.backgroundDefault }]}>
+          <View
+            style={[
+              styles.equipmentGrid,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
             {analysis.equipment.map((item: string, index: number) => (
               <View key={index} style={styles.equipmentItem}>
                 <Feather name="check-circle" size={16} color={theme.success} />
-                <ThemedText style={[styles.equipmentText, { marginLeft: Spacing.sm }]}>
+                <ThemedText
+                  style={[styles.equipmentText, { marginLeft: Spacing.sm }]}
+                >
                   {item}
                 </ThemedText>
               </View>
@@ -215,10 +325,17 @@ export default function AIResultsScreen() {
         {analysis.steps.map((step: any, index: number) => (
           <View
             key={index}
-            style={[styles.stepCard, { backgroundColor: theme.backgroundDefault }]}
+            style={[
+              styles.stepCard,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
           >
-            <View style={[styles.stepNumber, { backgroundColor: theme.primary }]}>
-              <ThemedText style={[styles.stepNumberText, { color: theme.buttonText }]}>
+            <View
+              style={[styles.stepNumber, { backgroundColor: theme.primary }]}
+            >
+              <ThemedText
+                style={[styles.stepNumberText, { color: theme.buttonText }]}
+              >
                 {index + 1}
               </ThemedText>
             </View>
@@ -228,12 +345,19 @@ export default function AIResultsScreen() {
                   {step.title}
                 </ThemedText>
                 {step.timeEstimate && (
-                  <ThemedText style={[styles.timeEstimate, { color: theme.tabIconDefault }]}>
+                  <ThemedText
+                    style={[
+                      styles.timeEstimate,
+                      { color: theme.tabIconDefault },
+                    ]}
+                  >
                     ~{step.timeEstimate}
                   </ThemedText>
                 )}
               </View>
-              <ThemedText style={styles.stepDescription}>{step.description}</ThemedText>
+              <ThemedText style={styles.stepDescription}>
+                {step.description}
+              </ThemedText>
             </View>
           </View>
         ))}
@@ -247,7 +371,10 @@ export default function AIResultsScreen() {
           {analysis.tips.map((tip: string, index: number) => (
             <View
               key={index}
-              style={[styles.tipCard, { backgroundColor: theme.backgroundDefault }]}
+              style={[
+                styles.tipCard,
+                { backgroundColor: theme.backgroundDefault },
+              ]}
             >
               <Feather name="zap" size={20} color={theme.primary} />
               <ThemedText style={[styles.tipText, { marginLeft: Spacing.md }]}>
@@ -268,7 +395,10 @@ export default function AIResultsScreen() {
           <View style={styles.warningHeader}>
             <Feather name="alert-triangle" size={24} color={theme.error} />
             <ThemedText
-              style={[Typography.h4, { marginLeft: Spacing.sm, color: theme.error }]}
+              style={[
+                Typography.h4,
+                { marginLeft: Spacing.sm, color: theme.error },
+              ]}
             >
               Warning
             </ThemedText>
@@ -278,13 +408,40 @@ export default function AIResultsScreen() {
       ) : null}
 
       <View
-        style={[styles.disclaimerSection, { backgroundColor: theme.backgroundSecondary }]}
+        style={[
+          styles.disclaimerSection,
+          { backgroundColor: theme.backgroundSecondary },
+        ]}
       >
         <Feather name="info" size={20} color={theme.tabIconDefault} />
-        <ThemedText style={[styles.disclaimerText, { color: theme.tabIconDefault }]}>
-          AI suggestions are for guidance only. Always use professional judgment and
-          prioritize safety. If unsure, request professional assistance.
+        <ThemedText
+          style={[styles.disclaimerText, { color: theme.tabIconDefault }]}
+        >
+          AI suggestions are for guidance only. Always use professional judgment
+          and prioritize safety. If unsure, request professional assistance.
         </ThemedText>
+      </View>
+
+      <View
+        style={[styles.shareRow, { backgroundColor: theme.backgroundDefault }]}
+      >
+        <View style={styles.shareTextContainer}>
+          <ThemedText style={Typography.label}>Share with community</ThemedText>
+          <ThemedText
+            style={[styles.shareDescription, { color: theme.tabIconDefault }]}
+          >
+            {hasShared
+              ? "Your scan is eligible for Stuck of the Week."
+              : "Let others vote on your scan for Stuck of the Week."}
+          </ThemedText>
+        </View>
+        <Switch
+          value={shareWithCommunity}
+          onValueChange={handleShareToggle}
+          disabled={hasShared || !isFirebaseAvailable()}
+          trackColor={{ false: theme.backgroundSecondary, true: theme.primary }}
+          thumbColor={shareWithCommunity ? theme.primary : theme.tabIconDefault}
+        />
       </View>
 
       <Pressable
@@ -293,7 +450,12 @@ export default function AIResultsScreen() {
         android_ripple={{ color: "rgba(255,255,255,0.2)" }}
       >
         <Feather name="alert-circle" size={24} color={theme.buttonText} />
-        <ThemedText style={[Typography.button, { color: theme.buttonText, marginLeft: Spacing.md }]}>
+        <ThemedText
+          style={[
+            Typography.button,
+            { color: theme.buttonText, marginLeft: Spacing.md },
+          ]}
+        >
           Request Help Now
         </ThemedText>
       </Pressable>
@@ -477,6 +639,23 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.md,
     fontSize: 14,
     lineHeight: 20,
+  },
+  shareRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.xl,
+  },
+  shareTextContainer: {
+    flex: 1,
+    marginRight: Spacing.md,
+  },
+  shareDescription: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: Spacing.xs,
   },
   helpButton: {
     flexDirection: "row",

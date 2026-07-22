@@ -1,6 +1,7 @@
 import Purchases, {
   LOG_LEVEL,
   PurchasesOffering,
+  CustomerInfo,
 } from "react-native-purchases";
 import { Platform } from "react-native";
 
@@ -40,7 +41,7 @@ export const PRODUCT_IDS = {
 
 // Entitlement IDs (configured in RevenueCat dashboard)
 export const ENTITLEMENT_IDS = {
-  PREMIUM: "premium",
+  PREMIUM: "It's Adventure Time Pro",
 };
 
 export const initializeRevenueCat = async () => {
@@ -101,7 +102,7 @@ export const getOfferings = async (): Promise<PurchasesOffering | null> => {
 
 export const purchaseSubscription = async (
   productIdentifier: string = PRODUCT_IDS.MONTHLY_SUBSCRIPTION,
-) => {
+): Promise<CustomerInfo | null> => {
   try {
     if (!revenueCatConfigured) {
       throw new Error(
@@ -128,20 +129,20 @@ export const purchaseSubscription = async (
     }
 
     const { customerInfo } = await Purchases.purchasePackage(packageToBuy);
-    return !!customerInfo.entitlements.active[ENTITLEMENT_IDS.PREMIUM];
+    return customerInfo;
   } catch (error: any) {
     if (!error.userCancelled) {
       console.error("Purchase error:", error);
       throw error;
     }
-    return false;
+    return null;
   }
 };
 
 export const purchaseMonthlySubscription = async () =>
   purchaseSubscription(PRODUCT_IDS.MONTHLY_SUBSCRIPTION);
 
-export const restorePurchases = async () => {
+export const restorePurchases = async (): Promise<CustomerInfo | null> => {
   try {
     if (!revenueCatConfigured) {
       throw new Error(
@@ -149,7 +150,7 @@ export const restorePurchases = async () => {
       );
     }
     const customerInfo = await Purchases.restorePurchases();
-    return !!customerInfo.entitlements.active[ENTITLEMENT_IDS.PREMIUM];
+    return customerInfo;
   } catch (error) {
     console.error("Restore error:", error);
     throw error;

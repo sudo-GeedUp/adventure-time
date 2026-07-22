@@ -1,0 +1,74 @@
+
+Uploading your app archive to EAS Submit
+- Uploading to EAS Submit 0%
+✔ Uploaded to EAS Submit 1s
+Looking up credentials configuration for com.masongallegos.itsadventuretime...
+✔ App Store Connect API Key already set up.
+Using Api Key ID: 5KT4YSVU45 ([Expo] EAS Submit jN8TfFFP81)
+
+ASC App ID:                 6758251454
+Project ID:                 02cac41b-21af-4ee7-bda0-26b4042a9013
+App Store Connect API Key:  
+    Key Name  :  [Expo] EAS Submit jN8TfFFP81
+    Key ID    :  5KT4YSVU45
+    Key Source:  EAS servers
+Archive Path:               ./build-6.ipa
+
+- Scheduling iOS submission
+✔ Scheduled iOS submission
+
+Submission details: https://expo.dev/accounts/sinjingallegos/projects/my-app/submissions/c4b9c0d4-296b-4599-abd9-112d6e137638
+
+Waiting for submission to complete. You can press Ctrl+C to exit.
+- Submitting
+✖ Something went wrong when submitting your app to Apple App Store Connect.
+
+Fastlane pilot failed
+We couldn't figure out what went wrong. See logs to learn more.
+
+[logs] Start phase: SPIN_UP_SUBMISSION_WORKER
+[logs] Creating new worker instance
+[logs] End phase: SPIN_UP_SUBMISSION_WORKER
+
+[logs] Start phase: SUBMIT_TO_APP_STORE
+[logs] Starting the submit process
+[logs] Downloading archive
+[logs] Preparing artifact
+[logs] Verifying archive
+[logs] Creating ascApiJsonKey.json file with ASC credentials
+[logs] Submitting iOS app to TestFlight...
+[logs] Submitting the app with fastlane pilot
+[logs] -------------------
+[logs] --- Step: pilot ---
+[logs] -------------------
+[logs] Creating authorization token for App Store Connect API
+[logs] Ready to upload new build to TestFlight (App: 6758251454)...
+[logs] Going to upload updated app to App Store Connect
+[logs] This might take a few minutes. Please don't interrupt the script.
+[logs] [altool] 2026-07-21 00:56:32.627 *** Error: Validation failed Redundant Binary Upload. You've already uploaded a build with build number '6' for version number '2.0.0'. Make sure you increment the build string before you upload your app to App Store Connect. Learn more in Xcode Help (http://help.apple.com/xcode/mac/current/#/devba7f53ad4). (ID: 0635d61f-78ca-44a5-b2b2-c35f494a6d82) (409)
+[logs] [altool]  {
+[logs] 
+[logs] [altool]     NSLocalizedDescription = "Validation failed";
+[logs] 
+[logs] [altool]     NSLocalizedFailureReason = "Redundant Binary Upload. You've already uploaded a build with build number '6' for version number '2.0.0'. Make sure you increment the build string before you upload your app to App Store Connect. Learn more in Xcode Help (http://help.apple.com/xcode/mac/current/#/devba7f53ad4). (ID: 0635d61f-78ca-44a5-b2b2-c35f494a6d82)";
+[logs] 
+[logs] [altool]     NSUnderlyingError = "Error Domain=IrisAPI Code=-19241 \"Validation failed\" UserInfo={status=409, detail=Redundant Binary Upload. You've already uploaded a build with build number '6' for version number '2.0.0'. Make sure you increment the build string before you upload your app to App Store Connect. Learn more in Xcode Help (http://help.apple.com/xcode/mac/current/#/devba7f53ad4)., id=0635d61f-78ca-44a5-b2b2-c35f494a6d82, code=STATE_ERROR.VALIDATION_ERROR, title=Validation failed, NSLocalizedFailureReason=Redundant Binary Upload. You've already uploaded a build with build number '6' for version number '2.0.0'. Make sure you increment the build string before you upload your app to App Store Connect. Learn more in Xcode Help (http://help.apple.com/xcode/mac/current/#/devba7f53ad4)., NSLocalizedDescription=Validation failed}";
+[logs] 
+[logs] [altool]     "iris-code" = "STATE_ERROR.VALIDATION_ERROR";
+[logs] 
+[logs] [altool] }
+[logs] 
+[logs] Application Loader output above ^
+[logs] [ContentDelivery.Uploader.600001768140] Validation failed (409) Redundant Binary Upload. You've already uploaded a build with build number '6' for version number '2.0.0'. Make sure you increment the build string before you upload your app to App Store Connect. Learn more in Xcode Help (http://help.apple.com/xcode/mac/current/#/devba7f53ad4). (ID: 0635d61f-78ca-44a5-b2b2-c35f494a6d82)
+[logs] Error uploading '/var/folders/m1/8_w9962s3b79dqm00nnlm85m0000gn/T/a018ae76-af39-4085-a09b-cc56caded182.ipa'.
+[logs] Validation failed Redundant Binary Upload. You've already uploaded a build with build number '6' for version number '2.0.0'. Make sure you increment the build string before you upload your app to App Store Connect. Learn more in Xcode Help (http://help.apple.com/xcode/mac/current/#/devba7f53ad4). (ID: 0635d61f-78ca-44a5-b2b2-c35f494a6d82) (409)
+[logs] The call to the altool completed with a non-zero exit status: 1. This indicates a failure.
+[logs] Could not download/upload from App Store Connect!
+[logs] [!] Error uploading ipa file: 
+[logs]  [Application Loader Error Output]: [ContentDelivery.Uploader.600001768140] Validation failed (409) Redundant Binary Upload. You've already uploaded a build with build number '6' for version number '2.0.0'. Make sure you increment the build string before you upload your app to App Store Connect. Learn more in Xcode Help (http://help.apple.com/xcode/mac/current/#/devba7f53ad4). (ID: 0635d61f-78ca-44a5-b2b2-c35f494a6d82)
+[logs] [Application Loader Error Output]: Error uploading '/var/folders/m1/8_w9962s3b79dqm00nnlm85m0000gn/T/a018ae76-af39-4085-a09b-cc56caded182.ipa'.
+[logs] [Application Loader Error Output]: Validation failed Redundant Binary Upload. You've already uploaded a build with build number '6' for version number '2.0.0'. Make sure you increment the build string before you upload your app to App Store Connect. Learn more in Xcode Help (http://help.apple.com/xcode/mac/current/#/devba7f53ad4). (ID: 0635d61f-78ca-44a5-b2b2-c35f494a6d82) (409)
+[logs] [Application Loader Error Output]: The call to the altool completed with a non-zero exit status: 1. This indicates a failure.
+[logs] Fastlane pilot failed
+[logs] Failed to submit the app to the store
+[logs] End phase: SUBMIT_TO_APP_STORE

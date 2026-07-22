@@ -1,25 +1,26 @@
 {
-  "cli": {
-    "version": ">= 5.2.0",
-    "appVersionSource": "local"
-  },
   "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal",
-      "environment": "development",
-      "ios": {
-        "scheme": "ItsAdventureTime",
-        "resourceClass": "m-medium"
-      }
-    },
     "preview": {
       "distribution": "internal",
       "channel": "preview",
-      "environment": "preview",
       "ios": {
         "scheme": "ItsAdventureTime",
         "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "ios": {
+        "scheme": "ItsAdventureTime",
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "apk"
       }
     },
     "production": {
@@ -27,16 +28,29 @@
       "ios": {
         "scheme": "ItsAdventureTime",
         "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "app-bundle"
       }
     }
   },
+
   "submit": {
     "production": {
       "ios": {
         "ascAppId": "6758251454",
         "appleId": "sinjin.gallegos@aol.com",
-        "appleTeamId": "2AU7KFCM84"
+        "appleTeamId": "2AU7KFCM84",
+
+        "ascApiKeyPath": "./AuthKey_NXTJS2D9R7.p8",
+        "ascApiKeyIssuerId": "46781a73-a825-49fa-a503-82d6dabe8b5a",
+        "ascApiKeyId": "NXTJS2D9R7"
+      },
+      "android": {
+        "track": "production",
+        "releaseStatus": "completed"
       }
     }
   }
 }
+

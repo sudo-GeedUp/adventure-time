@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, Pressable, Alert, Platform, Dimensions } from "react-native";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { View, StyleSheet, Pressable, Alert, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
@@ -11,7 +11,16 @@ import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { SAMPLE_TRAILS, Trail } from "@/utils/trails";
 import { calculateDistance } from "@/utils/location";
 import { OfflineMapsManager } from "@/utils/offlineMaps";
-import { storage, CompletedAdventure, AssistanceWaypoint } from "@/utils/storage";
+import {
+  FirebaseLocationService,
+  isFirebaseAvailable,
+  CommunityAdventuresService,
+} from "@/utils/firebase";
+import {
+  storage,
+  CompletedAdventure,
+  AssistanceWaypoint,
+} from "@/utils/storage";
 
 let MapView: any = null;
 let Marker: any = null;
@@ -20,6 +29,7 @@ let Polyline: any = null;
 
 if (Platform.OS !== "web") {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const maps = require("react-native-maps");
     MapView = maps.default;
     Marker = maps.Marker;
@@ -30,9 +40,6 @@ if (Platform.OS !== "web") {
     console.log("Maps load error:", e?.message || "Unknown error loading maps");
   }
 }
-
-const { width, height } = Dimensions.get("window");
-const MAP_PADDING = 50;
 
 const MAX_LOCATION_ACCURACY_METERS = 50;
 const MAP_CENTER_THROTTLE_MS = 1200;
@@ -45,20 +52,28 @@ export default function LiveMapScreen() {
   const insets = useSafeAreaInsets();
   const mapRef = useRef<any>(null);
   const lastAcceptedLocationRef = useRef<any>(null);
-  const lastCenteredLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
+  const lastCenteredLocationRef = useRef<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const lastCenterTimeRef = useRef<number>(0);
-  
+
   const [location, setLocation] = useState<any>(null);
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
   const [trails, setTrails] = useState<Trail[]>([]);
   const [nearbyTrails, setNearbyTrails] = useState<Trail[]>([]);
   const [isTracking, setIsTracking] = useState(true);
-  const [locationSubscription, setLocationSubscription] = useState<Location.LocationSubscription | null>(null);
+  const [locationSubscription, setLocationSubscription] =
+    useState<Location.LocationSubscription | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [selectedTrail, setSelectedTrail] = useState<Trail | null>(null);
-  const [communityAdventures, setCommunityAdventures] = useState<CompletedAdventure[]>([]);
-  const [assistanceWaypoints, setAssistanceWaypoints] = useState<{ adventure: CompletedAdventure; waypoint: AssistanceWaypoint }[]>([]);
-  const [showCommunityTrails, setShowCommunityTrails] = useState(true);
+  const [communityAdventures, setCommunityAdventures] = useState<
+    CompletedAdventure[]
+  >([]);
+  const [assistanceWaypoints, setAssistanceWaypoints] = useState<
+    { adventure: CompletedAdventure; waypoint: AssistanceWaypoint }[]
+  >([]);
+  const [showCommunityTrails] = useState(true);
 
   const gpsAccuracyIsPoor =
     typeof gpsAccuracy === "number" &&
@@ -76,7 +91,10 @@ export default function LiveMapScreen() {
   useEffect(() => {
     initializeLocation();
     loadTrails();
-    loadCommunityAdventures();
+    const unsubscribe = loadCommunityAdventures();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -84,26 +102,79 @@ export default function LiveMapScreen() {
       if (locationSubscription) {
         locationSubscription.remove();
       }
+      FirebaseLocationService.stopLocationBroadcast();
     };
   }, [locationSubscription]);
+
+  const updateMapRegion = useCallback(() => {
+    if (!mapRef.current || !location) return;
+
+    if (
+      typeof gpsAccuracy === "number" &&
+      gpsAccuracy > MAX_LOCATION_ACCURACY_METERS
+    ) {
+      return;
+    }
+
+    const now = Date.now();
+    if (now - lastCenterTimeRef.current < MAP_CENTER_THROTTLE_MS) return;
+
+    const nextCenter = {
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+    };
+
+    const lastCentered = lastCenteredLocationRef.current;
+    if (lastCentered) {
+      const distanceMeters =
+        calculateDistance(lastCentered, nextCenter) * 1609.344;
+      if (distanceMeters < MIN_CENTER_MOVE_METERS) return;
+    }
+
+    lastCenterTimeRef.current = now;
+    lastCenteredLocationRef.current = nextCenter;
+
+    mapRef.current.animateToRegion(
+      {
+        ...nextCenter,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      },
+      800,
+    );
+  }, [gpsAccuracy, location]);
+
+  const updateNearbyTrails = useCallback(() => {
+    if (!location) return;
+
+    const nearby = trails.filter((trail) => {
+      const distance = calculateDistance(location.coords, trail.location);
+      return distance <= 20; // Show trails within 20 miles
+    });
+
+    setNearbyTrails(nearby);
+  }, [location, trails]);
 
   useEffect(() => {
     if (location && mapReady && isTracking) {
       updateMapRegion();
     }
-  }, [location, mapReady, isTracking]);
+  }, [location, mapReady, isTracking, updateMapRegion]);
 
   useEffect(() => {
     if (location) {
       updateNearbyTrails();
     }
-  }, [location, trails]);
+  }, [location, trails, updateNearbyTrails]);
 
   const initializeLocation = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission Required", "Location permission is needed for live GPS tracking");
+        Alert.alert(
+          "Permission Required",
+          "Location permission is needed for live GPS tracking",
+        );
         return;
       }
 
@@ -114,10 +185,16 @@ export default function LiveMapScreen() {
       setGpsAccuracy(
         typeof currentLocation.coords.accuracy === "number"
           ? currentLocation.coords.accuracy
-          : null
+          : null,
       );
       setLocation(currentLocation);
       lastAcceptedLocationRef.current = currentLocation;
+
+      // Broadcast location to other users
+      const userProfile = await storage.getUserProfile();
+      FirebaseLocationService.startLocationBroadcast(
+        userProfile?.id || "anonymous",
+      );
 
       // Start location tracking
       const subscription = await Location.watchPositionAsync(
@@ -152,12 +229,12 @@ export default function LiveMapScreen() {
                 : Date.now();
             const timeDeltaSeconds = Math.max(
               (newTimestamp - prevTimestamp) / 1000,
-              0.001
+              0.001,
             );
 
             const distanceMiles = calculateDistance(
               prevAccepted.coords,
-              newLocation.coords
+              newLocation.coords,
             );
             const distanceMeters = distanceMiles * 1609.344;
             const speedMps = distanceMeters / timeDeltaSeconds;
@@ -169,7 +246,7 @@ export default function LiveMapScreen() {
 
           lastAcceptedLocationRef.current = newLocation;
           setLocation(newLocation);
-        }
+        },
       );
       setLocationSubscription(subscription);
     } catch (error) {
@@ -193,62 +270,46 @@ export default function LiveMapScreen() {
     }
   };
 
-  const loadCommunityAdventures = async () => {
-    try {
-      const adventures = await storage.getCommunityAdventures();
-      setCommunityAdventures(adventures);
-      
-      const activeWaypoints = await storage.getActiveAssistanceWaypoints();
-      setAssistanceWaypoints(activeWaypoints);
-    } catch (error) {
-      console.error("Error loading community adventures:", error);
-    }
-  };
+  const loadCommunityAdventures = () => {
+    let unsubscribe: (() => void) | null = null;
 
-  const updateMapRegion = () => {
-    if (!mapRef.current || !location) return;
+    const loadAndSubscribe = async () => {
+      try {
+        const localAdventures = await storage.getCommunityAdventures();
+        setCommunityAdventures(localAdventures);
 
-    if (gpsAccuracyIsPoor) {
-      return;
-    }
+        if (isFirebaseAvailable()) {
+          unsubscribe =
+            CommunityAdventuresService.subscribeToCommunityAdventures(
+              (firebaseAdventures) => {
+                setCommunityAdventures((prev) => {
+                  const combined = [...prev];
+                  firebaseAdventures.forEach((adv) => {
+                    const idx = combined.findIndex((a) => a.id === adv.id);
+                    if (idx >= 0) {
+                      combined[idx] = adv;
+                    } else {
+                      combined.push(adv);
+                    }
+                  });
+                  return combined;
+                });
+              },
+            );
+        }
 
-    const now = Date.now();
-    if (now - lastCenterTimeRef.current < MAP_CENTER_THROTTLE_MS) return;
-
-    const nextCenter = {
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
+        const activeWaypoints = await storage.getActiveAssistanceWaypoints();
+        setAssistanceWaypoints(activeWaypoints);
+      } catch (error) {
+        console.error("Error loading community adventures:", error);
+      }
     };
 
-    const lastCentered = lastCenteredLocationRef.current;
-    if (lastCentered) {
-      const distanceMeters =
-        calculateDistance(lastCentered, nextCenter) * 1609.344;
-      if (distanceMeters < MIN_CENTER_MOVE_METERS) return;
-    }
+    loadAndSubscribe();
 
-    lastCenterTimeRef.current = now;
-    lastCenteredLocationRef.current = nextCenter;
-
-    mapRef.current.animateToRegion(
-      {
-        ...nextCenter,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      },
-      800
-    );
-  };
-
-  const updateNearbyTrails = () => {
-    if (!location) return;
-    
-    const nearby = trails.filter(trail => {
-      const distance = calculateDistance(location.coords, trail.location);
-      return distance <= 20; // Show trails within 20 miles
-    });
-    
-    setNearbyTrails(nearby);
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   };
 
   const centerOnUser = () => {
@@ -267,7 +328,7 @@ export default function LiveMapScreen() {
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
         },
-        500
+        500,
       );
     }
   };
@@ -283,12 +344,15 @@ export default function LiveMapScreen() {
     setIsTracking(false);
     setSelectedTrail(trail);
     if (mapRef.current) {
-      mapRef.current.animateToRegion({
-        latitude: trail.location.latitude,
-        longitude: trail.location.longitude,
-        latitudeDelta: 0.005,
-        longitudeDelta: 0.005,
-      }, 1000);
+      mapRef.current.animateToRegion(
+        {
+          latitude: trail.location.latitude,
+          longitude: trail.location.longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        },
+        1000,
+      );
     }
   };
 
@@ -299,7 +363,12 @@ export default function LiveMapScreen() {
   const renderMap = () => {
     if (!MapView) {
       return (
-        <View style={[styles.mapPlaceholder, { backgroundColor: theme.backgroundSecondary }]}>
+        <View
+          style={[
+            styles.mapPlaceholder,
+            { backgroundColor: theme.backgroundSecondary },
+          ]}
+        >
           <Feather name="map" size={64} color={theme.tabIconDefault} />
           <ThemedText style={[styles.mapText, { color: theme.tabIconDefault }]}>
             Maps available on device only
@@ -350,46 +419,55 @@ export default function LiveMapScreen() {
             }}
             onPress={() => handleTrailPress(trail)}
           >
-            <View style={[styles.trailMarker, { backgroundColor: theme.primary }]}>
+            <View
+              style={[styles.trailMarker, { backgroundColor: theme.primary }]}
+            >
               <Feather name="flag" size={16} color="white" />
             </View>
           </Marker>
         ))}
 
         {/* Community Adventure Routes */}
-        {showCommunityTrails && communityAdventures.map((adventure) => {
-          if (adventure.route.length < 2) return null;
-          return (
-            <Polyline
-              key={adventure.id}
-              coordinates={adventure.route.map(point => ({
-                latitude: point.latitude,
-                longitude: point.longitude,
-              }))}
-              strokeColor={theme.accent + "80"}
-              strokeWidth={2}
-            />
-          );
-        })}
+        {showCommunityTrails &&
+          communityAdventures.map((adventure) => {
+            if (adventure.route.length < 2) return null;
+            return (
+              <Polyline
+                key={adventure.id}
+                coordinates={adventure.route.map((point) => ({
+                  latitude: point.latitude,
+                  longitude: point.longitude,
+                }))}
+                strokeColor={theme.accent + "80"}
+                strokeWidth={2}
+              />
+            );
+          })}
 
         {/* Hazard Markers from Community Adventures */}
-        {showCommunityTrails && communityAdventures.flatMap((adventure) =>
-          adventure.hazards.map((hazard) => (
-            <Marker
-              key={hazard.id}
-              coordinate={{
-                latitude: hazard.location.latitude,
-                longitude: hazard.location.longitude,
-              }}
-              title={hazard.type}
-              description={hazard.description}
-            >
-              <View style={[styles.hazardMarker, { backgroundColor: theme.warning }]}>
-                <Feather name="alert-triangle" size={16} color="white" />
-              </View>
-            </Marker>
-          ))
-        )}
+        {showCommunityTrails &&
+          communityAdventures.flatMap((adventure) =>
+            adventure.hazards.map((hazard) => (
+              <Marker
+                key={hazard.id}
+                coordinate={{
+                  latitude: hazard.location.latitude,
+                  longitude: hazard.location.longitude,
+                }}
+                title={hazard.type}
+                description={hazard.description}
+              >
+                <View
+                  style={[
+                    styles.hazardMarker,
+                    { backgroundColor: theme.warning },
+                  ]}
+                >
+                  <Feather name="alert-triangle" size={16} color="white" />
+                </View>
+              </Marker>
+            )),
+          )}
 
         {/* Active Assistance Waypoints */}
         {assistanceWaypoints.map(({ waypoint }) => (
@@ -402,7 +480,12 @@ export default function LiveMapScreen() {
             title="⚠️ Assistance Needed"
             description={waypoint.description}
           >
-            <View style={[styles.assistanceMarker, { backgroundColor: theme.error }]}>
+            <View
+              style={[
+                styles.assistanceMarker,
+                { backgroundColor: theme.error },
+              ]}
+            >
               <Feather name="alert-circle" size={20} color="white" />
             </View>
           </Marker>
@@ -439,10 +522,10 @@ export default function LiveMapScreen() {
             Live GPS Map
           </ThemedText>
           <View style={styles.locationStatus}>
-            <Feather 
-              name={location ? "navigation" : "compass"} 
-              size={20} 
-              color={gpsStatusColor} 
+            <Feather
+              name={location ? "navigation" : "compass"}
+              size={20}
+              color={gpsStatusColor}
             />
             <ThemedText style={[styles.statusText, { color: gpsStatusColor }]}>
               {gpsStatusText}
@@ -454,24 +537,30 @@ export default function LiveMapScreen() {
       {/* Map */}
       <View style={styles.mapContainer}>
         {renderMap()}
-        
+
         {/* Map Controls */}
         <View style={styles.mapControls}>
           <Pressable
-            style={[styles.controlButton, { backgroundColor: theme.backgroundDefault }]}
+            style={[
+              styles.controlButton,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
             onPress={centerOnUser}
           >
             <Feather name="crosshair" size={20} color={theme.primary} />
           </Pressable>
-          
+
           <Pressable
-            style={[styles.controlButton, { backgroundColor: theme.backgroundDefault }]}
+            style={[
+              styles.controlButton,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
             onPress={toggleTracking}
           >
-            <Feather 
-              name={isTracking ? "navigation" : "compass"} 
-              size={20} 
-              color={isTracking ? theme.success : theme.warning} 
+            <Feather
+              name={isTracking ? "navigation" : "compass"}
+              size={20}
+              color={isTracking ? theme.success : theme.warning}
             />
           </Pressable>
         </View>
@@ -479,30 +568,44 @@ export default function LiveMapScreen() {
 
       {/* Selected Trail Info */}
       {selectedTrail && (
-        <View style={[styles.trailInfo, { backgroundColor: theme.backgroundDefault }]}>
+        <View
+          style={[
+            styles.trailInfo,
+            { backgroundColor: theme.backgroundDefault },
+          ]}
+        >
           <View style={styles.trailInfoHeader}>
-            <ThemedText style={[Typography.h4]}>{selectedTrail.name}</ThemedText>
+            <ThemedText style={[Typography.h4]}>
+              {selectedTrail.name}
+            </ThemedText>
             <Pressable onPress={() => setSelectedTrail(null)}>
               <Feather name="x" size={20} color={theme.tabIconDefault} />
             </Pressable>
           </View>
-          
+
           <View style={styles.trailDetails}>
             <View style={styles.detailRow}>
               <Feather name="map-pin" size={16} color={theme.primary} />
               <ThemedText style={styles.detailText}>
-                {location ? calculateDistance(location.coords, selectedTrail.location).toFixed(1) : "0"} miles away (straight-line)
+                {location
+                  ? calculateDistance(
+                      location.coords,
+                      selectedTrail.location,
+                    ).toFixed(1)
+                  : "0"}{" "}
+                miles away (straight-line)
               </ThemedText>
             </View>
-            
+
             <View style={styles.detailRow}>
               <Feather name="trending-up" size={16} color={theme.warning} />
               <ThemedText style={styles.detailText}>
-                {selectedTrail.difficulty} • {selectedTrail.distance.toFixed(1)} miles
+                {selectedTrail.difficulty} • {selectedTrail.distance.toFixed(1)}{" "}
+                miles
               </ThemedText>
             </View>
           </View>
-          
+
           <Pressable
             style={[styles.startButton, { backgroundColor: theme.primary }]}
             onPress={() => startAdventure(selectedTrail)}
@@ -516,24 +619,48 @@ export default function LiveMapScreen() {
       )}
 
       {/* Nearby Trails List */}
-      <View style={[styles.nearbyList, { backgroundColor: theme.backgroundDefault }]}>
+      <View
+        style={[
+          styles.nearbyList,
+          { backgroundColor: theme.backgroundDefault },
+        ]}
+      >
         <ThemedText style={[Typography.h4, styles.listTitle]}>
           Nearby Trails ({nearbyTrails.length})
         </ThemedText>
-        
+
         {nearbyTrails.slice(0, 3).map((trail) => (
           <Pressable
             key={trail.id}
-            style={[styles.nearbyItem, { backgroundColor: theme.backgroundSecondary }]}
+            style={[
+              styles.nearbyItem,
+              { backgroundColor: theme.backgroundSecondary },
+            ]}
             onPress={() => handleTrailPress(trail)}
           >
             <View style={styles.nearbyItemContent}>
-              <ThemedText style={styles.nearbyItemName}>{trail.name}</ThemedText>
-              <ThemedText style={[styles.nearbyItemDistance, { color: theme.tabIconDefault }]}>
-                {location ? calculateDistance(location.coords, trail.location).toFixed(1) : "0"} miles
+              <ThemedText style={styles.nearbyItemName}>
+                {trail.name}
+              </ThemedText>
+              <ThemedText
+                style={[
+                  styles.nearbyItemDistance,
+                  { color: theme.tabIconDefault },
+                ]}
+              >
+                {location
+                  ? calculateDistance(location.coords, trail.location).toFixed(
+                      1,
+                    )
+                  : "0"}{" "}
+                miles
               </ThemedText>
             </View>
-            <Feather name="chevron-right" size={16} color={theme.tabIconDefault} />
+            <Feather
+              name="chevron-right"
+              size={16}
+              color={theme.tabIconDefault}
+            />
           </Pressable>
         ))}
       </View>

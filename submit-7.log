@@ -1,0 +1,29 @@
+
+Uploading your app archive to EAS Submit
+- Uploading to EAS Submit 0%
+✔ Uploaded to EAS Submit 1s
+Looking up credentials configuration for com.masongallegos.itsadventuretime...
+✔ App Store Connect API Key already set up.
+Using Api Key ID: 5KT4YSVU45 ([Expo] EAS Submit jN8TfFFP81)
+
+ASC App ID:                 6758251454
+Project ID:                 02cac41b-21af-4ee7-bda0-26b4042a9013
+App Store Connect API Key:  
+    Key Name  :  [Expo] EAS Submit jN8TfFFP81
+    Key ID    :  5KT4YSVU45
+    Key Source:  EAS servers
+Archive Path:               ./build-7.ipa
+
+- Scheduling iOS submission
+✔ Scheduled iOS submission
+
+Submission details: https://expo.dev/accounts/sinjingallegos/projects/my-app/submissions/14e54ae5-6761-4789-92a0-7ac23fa34f61
+
+Waiting for submission to complete. You can press Ctrl+C to exit.
+- Submitting
+✔ Submitted your app to Apple App Store Connect!
+
+Your binary has been successfully uploaded to App Store Connect!
+- It is now being processed by Apple - you will receive an email when the processing finishes.
+- It usually takes about 5-10 minutes depending on how busy Apple servers are.
+- When it's done, you can see your build here: https://appstoreconnect.apple.com/apps/6758251454/testflight/ios

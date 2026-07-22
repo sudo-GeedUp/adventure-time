@@ -1,0 +1,15 @@
+.env
+node_modules
+.expo
+ios/
+android/
+*.der
+upload_cert_new.der
+*.pem
+upload_cert_new.pem
+*.ipa
+build-*.ipa
+build-*.log
+.eas-local-build
+builds-old/
+.DS_Store
