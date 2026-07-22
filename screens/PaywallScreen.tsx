@@ -1,66 +1,53 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import * as WebBrowser from "expo-web-browser";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useTheme } from "@/hooks/useTheme";
-import { PRODUCT_IDS } from "@/config/revenuecat";
+import { getOfferings } from "@/config/revenuecat";
+import {
+  PRIVACY_POLICY_URL,
+  TERMS_OF_SERVICE_URL,
+} from "@/constants/LegalUrls";
+import {
+  PACKAGE_TYPE,
+  PurchasesIntroPrice,
+  PurchasesPackage,
+} from "react-native-purchases";
 
-interface SubscriptionPlan {
+interface PlanOption {
   id: string;
+  package: PurchasesPackage;
   title: string;
-  price: string;
   period: string;
+  pricePerUnit?: string;
   savings?: string;
+  introPrice?: string;
   popular?: boolean;
   features: string[];
 }
 
-const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
-  {
-    id: "monthly",
-    title: "Monthly",
-    price: "$9.99",
-    period: "/month",
-    features: [
-      "AI Recovery Scan",
-      "Unlimited Adventures",
-      "Trail Updates & Events",
-      "Community Trail Data",
-      "Rally Navigator",
-      "Offline Maps",
-      "Priority Support",
-    ],
-  },
-  {
-    id: "yearly",
-    title: "Yearly",
-    price: "$79.99",
-    period: "/year",
-    savings: "Save 33%",
-    popular: true,
-    features: [
-      "Everything in Monthly",
-      "Advanced Analytics",
-      "Custom Trail Routes",
-      "Export Adventure Data",
-      "Early Access to Features",
-      "Ad-Free Experience",
-      "Exclusive Community Badge",
-    ],
-  },
+const PREMIUM_FEATURES = [
+  "AI Recovery Scan",
+  "Unlimited Adventures",
+  "Trail Updates & Events",
+  "Community Trail Data",
+  "Rally Navigator",
+  "Offline Maps",
+  "Priority Support",
 ];
 
-const PREMIUM_FEATURES = [
+const PREMIUM_FEATURE_CARDS = [
   {
     icon: "scan" as const,
     title: "AI Recovery Scan",
@@ -93,24 +80,210 @@ const PREMIUM_FEATURES = [
   },
 ];
 
+function getPlanTitle(packageType: PACKAGE_TYPE): string {
+  switch (packageType) {
+    case PACKAGE_TYPE.ANNUAL:
+      return "Yearly";
+    case PACKAGE_TYPE.MONTHLY:
+      return "Monthly";
+    case PACKAGE_TYPE.SIX_MONTH:
+      return "6 Month";
+    case PACKAGE_TYPE.THREE_MONTH:
+      return "3 Month";
+    case PACKAGE_TYPE.TWO_MONTH:
+      return "2 Month";
+    case PACKAGE_TYPE.WEEKLY:
+      return "Weekly";
+    case PACKAGE_TYPE.LIFETIME:
+      return "Lifetime";
+    default:
+      return "Subscription";
+  }
+}
+
+function getPeriodLabel(
+  packageType: PACKAGE_TYPE,
+  isoPeriod: string | null,
+): string {
+  if (isoPeriod) {
+    if (isoPeriod === "P1M") return "/month";
+    if (isoPeriod === "P1Y") return "/year";
+    if (isoPeriod === "P6M") return "/6 months";
+    if (isoPeriod === "P3M") return "/3 months";
+    if (isoPeriod === "P2M") return "/2 months";
+    if (isoPeriod === "P1W") return "/week";
+  }
+  switch (packageType) {
+    case PACKAGE_TYPE.ANNUAL:
+      return "/year";
+    case PACKAGE_TYPE.MONTHLY:
+      return "/month";
+    case PACKAGE_TYPE.SIX_MONTH:
+      return "/6 months";
+    case PACKAGE_TYPE.THREE_MONTH:
+      return "/3 months";
+    case PACKAGE_TYPE.TWO_MONTH:
+      return "/2 months";
+    case PACKAGE_TYPE.WEEKLY:
+      return "/week";
+    default:
+      return "";
+  }
+}
+
+function formatIntroPeriod(
+  periodUnit: string,
+  periodNumberOfUnits: number,
+): string {
+  const unit = periodUnit.toLowerCase();
+  return periodNumberOfUnits === 1 ? unit : `${periodNumberOfUnits} ${unit}s`;
+}
+
+function getIntroPriceText(
+  intro: PurchasesIntroPrice | null,
+): string | undefined {
+  if (!intro) return undefined;
+  const period = formatIntroPeriod(intro.periodUnit, intro.periodNumberOfUnits);
+  if (intro.price === 0) {
+    return intro.cycles === 1
+      ? `${period} free trial`
+      : `${intro.cycles} ${period}s free`;
+  }
+  return `First ${intro.cycles} ${period}s at ${intro.priceString}`;
+}
+
+function getSavingsText(
+  monthly: PurchasesPackage | undefined,
+  yearly: PurchasesPackage | undefined,
+): string | undefined {
+  if (!monthly || !yearly) return undefined;
+  const yearlyEquivalent = monthly.product.pricePerYear;
+  if (yearlyEquivalent && yearlyEquivalent > yearly.product.price) {
+    const savings = Math.round(
+      ((yearlyEquivalent - yearly.product.price) / yearlyEquivalent) * 100,
+    );
+    if (savings > 0) return `Save ${savings}%`;
+  }
+  return undefined;
+}
+
+function getPricePerUnit(
+  pkg: PurchasesPackage,
+  otherPkg?: PurchasesPackage,
+): string | undefined {
+  const { packageType, product } = pkg;
+  if (packageType === PACKAGE_TYPE.ANNUAL) {
+    if (product.pricePerMonthString)
+      return `that's ${product.pricePerMonthString}/month`;
+    if (otherPkg?.product.priceString)
+      return `vs ${otherPkg.product.priceString}/month`;
+  }
+  if (packageType === PACKAGE_TYPE.MONTHLY && product.pricePerYearString) {
+    return `that's ${product.pricePerYearString}/year`;
+  }
+  if (packageType === PACKAGE_TYPE.SIX_MONTH && product.pricePerMonthString) {
+    return `that's ${product.pricePerMonthString}/month`;
+  }
+  return undefined;
+}
+
 export default function PaywallScreen({ navigation }: any) {
   const { theme } = useTheme();
   const { purchaseSubscription, restore } = useSubscription();
-  const [selectedPlan, setSelectedPlan] = useState<string>("yearly");
+  const [packages, setPackages] = useState<PurchasesPackage[]>([]);
+  const [loadingOfferings, setLoadingOfferings] = useState(true);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [purchasing, setPurchasing] = useState(false);
   const [restoring, setRestoring] = useState(false);
 
+  useEffect(() => {
+    loadOfferings();
+  }, []);
+
+  const loadOfferings = async () => {
+    try {
+      setLoadingOfferings(true);
+      const offering = await getOfferings();
+      if (offering?.availablePackages?.length) {
+        const relevantPackages = offering.availablePackages.filter((pkg) =>
+          [
+            PACKAGE_TYPE.ANNUAL,
+            PACKAGE_TYPE.MONTHLY,
+            PACKAGE_TYPE.SIX_MONTH,
+            PACKAGE_TYPE.THREE_MONTH,
+            PACKAGE_TYPE.TWO_MONTH,
+            PACKAGE_TYPE.WEEKLY,
+          ].includes(pkg.packageType),
+        );
+        setPackages(relevantPackages);
+        const defaultPkg =
+          relevantPackages.find((p) => p.packageType === PACKAGE_TYPE.ANNUAL) ||
+          relevantPackages[0];
+        setSelectedPlanId(defaultPkg.identifier);
+      }
+    } catch (error: any) {
+      Alert.alert(
+        "Error",
+        error.message || "Unable to load subscription options.",
+      );
+    } finally {
+      setLoadingOfferings(false);
+    }
+  };
+
+  const plans: PlanOption[] = useMemo(() => {
+    const monthly = packages.find(
+      (p) => p.packageType === PACKAGE_TYPE.MONTHLY,
+    );
+    const yearly = packages.find((p) => p.packageType === PACKAGE_TYPE.ANNUAL);
+    return packages.map((pkg) => {
+      const isYearly = pkg.packageType === PACKAGE_TYPE.ANNUAL;
+      const title = getPlanTitle(pkg.packageType);
+      const period = getPeriodLabel(
+        pkg.packageType,
+        pkg.product.subscriptionPeriod,
+      );
+      const otherPkg = isYearly ? monthly : yearly;
+      const pricePerUnit = getPricePerUnit(pkg, otherPkg);
+      const introPrice = getIntroPriceText(pkg.product.introPrice);
+      const savings = isYearly ? getSavingsText(monthly, yearly) : undefined;
+      return {
+        id: pkg.identifier,
+        package: pkg,
+        title,
+        period,
+        pricePerUnit,
+        savings,
+        introPrice,
+        popular: isYearly,
+        features: PREMIUM_FEATURES,
+      };
+    });
+  }, [packages]);
+
+  const selectedPlan = useMemo(
+    () => plans.find((p) => p.id === selectedPlanId),
+    [plans, selectedPlanId],
+  );
+
+  const openUrl = async (url: string) => {
+    try {
+      await WebBrowser.openBrowserAsync(url);
+    } catch {
+      Alert.alert("Error", "Unable to open link.");
+    }
+  };
+
   const handlePurchase = async () => {
+    if (!selectedPlan) return;
     setPurchasing(true);
     try {
-      const productIdentifier =
-        selectedPlan === "yearly"
-          ? PRODUCT_IDS.YEARLY_SUBSCRIPTION
-          : PRODUCT_IDS.MONTHLY_SUBSCRIPTION;
-      const success = await purchaseSubscription(productIdentifier);
+      const success = await purchaseSubscription(
+        selectedPlan.package.product.identifier,
+      );
       if (success) {
         Alert.alert(
-          "Welcome to Premium! 🎉",
+          "Welcome to Premium!",
           "You now have access to all premium features.",
           [{ text: "Get Started", onPress: () => navigation.goBack() }],
         );
@@ -136,7 +309,7 @@ export default function PaywallScreen({ navigation }: any) {
       const success = await restore();
       if (success) {
         Alert.alert(
-          "Purchases Restored! ✅",
+          "Purchases Restored!",
           "Your premium subscription has been restored.",
           [{ text: "Continue", onPress: () => navigation.goBack() }],
         );
@@ -272,7 +445,7 @@ export default function PaywallScreen({ navigation }: any) {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      marginBottom: 12,
+      marginBottom: 8,
     },
     planTitle: {
       fontSize: 18,
@@ -294,11 +467,23 @@ export default function PaywallScreen({ navigation }: any) {
       opacity: 0.7,
       marginLeft: 4,
     },
+    planIntro: {
+      fontSize: 13,
+      color: theme.success,
+      fontWeight: "600",
+      marginTop: 2,
+    },
     planSavings: {
       fontSize: 12,
       color: theme.success,
       fontWeight: "600",
-      marginTop: 4,
+      marginTop: 2,
+    },
+    planPerUnit: {
+      fontSize: 12,
+      color: theme.text,
+      opacity: 0.6,
+      marginTop: 2,
     },
     planFeatures: {
       marginTop: 12,
@@ -317,6 +502,14 @@ export default function PaywallScreen({ navigation }: any) {
     ctaSection: {
       paddingHorizontal: 20,
       marginBottom: 20,
+    },
+    disclosureText: {
+      fontSize: 12,
+      color: theme.text,
+      opacity: 0.7,
+      textAlign: "center",
+      lineHeight: 18,
+      marginBottom: 12,
     },
     subscribeButton: {
       borderRadius: 12,
@@ -354,7 +547,33 @@ export default function PaywallScreen({ navigation }: any) {
       color: theme.primary,
       textDecorationLine: "underline",
     },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: theme.backgroundDefault,
+    },
   });
+
+  if (loadingOfferings) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const subscribeButtonText = selectedPlan?.introPrice
+    ?.toLowerCase()
+    .includes("free trial")
+    ? "Start Free Trial"
+    : "Subscribe Now";
+
+  const renewalDisclosure = selectedPlan?.introPrice
+    ? `Your ${selectedPlan.introPrice} starts today. After the trial, your subscription will be ${selectedPlan.package.product.priceString}${selectedPlan.period} and auto-renews unless cancelled at least 24 hours before the end of the current period. You can manage or cancel in Settings → Subscriptions.`
+    : "Subscription auto-renews unless cancelled at least 24 hours before the end of the current period. You can manage or cancel in Settings → Subscriptions.";
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -385,7 +604,7 @@ export default function PaywallScreen({ navigation }: any) {
         </View>
 
         <View style={styles.featuresSection}>
-          {PREMIUM_FEATURES.map((feature, index) => (
+          {PREMIUM_FEATURE_CARDS.map((feature, index) => (
             <View key={index} style={styles.featureItem}>
               <View style={styles.featureIconContainer}>
                 <Ionicons name={feature.icon} size={24} color={theme.primary} />
@@ -403,15 +622,15 @@ export default function PaywallScreen({ navigation }: any) {
         <View style={styles.plansSection}>
           <Text style={styles.sectionTitle}>Choose Your Plan</Text>
 
-          {SUBSCRIPTION_PLANS.map((plan) => (
+          {plans.map((plan) => (
             <TouchableOpacity
               key={plan.id}
               style={[
                 styles.planCard,
-                selectedPlan === plan.id && styles.planCardSelected,
+                selectedPlanId === plan.id && styles.planCardSelected,
                 plan.popular && styles.planCardPopular,
               ]}
-              onPress={() => setSelectedPlan(plan.id)}
+              onPress={() => setSelectedPlanId(plan.id)}
               activeOpacity={0.7}
             >
               {plan.popular && (
@@ -429,11 +648,19 @@ export default function PaywallScreen({ navigation }: any) {
                 <Text style={styles.planTitle}>{plan.title}</Text>
                 <View>
                   <View style={styles.planPricing}>
-                    <Text style={styles.planPrice}>{plan.price}</Text>
+                    <Text style={styles.planPrice}>
+                      {plan.package.product.priceString}
+                    </Text>
                     <Text style={styles.planPeriod}>{plan.period}</Text>
                   </View>
+                  {plan.introPrice && (
+                    <Text style={styles.planIntro}>{plan.introPrice}</Text>
+                  )}
                   {plan.savings && (
                     <Text style={styles.planSavings}>{plan.savings}</Text>
+                  )}
+                  {plan.pricePerUnit && (
+                    <Text style={styles.planPerUnit}>{plan.pricePerUnit}</Text>
                   )}
                 </View>
               </View>
@@ -455,10 +682,11 @@ export default function PaywallScreen({ navigation }: any) {
         </View>
 
         <View style={styles.ctaSection}>
+          <Text style={styles.disclosureText}>{renewalDisclosure}</Text>
           <TouchableOpacity
             style={styles.subscribeButton}
             onPress={handlePurchase}
-            disabled={purchasing || restoring}
+            disabled={purchasing || restoring || !selectedPlan}
           >
             <LinearGradient
               colors={[theme.primary, theme.secondary]}
@@ -469,7 +697,9 @@ export default function PaywallScreen({ navigation }: any) {
               {purchasing ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.subscribeButtonText}>Start Free Trial</Text>
+                <Text style={styles.subscribeButtonText}>
+                  {subscribeButtonText}
+                </Text>
               )}
             </LinearGradient>
           </TouchableOpacity>
@@ -489,11 +719,20 @@ export default function PaywallScreen({ navigation }: any) {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            7-day free trial, then{" "}
-            {selectedPlan === "yearly" ? "$79.99/year" : "$9.99/month"}.{"\n"}
             Cancel anytime. Auto-renews unless cancelled.{"\n"}
-            <Text style={styles.footerLink}>Terms of Service</Text> •{" "}
-            <Text style={styles.footerLink}>Privacy Policy</Text>
+            <Text
+              style={styles.footerLink}
+              onPress={() => openUrl(TERMS_OF_SERVICE_URL)}
+            >
+              Terms of Use (EULA)
+            </Text>
+            {" • "}
+            <Text
+              style={styles.footerLink}
+              onPress={() => openUrl(PRIVACY_POLICY_URL)}
+            >
+              Privacy Policy
+            </Text>
           </Text>
         </View>
       </ScrollView>

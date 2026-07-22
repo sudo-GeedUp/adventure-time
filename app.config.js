@@ -11,6 +11,13 @@ export default {
       policy: "sdkVersion",
     },
 
+    updates: {
+      enabled: true,
+      url: "https://u.expo.dev/02cac41b-21af-4ee7-bda0-26b4042a9013",
+      checkAutomatically: "ON_LOAD",
+      fallbackToCacheTimeout: 0,
+    },
+
     plugins: [
       [
         "expo-location",
@@ -37,7 +44,7 @@ export default {
 
     ios: {
       bundleIdentifier: "com.masongallegos.itsadventuretime",
-      buildNumber: "9",
+      buildNumber: "11",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },

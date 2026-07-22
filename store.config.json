@@ -1,14 +1,14 @@
 {
   "configVersion": 0,
   "apple": {
-    "version": "2.0.0(8)",
+    "version": "2.0.0(11)",
     "copyright": "© 2026 Mason Gallegos. All Rights Reserved",
     "release": {
       "automaticRelease": false
     },
     "info": {
       "en-US": {
-        "description": "Its Adventure Time by Mason is your ultimate off-road companion for discovering and navigating trails. Whether you're into overlanding, 4x4 adventures, or trail riding, this app has everything you need.\n\nKEY FEATURES:\n- Live GPS tracking with speed, altitude, and distance\n- Rally-style navigator with audio callouts for turns and hazards\n- Community-driven trail database with user-submitted routes\n- Offline maps for areas without cell service\n- AI Recovery Scan - snap a photo of your stuck situation and get recovery advice\n- SOS emergency sharing with location tracking\n- Trail difficulty ratings and safety information\n- Save and share your adventures with friends\n\nPERFECT FOR:\n- Overlanding enthusiasts\n- 4x4 off-roaders\n- Trail riders and hikers\n- Adventure seekers\n- Emergency preparedness\n\nDownload now and start your next adventure!\n\nNote: Continued use of GPS running in the background can dramatically decrease battery life.\n\nTerms of Use (EULA): https://thegoodadventuretime.web.app/terms-of-use.html\nPrivacy Policy: https://thegoodadventuretime.web.app/privacy-policy.html",
+        "description": "Its Adventure Time by Mason is your ultimate off-road companion for discovering and navigating trails. Whether you're into overlanding, 4x4 adventures, or trail riding, this app has everything you need.\n\nKEY FEATURES:\n- Live GPS tracking with speed, altitude, and distance\n- Rally-style navigator with audio callouts for turns and hazards\n- Community-driven trail database with user-submitted routes\n- Offline maps for areas without cell service\n- AI Recovery Scan - snap a photo of your stuck situation and get recovery advice\n- SOS emergency sharing with location tracking\n- Trail difficulty ratings and safety information\n- Save and share your adventures with friends\n\nPERFECT FOR:\n- Overlanding enthusiasts\n- 4x4 off-roaders\n- Trail riders and hikers\n- Adventure seekers\n- Emergency preparedness\n\nDownload now and start your next adventure!\n\nNote: Continued use of GPS running in the background can dramatically decrease battery life.\n\nTerms of Use (EULA): https://thegoodadventuretime.web.app/terms-of-use\nPrivacy Policy: https://thegoodadventuretime.web.app/privacy-policy",
         "keywords": [
           "offroad",
           "overlanding",
@@ -26,7 +26,7 @@
         "supportUrl": "https://thegoodadventuretime.web.app",
         "title": "Its Adventure Time",
         "subtitle": "Off-road GPS navigation",
-        "privacyPolicyUrl": "https://thegoodadventuretime.web.app/privacy-policy.html",
+        "privacyPolicyUrl": "https://thegoodadventuretime.web.app/privacy-policy",
         "screenshots": {
           "APP_IPAD_PRO_3GEN_129": [
             "store/apple/screenshot/en-US/APP_IPAD_PRO_3GEN_129/Simulator Screenshot - iPad Pro 13-inch (M5) - 2026-07-13 at 01.32.43.png"

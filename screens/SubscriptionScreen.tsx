@@ -1,28 +1,166 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   StyleSheet,
   Pressable,
   Alert,
   ActivityIndicator,
+  Text,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { PurchasesPackage } from "react-native-purchases";
+import {
+  PACKAGE_TYPE,
+  PurchasesIntroPrice,
+  PurchasesPackage,
+} from "react-native-purchases";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
-import { getOfferings, PRODUCT_IDS } from "@/config/revenuecat";
+import { getOfferings } from "@/config/revenuecat";
+import {
+  PRIVACY_POLICY_URL,
+  TERMS_OF_SERVICE_URL,
+} from "@/constants/LegalUrls";
+import * as WebBrowser from "expo-web-browser";
+
+const PREMIUM_FEATURES = [
+  "AI Recovery Scan",
+  "Unlimited Adventures",
+  "Trail Updates & Events",
+  "Community Trail Data",
+  "Rally Navigator",
+  "Offline Maps",
+  "Priority Support",
+];
+
+interface PlanOption {
+  id: string;
+  package: PurchasesPackage;
+  title: string;
+  period: string;
+  pricePerUnit?: string;
+  savings?: string;
+  introPrice?: string;
+  popular?: boolean;
+  features: string[];
+}
+
+function getPlanTitle(packageType: PACKAGE_TYPE): string {
+  switch (packageType) {
+    case PACKAGE_TYPE.ANNUAL:
+      return "Yearly";
+    case PACKAGE_TYPE.MONTHLY:
+      return "Monthly";
+    case PACKAGE_TYPE.SIX_MONTH:
+      return "6 Month";
+    case PACKAGE_TYPE.THREE_MONTH:
+      return "3 Month";
+    case PACKAGE_TYPE.TWO_MONTH:
+      return "2 Month";
+    case PACKAGE_TYPE.WEEKLY:
+      return "Weekly";
+    case PACKAGE_TYPE.LIFETIME:
+      return "Lifetime";
+    default:
+      return "Subscription";
+  }
+}
+
+function getPeriodLabel(
+  packageType: PACKAGE_TYPE,
+  isoPeriod: string | null,
+): string {
+  if (isoPeriod) {
+    if (isoPeriod === "P1M") return "/month";
+    if (isoPeriod === "P1Y") return "/year";
+    if (isoPeriod === "P6M") return "/6 months";
+    if (isoPeriod === "P3M") return "/3 months";
+    if (isoPeriod === "P2M") return "/2 months";
+    if (isoPeriod === "P1W") return "/week";
+  }
+  switch (packageType) {
+    case PACKAGE_TYPE.ANNUAL:
+      return "/year";
+    case PACKAGE_TYPE.MONTHLY:
+      return "/month";
+    case PACKAGE_TYPE.SIX_MONTH:
+      return "/6 months";
+    case PACKAGE_TYPE.THREE_MONTH:
+      return "/3 months";
+    case PACKAGE_TYPE.TWO_MONTH:
+      return "/2 months";
+    case PACKAGE_TYPE.WEEKLY:
+      return "/week";
+    default:
+      return "";
+  }
+}
+
+function formatIntroPeriod(
+  periodUnit: string,
+  periodNumberOfUnits: number,
+): string {
+  const unit = periodUnit.toLowerCase();
+  return periodNumberOfUnits === 1 ? unit : `${periodNumberOfUnits} ${unit}s`;
+}
+
+function getIntroPriceText(
+  intro: PurchasesIntroPrice | null,
+): string | undefined {
+  if (!intro) return undefined;
+  const period = formatIntroPeriod(intro.periodUnit, intro.periodNumberOfUnits);
+  if (intro.price === 0) {
+    return intro.cycles === 1
+      ? `${period} free trial`
+      : `${intro.cycles} ${period}s free`;
+  }
+  return `First ${intro.cycles} ${period}s at ${intro.priceString}`;
+}
+
+function getSavingsText(
+  monthly: PurchasesPackage | undefined,
+  yearly: PurchasesPackage | undefined,
+): string | undefined {
+  if (!monthly || !yearly) return undefined;
+  const yearlyEquivalent = monthly.product.pricePerYear;
+  if (yearlyEquivalent && yearlyEquivalent > yearly.product.price) {
+    const savings = Math.round(
+      ((yearlyEquivalent - yearly.product.price) / yearlyEquivalent) * 100,
+    );
+    if (savings > 0) return `Save ${savings}%`;
+  }
+  return undefined;
+}
+
+function getPricePerUnit(
+  pkg: PurchasesPackage,
+  otherPkg?: PurchasesPackage,
+): string | undefined {
+  const { packageType, product } = pkg;
+  if (packageType === PACKAGE_TYPE.ANNUAL) {
+    if (product.pricePerMonthString)
+      return `that's ${product.pricePerMonthString}/month`;
+    if (otherPkg?.product.priceString)
+      return `vs ${otherPkg.product.priceString}/month`;
+  }
+  if (packageType === PACKAGE_TYPE.MONTHLY && product.pricePerYearString) {
+    return `that's ${product.pricePerYearString}/year`;
+  }
+  if (packageType === PACKAGE_TYPE.SIX_MONTH && product.pricePerMonthString) {
+    return `that's ${product.pricePerMonthString}/month`;
+  }
+  return undefined;
+}
 
 export default function SubscriptionScreen() {
   const { theme } = useTheme();
   const { isPremium, purchaseSubscription, restore, isLoading } =
     useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [monthlyPackage, setMonthlyPackage] = useState<PurchasesPackage | null>(
-    null,
-  );
+  const [packages, setPackages] = useState<PurchasesPackage[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [loadingOfferings, setLoadingOfferings] = useState(true);
 
   useEffect(() => {
@@ -32,14 +170,23 @@ export default function SubscriptionScreen() {
   const loadOfferings = async () => {
     try {
       setLoadingOfferings(true);
-      const offerings = await getOfferings();
-      if (offerings) {
-        const monthly = offerings.availablePackages.find(
-          (pkg) =>
-            pkg.packageType === "MONTHLY" ||
-            pkg.product.identifier === PRODUCT_IDS.MONTHLY_SUBSCRIPTION,
+      const offering = await getOfferings();
+      if (offering?.availablePackages?.length) {
+        const relevantPackages = offering.availablePackages.filter((pkg) =>
+          [
+            PACKAGE_TYPE.ANNUAL,
+            PACKAGE_TYPE.MONTHLY,
+            PACKAGE_TYPE.SIX_MONTH,
+            PACKAGE_TYPE.THREE_MONTH,
+            PACKAGE_TYPE.TWO_MONTH,
+            PACKAGE_TYPE.WEEKLY,
+          ].includes(pkg.packageType),
         );
-        setMonthlyPackage(monthly || null);
+        setPackages(relevantPackages);
+        const defaultPkg =
+          relevantPackages.find((p) => p.packageType === PACKAGE_TYPE.ANNUAL) ||
+          relevantPackages[0];
+        setSelectedPlanId(defaultPkg.identifier);
       }
     } catch (_error) {
       console.error("Error loading offerings:", _error);
@@ -48,13 +195,47 @@ export default function SubscriptionScreen() {
     }
   };
 
+  const plans: PlanOption[] = useMemo(() => {
+    const monthly = packages.find(
+      (p) => p.packageType === PACKAGE_TYPE.MONTHLY,
+    );
+    const yearly = packages.find((p) => p.packageType === PACKAGE_TYPE.ANNUAL);
+    return packages.map((pkg) => {
+      const isYearly = pkg.packageType === PACKAGE_TYPE.ANNUAL;
+      const title = getPlanTitle(pkg.packageType);
+      const period = getPeriodLabel(
+        pkg.packageType,
+        pkg.product.subscriptionPeriod,
+      );
+      const otherPkg = isYearly ? monthly : yearly;
+      const pricePerUnit = getPricePerUnit(pkg, otherPkg);
+      const introPrice = getIntroPriceText(pkg.product.introPrice);
+      const savings = isYearly ? getSavingsText(monthly, yearly) : undefined;
+      return {
+        id: pkg.identifier,
+        package: pkg,
+        title,
+        period,
+        pricePerUnit,
+        savings,
+        introPrice,
+        popular: isYearly,
+        features: PREMIUM_FEATURES,
+      };
+    });
+  }, [packages]);
+
+  const selectedPlan = useMemo(
+    () => plans.find((p) => p.id === selectedPlanId),
+    [plans, selectedPlanId],
+  );
+
   const handlePurchase = async () => {
-    if (isProcessing) return;
+    if (isProcessing || !selectedPlan) return;
 
     setIsProcessing(true);
     try {
-      const productIdentifier =
-        monthlyPackage?.product.identifier || PRODUCT_IDS.MONTHLY_SUBSCRIPTION;
+      const productIdentifier = selectedPlan.package.product.identifier;
       const success = await purchaseSubscription(productIdentifier);
       if (success) {
         Alert.alert(
@@ -98,6 +279,14 @@ export default function SubscriptionScreen() {
       );
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const openUrl = async (url: string) => {
+    try {
+      await WebBrowser.openBrowserAsync(url);
+    } catch {
+      Alert.alert("Error", "Unable to open link.");
     }
   };
 
@@ -199,7 +388,17 @@ export default function SubscriptionScreen() {
     );
   }
 
-  const priceString = monthlyPackage?.product.priceString || "$4.99/month";
+  const subscribeButtonText = selectedPlan?.introPrice
+    ?.toLowerCase()
+    .includes("free trial")
+    ? "Start Free Trial"
+    : "Subscribe Now";
+
+  const renewalDisclosure = `Subscription auto-renews unless cancelled at least 24 hours before the end of the current period. You can manage or cancel in Settings → Subscriptions.${
+    selectedPlan?.introPrice
+      ? ` After the ${selectedPlan.introPrice}, the subscription auto-renews at ${selectedPlan.package.product.priceString}${selectedPlan.period}.`
+      : ""
+  }`;
 
   return (
     <ScreenScrollView style={{ backgroundColor: theme.backgroundDefault }}>
@@ -260,14 +459,105 @@ export default function SubscriptionScreen() {
           />
         </View>
 
-        <View style={styles.priceContainer}>
-          <ThemedText style={[Typography.h2, styles.priceText]}>
-            {priceString}
-          </ThemedText>
+        <View style={styles.plansSection}>
+          {plans.map((plan) => (
+            <Pressable
+              key={plan.id}
+              style={[
+                styles.planCard,
+                { backgroundColor: theme.backgroundSecondary },
+                selectedPlanId === plan.id && {
+                  borderColor: theme.primary,
+                  borderWidth: 2,
+                },
+                plan.popular && styles.planCardPopular,
+              ]}
+              onPress={() => setSelectedPlanId(plan.id)}
+            >
+              {plan.popular && (
+                <View
+                  style={[
+                    styles.popularBadge,
+                    { backgroundColor: theme.primary },
+                  ]}
+                >
+                  <ThemedText style={styles.popularBadgeText}>
+                    MOST POPULAR
+                  </ThemedText>
+                </View>
+              )}
+
+              <View style={styles.planHeader}>
+                <ThemedText style={[Typography.h3, { color: theme.text }]}>
+                  {plan.title}
+                </ThemedText>
+                <View>
+                  <View style={styles.planPricing}>
+                    <ThemedText
+                      style={[Typography.h2, { color: theme.primary }]}
+                    >
+                      {plan.package.product.priceString}
+                    </ThemedText>
+                    <ThemedText
+                      style={[
+                        styles.planPeriod,
+                        { color: theme.tabIconDefault },
+                      ]}
+                    >
+                      {plan.period}
+                    </ThemedText>
+                  </View>
+                  {plan.introPrice && (
+                    <ThemedText
+                      style={[styles.planIntro, { color: theme.success }]}
+                    >
+                      {plan.introPrice}
+                    </ThemedText>
+                  )}
+                  {plan.savings && (
+                    <ThemedText
+                      style={[styles.planSavings, { color: theme.success }]}
+                    >
+                      {plan.savings}
+                    </ThemedText>
+                  )}
+                  {plan.pricePerUnit && (
+                    <ThemedText
+                      style={[
+                        styles.planPerUnit,
+                        { color: theme.tabIconDefault },
+                      ]}
+                    >
+                      {plan.pricePerUnit}
+                    </ThemedText>
+                  )}
+                </View>
+              </View>
+
+              <View style={styles.planFeatures}>
+                {plan.features.map((feature, idx) => (
+                  <View key={idx} style={styles.planFeature}>
+                    <Feather name="check" size={18} color={theme.success} />
+                    <ThemedText
+                      style={[
+                        styles.planFeatureText,
+                        { color: theme.tabIconDefault },
+                      ]}
+                    >
+                      {feature}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={styles.disclosureContainer}>
           <ThemedText
-            style={[styles.priceSubtext, { color: theme.tabIconDefault }]}
+            style={[styles.disclosureText, { color: theme.tabIconDefault }]}
           >
-            Cancel anytime in Settings
+            {renewalDisclosure}
           </ThemedText>
         </View>
 
@@ -278,11 +568,11 @@ export default function SubscriptionScreen() {
               backgroundColor: isProcessing
                 ? theme.tabIconDefault
                 : theme.primary,
-              opacity: isProcessing ? 0.6 : 1,
+              opacity: isProcessing || !selectedPlan ? 0.6 : 1,
             },
           ]}
           onPress={handlePurchase}
-          disabled={isProcessing}
+          disabled={isProcessing || !selectedPlan}
         >
           {isProcessing ? (
             <ActivityIndicator color={theme.backgroundDefault} />
@@ -295,7 +585,7 @@ export default function SubscriptionScreen() {
                   { color: theme.backgroundDefault },
                 ]}
               >
-                Subscribe Now
+                {subscribeButtonText}
               </ThemedText>
             </>
           )}
@@ -317,9 +607,21 @@ export default function SubscriptionScreen() {
           <ThemedText
             style={[styles.termsText, { color: theme.tabIconDefault }]}
           >
-            By subscribing, you agree to our Terms of Service and Privacy
-            Policy.
-            {"\n\n"}
+            By subscribing, you agree to our{" "}
+            <Text
+              style={[styles.termsLink, { color: theme.link }]}
+              onPress={() => openUrl(TERMS_OF_SERVICE_URL)}
+            >
+              Terms of Use (EULA)
+            </Text>{" "}
+            and{" "}
+            <Text
+              style={[styles.termsLink, { color: theme.link }]}
+              onPress={() => openUrl(PRIVACY_POLICY_URL)}
+            >
+              Privacy Policy
+            </Text>
+            .{"\n\n"}
             Subscription automatically renews monthly unless cancelled at least
             24 hours before the end of the current period. Your account will be
             charged for renewal within 24 hours prior to the end of the current
@@ -408,6 +710,80 @@ const styles = StyleSheet.create({
   featuresTitle: {
     marginBottom: Spacing.lg,
   },
+  plansSection: {
+    marginBottom: Spacing.xl,
+  },
+  planCard: {
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: "transparent",
+    marginBottom: Spacing.lg,
+  },
+  planCardPopular: {
+    position: "relative",
+  },
+  popularBadge: {
+    position: "absolute",
+    top: -8,
+    right: Spacing.lg,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  popularBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  planHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: Spacing.sm,
+  },
+  planPricing: {
+    flexDirection: "row",
+    alignItems: "baseline",
+  },
+  planPeriod: {
+    fontSize: 14,
+    marginLeft: 4,
+  },
+  planIntro: {
+    fontSize: 13,
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  planSavings: {
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  planPerUnit: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  planFeatures: {
+    marginTop: Spacing.md,
+  },
+  planFeature: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.sm,
+  },
+  planFeatureText: {
+    fontSize: 14,
+    marginLeft: Spacing.sm,
+  },
+  disclosureContainer: {
+    marginBottom: Spacing.xl,
+  },
+  disclosureText: {
+    fontSize: 12,
+    textAlign: "center",
+    lineHeight: 18,
+  },
   premiumCard: {
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
@@ -492,5 +868,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
     lineHeight: 18,
+  },
+  termsLink: {
+    textDecorationLine: "underline",
   },
 });
