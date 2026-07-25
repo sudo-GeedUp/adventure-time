@@ -1,4 +1,5 @@
 import React, { Component, ComponentType, PropsWithChildren } from "react";
+import { sentryService } from "@/services/sentryService";
 import { ErrorFallback, ErrorFallbackProps } from "@/components/ErrorFallback";
 
 export type ErrorBoundaryProps = PropsWithChildren<{
@@ -26,15 +27,19 @@ export class ErrorBoundary extends Component<
   };
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    console.error('ErrorBoundary caught error:', error);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
+    console.error("ErrorBoundary caught error:", error);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
     return { error };
   }
 
   componentDidCatch(error: Error, info: { componentStack: string }): void {
-    console.error('ErrorBoundary componentDidCatch:', error);
-    console.error('Component stack:', info.componentStack);
+    console.error("ErrorBoundary componentDidCatch:", error);
+    console.error("Component stack:", info.componentStack);
+    sentryService.captureException(error, {
+      componentStack: info.componentStack,
+      source: "ErrorBoundary",
+    });
     if (typeof this.props.onError === "function") {
       this.props.onError(error, info.componentStack);
     }

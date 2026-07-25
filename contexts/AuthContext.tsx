@@ -1,6 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from 'firebase/auth';
-import { authService, UserProfile } from '@/services/authService';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { User } from "firebase/auth";
+import { authService, UserProfile } from "@/services/authService";
+import { sentryService } from "@/services/sentryService";
 
 interface AuthContextType {
   user: User | null;
@@ -8,7 +15,11 @@ interface AuthContextType {
   loading: boolean;
   isAuthenticated: boolean;
   isPremium: boolean;
-  signUp: (email: string, password: string, displayName: string) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    displayName: string,
+  ) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
@@ -27,32 +38,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth state changes
     const unsubscribe = authService.onAuthStateChanged(async (firebaseUser) => {
       setUser(firebaseUser);
-      
+
       if (firebaseUser) {
         try {
           // Load user profile from Firestore
           const profile = await authService.getUserProfile(firebaseUser.uid);
           setUserProfile(profile);
           setIsPremium(profile?.isPremium || false);
+          sentryService.setUser({
+            id: firebaseUser.uid,
+            email: firebaseUser.email || undefined,
+          });
         } catch (error) {
-          console.error('Error loading user profile:', error);
+          console.error("Error loading user profile:", error);
           setUserProfile(null);
           setIsPremium(false);
+          sentryService.setUser({ id: firebaseUser.uid });
         }
       } else {
         setUserProfile(null);
         setIsPremium(false);
+        sentryService.clearUser();
       }
-      
+
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, displayName: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    displayName: string,
+  ) => {
     try {
-      const profile = await authService.signUpWithEmail(email, password, displayName);
+      const profile = await authService.signUpWithEmail(
+        email,
+        password,
+        displayName,
+      );
       setUserProfile(profile);
     } catch (error) {
       throw error;
@@ -94,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) {
       const profile = await authService.getUserProfile(user.uid);
       setUserProfile(profile);
-      
+
       const premiumStatus = await authService.checkPremiumStatus();
       setIsPremium(premiumStatus);
     }
@@ -119,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
