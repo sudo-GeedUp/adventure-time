@@ -5,7 +5,6 @@ import {
   Pressable,
   Alert,
   ActivityIndicator,
-  Text,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import {
@@ -23,7 +22,7 @@ import {
   PRIVACY_POLICY_URL,
   TERMS_OF_SERVICE_URL,
 } from "@/constants/LegalUrls";
-import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
 
 const PREMIUM_FEATURES = [
   "AI Recovery Scan",
@@ -40,6 +39,8 @@ interface PlanOption {
   package: PurchasesPackage;
   title: string;
   period: string;
+  subscriptionTitle: string;
+  length: string;
   pricePerUnit?: string;
   savings?: string;
   introPrice?: string;
@@ -65,6 +66,41 @@ function getPlanTitle(packageType: PACKAGE_TYPE): string {
       return "Lifetime";
     default:
       return "Subscription";
+  }
+}
+
+function getSubscriptionTitle(pkg: PurchasesPackage): string {
+  const title = pkg.product.title?.trim();
+  return title || getPlanTitle(pkg.packageType);
+}
+
+function getSubscriptionLength(
+  packageType: PACKAGE_TYPE,
+  isoPeriod: string | null,
+): string {
+  if (isoPeriod) {
+    if (isoPeriod === "P1M") return "1 month";
+    if (isoPeriod === "P1Y") return "1 year";
+    if (isoPeriod === "P6M") return "6 months";
+    if (isoPeriod === "P3M") return "3 months";
+    if (isoPeriod === "P2M") return "2 months";
+    if (isoPeriod === "P1W") return "1 week";
+  }
+  switch (packageType) {
+    case PACKAGE_TYPE.ANNUAL:
+      return "1 year";
+    case PACKAGE_TYPE.MONTHLY:
+      return "1 month";
+    case PACKAGE_TYPE.SIX_MONTH:
+      return "6 months";
+    case PACKAGE_TYPE.THREE_MONTH:
+      return "3 months";
+    case PACKAGE_TYPE.TWO_MONTH:
+      return "2 months";
+    case PACKAGE_TYPE.WEEKLY:
+      return "1 week";
+    default:
+      return "subscription period";
   }
 }
 
@@ -207,6 +243,11 @@ export default function SubscriptionScreen() {
         pkg.packageType,
         pkg.product.subscriptionPeriod,
       );
+      const subscriptionTitle = getSubscriptionTitle(pkg);
+      const length = getSubscriptionLength(
+        pkg.packageType,
+        pkg.product.subscriptionPeriod,
+      );
       const otherPkg = isYearly ? monthly : yearly;
       const pricePerUnit = getPricePerUnit(pkg, otherPkg);
       const introPrice = getIntroPriceText(pkg.product.introPrice);
@@ -216,6 +257,8 @@ export default function SubscriptionScreen() {
         package: pkg,
         title,
         period,
+        subscriptionTitle,
+        length,
         pricePerUnit,
         savings,
         introPrice,
@@ -284,7 +327,7 @@ export default function SubscriptionScreen() {
 
   const openUrl = async (url: string) => {
     try {
-      await WebBrowser.openBrowserAsync(url);
+      await Linking.openURL(url);
     } catch {
       Alert.alert("Error", "Unable to open link.");
     }
@@ -394,11 +437,15 @@ export default function SubscriptionScreen() {
     ? "Start Free Trial"
     : "Subscribe Now";
 
-  const renewalDisclosure = `Subscription auto-renews unless cancelled at least 24 hours before the end of the current period. You can manage or cancel in Settings → Subscriptions.${
-    selectedPlan?.introPrice
-      ? ` After the ${selectedPlan.introPrice}, the subscription auto-renews at ${selectedPlan.package.product.priceString}${selectedPlan.period}.`
-      : ""
-  }`;
+  const renewalDisclosure = selectedPlan
+    ? `${selectedPlan.subscriptionTitle} (${selectedPlan.length}) auto-renews at ${
+        selectedPlan.package.product.priceString
+      }${selectedPlan.period} unless cancelled at least 24 hours before the end of the current period. You can manage or cancel in Settings → Subscriptions.${
+        selectedPlan.introPrice
+          ? ` After the ${selectedPlan.introPrice}, the subscription auto-renews at ${selectedPlan.package.product.priceString}${selectedPlan.period}.`
+          : ""
+      }`
+    : "Subscription auto-renews unless cancelled at least 24 hours before the end of the current period. You can manage or cancel in Settings → Subscriptions.";
 
   return (
     <ScreenScrollView style={{ backgroundColor: theme.backgroundDefault }}>
@@ -488,9 +535,24 @@ export default function SubscriptionScreen() {
               )}
 
               <View style={styles.planHeader}>
-                <ThemedText style={[Typography.h3, { color: theme.text }]}>
-                  {plan.title}
-                </ThemedText>
+                <View style={styles.planHeaderLeft}>
+                  <ThemedText style={[Typography.h3, { color: theme.text }]}>
+                    {plan.title}
+                  </ThemedText>
+                  <ThemedText
+                    style={[
+                      styles.planSubscriptionTitle,
+                      { color: theme.tabIconDefault },
+                    ]}
+                  >
+                    {plan.subscriptionTitle}
+                  </ThemedText>
+                  <ThemedText
+                    style={[styles.planLength, { color: theme.tabIconDefault }]}
+                  >
+                    Length: {plan.length}
+                  </ThemedText>
+                </View>
                 <View>
                   <View style={styles.planPricing}>
                     <ThemedText
@@ -535,6 +597,14 @@ export default function SubscriptionScreen() {
               </View>
 
               <View style={styles.planFeatures}>
+                <ThemedText
+                  style={[
+                    styles.planFeaturesTitle,
+                    { color: theme.tabIconDefault },
+                  ]}
+                >
+                  What&apos;s included:
+                </ThemedText>
                 {plan.features.map((feature, idx) => (
                   <View key={idx} style={styles.planFeature}>
                     <Feather name="check" size={18} color={theme.success} />
@@ -559,6 +629,32 @@ export default function SubscriptionScreen() {
           >
             {renewalDisclosure}
           </ThemedText>
+          <ThemedText
+            style={[styles.includedText, { color: theme.tabIconDefault }]}
+          >
+            What&apos;s included: {PREMIUM_FEATURES.join(", ")}
+          </ThemedText>
+          <View style={styles.legalLinksContainer}>
+            <Pressable onPress={() => openUrl(TERMS_OF_SERVICE_URL)}>
+              <ThemedText style={[styles.legalLink, { color: theme.link }]}>
+                Terms of Use (EULA)
+              </ThemedText>
+            </Pressable>
+            <ThemedText
+              style={[
+                styles.legalLinkSeparator,
+                { color: theme.tabIconDefault },
+              ]}
+            >
+              {" "}
+              •{" "}
+            </ThemedText>
+            <Pressable onPress={() => openUrl(PRIVACY_POLICY_URL)}>
+              <ThemedText style={[styles.legalLink, { color: theme.link }]}>
+                Privacy Policy
+              </ThemedText>
+            </Pressable>
+          </View>
         </View>
 
         <Pressable
@@ -602,33 +698,6 @@ export default function SubscriptionScreen() {
             Restore Purchases
           </ThemedText>
         </Pressable>
-
-        <View style={styles.termsContainer}>
-          <ThemedText
-            style={[styles.termsText, { color: theme.tabIconDefault }]}
-          >
-            By subscribing, you agree to our{" "}
-            <Text
-              style={[styles.termsLink, { color: theme.link }]}
-              onPress={() => openUrl(TERMS_OF_SERVICE_URL)}
-            >
-              Terms of Use (EULA)
-            </Text>{" "}
-            and{" "}
-            <Text
-              style={[styles.termsLink, { color: theme.link }]}
-              onPress={() => openUrl(PRIVACY_POLICY_URL)}
-            >
-              Privacy Policy
-            </Text>
-            .{"\n\n"}
-            Subscription automatically renews monthly unless cancelled at least
-            24 hours before the end of the current period. Your account will be
-            charged for renewal within 24 hours prior to the end of the current
-            period. You can manage and cancel your subscriptions in your
-            device&apos;s Settings.
-          </ThemedText>
-        </View>
       </View>
     </ScreenScrollView>
   );
@@ -776,6 +845,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: Spacing.sm,
   },
+  planHeaderLeft: {
+    flex: 1,
+    marginRight: Spacing.md,
+  },
+  planSubscriptionTitle: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  planLength: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  planFeaturesTitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: Spacing.sm,
+  },
   disclosureContainer: {
     marginBottom: Spacing.xl,
   },
@@ -783,6 +869,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
     lineHeight: 18,
+  },
+  includedText: {
+    fontSize: 12,
+    textAlign: "center",
+    lineHeight: 18,
+    marginTop: Spacing.sm,
+  },
+  legalLinksContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: Spacing.md,
+  },
+  legalLink: {
+    fontSize: 13,
+    fontWeight: "600",
+    textDecorationLine: "underline",
+  },
+  legalLinkSeparator: {
+    fontSize: 13,
   },
   premiumCard: {
     padding: Spacing.lg,

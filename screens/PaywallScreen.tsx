@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useTheme } from "@/hooks/useTheme";
 import { getOfferings } from "@/config/revenuecat";
@@ -30,6 +30,8 @@ interface PlanOption {
   package: PurchasesPackage;
   title: string;
   period: string;
+  subscriptionTitle: string;
+  length: string;
   pricePerUnit?: string;
   savings?: string;
   introPrice?: string;
@@ -126,6 +128,41 @@ function getPeriodLabel(
       return "/2 months";
     case PACKAGE_TYPE.WEEKLY:
       return "/week";
+    default:
+      return "";
+  }
+}
+
+function getSubscriptionTitle(pkg: PurchasesPackage): string {
+  const title = pkg.product.title?.trim();
+  return title || getPlanTitle(pkg.packageType);
+}
+
+function getSubscriptionLength(
+  packageType: PACKAGE_TYPE,
+  isoPeriod: string | null,
+): string {
+  if (isoPeriod) {
+    if (isoPeriod === "P1M") return "1 month";
+    if (isoPeriod === "P1Y") return "1 year";
+    if (isoPeriod === "P6M") return "6 months";
+    if (isoPeriod === "P3M") return "3 months";
+    if (isoPeriod === "P2M") return "2 months";
+    if (isoPeriod === "P1W") return "1 week";
+  }
+  switch (packageType) {
+    case PACKAGE_TYPE.ANNUAL:
+      return "1 year";
+    case PACKAGE_TYPE.MONTHLY:
+      return "1 month";
+    case PACKAGE_TYPE.SIX_MONTH:
+      return "6 months";
+    case PACKAGE_TYPE.THREE_MONTH:
+      return "3 months";
+    case PACKAGE_TYPE.TWO_MONTH:
+      return "2 months";
+    case PACKAGE_TYPE.WEEKLY:
+      return "1 week";
     default:
       return "";
   }
@@ -243,6 +280,11 @@ export default function PaywallScreen({ navigation }: any) {
         pkg.packageType,
         pkg.product.subscriptionPeriod,
       );
+      const subscriptionTitle = getSubscriptionTitle(pkg);
+      const length = getSubscriptionLength(
+        pkg.packageType,
+        pkg.product.subscriptionPeriod,
+      );
       const otherPkg = isYearly ? monthly : yearly;
       const pricePerUnit = getPricePerUnit(pkg, otherPkg);
       const introPrice = getIntroPriceText(pkg.product.introPrice);
@@ -252,6 +294,8 @@ export default function PaywallScreen({ navigation }: any) {
         package: pkg,
         title,
         period,
+        subscriptionTitle,
+        length,
         pricePerUnit,
         savings,
         introPrice,
@@ -268,7 +312,7 @@ export default function PaywallScreen({ navigation }: any) {
 
   const openUrl = async (url: string) => {
     try {
-      await WebBrowser.openBrowserAsync(url);
+      await Linking.openURL(url);
     } catch {
       Alert.alert("Error", "Unable to open link.");
     }
@@ -499,6 +543,52 @@ export default function PaywallScreen({ navigation }: any) {
       opacity: 0.7,
       marginLeft: 8,
     },
+    planHeaderLeft: {
+      flex: 1,
+      marginRight: 16,
+    },
+    planSubscriptionTitle: {
+      fontSize: 13,
+      color: theme.text,
+      marginTop: 2,
+    },
+    planLength: {
+      fontSize: 13,
+      color: theme.text,
+      marginTop: 2,
+    },
+    planFeaturesTitle: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: theme.text,
+      marginBottom: 8,
+    },
+    includedText: {
+      fontSize: 12,
+      color: theme.text,
+      opacity: 0.7,
+      textAlign: "center",
+      lineHeight: 18,
+      marginTop: 8,
+      marginBottom: 12,
+    },
+    legalLinksContainer: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 12,
+    },
+    legalLink: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: theme.primary,
+      textDecorationLine: "underline",
+    },
+    legalLinkSeparator: {
+      fontSize: 13,
+      color: theme.text,
+      opacity: 0.7,
+    },
     ctaSection: {
       paddingHorizontal: 20,
       marginBottom: 20,
@@ -571,8 +661,14 @@ export default function PaywallScreen({ navigation }: any) {
     ? "Start Free Trial"
     : "Subscribe Now";
 
-  const renewalDisclosure = selectedPlan?.introPrice
-    ? `Your ${selectedPlan.introPrice} starts today. After the trial, your subscription will be ${selectedPlan.package.product.priceString}${selectedPlan.period} and auto-renews unless cancelled at least 24 hours before the end of the current period. You can manage or cancel in Settings → Subscriptions.`
+  const renewalDisclosure = selectedPlan
+    ? `${selectedPlan.subscriptionTitle} (${selectedPlan.length}) auto-renews at ${
+        selectedPlan.package.product.priceString
+      }${selectedPlan.period} unless cancelled at least 24 hours before the end of the current period. You can manage or cancel in Settings → Subscriptions.${
+        selectedPlan.introPrice
+          ? ` After the ${selectedPlan.introPrice}, the subscription auto-renews at ${selectedPlan.package.product.priceString}${selectedPlan.period}.`
+          : ""
+      }`
     : "Subscription auto-renews unless cancelled at least 24 hours before the end of the current period. You can manage or cancel in Settings → Subscriptions.";
 
   return (
@@ -645,7 +741,22 @@ export default function PaywallScreen({ navigation }: any) {
               )}
 
               <View style={styles.planHeader}>
-                <Text style={styles.planTitle}>{plan.title}</Text>
+                <View style={styles.planHeaderLeft}>
+                  <Text style={styles.planTitle}>{plan.title}</Text>
+                  <Text
+                    style={[
+                      styles.planSubscriptionTitle,
+                      { color: theme.tabIconDefault },
+                    ]}
+                  >
+                    {plan.subscriptionTitle}
+                  </Text>
+                  <Text
+                    style={[styles.planLength, { color: theme.tabIconDefault }]}
+                  >
+                    Length: {plan.length}
+                  </Text>
+                </View>
                 <View>
                   <View style={styles.planPricing}>
                     <Text style={styles.planPrice}>
@@ -666,6 +777,14 @@ export default function PaywallScreen({ navigation }: any) {
               </View>
 
               <View style={styles.planFeatures}>
+                <Text
+                  style={[
+                    styles.planFeaturesTitle,
+                    { color: theme.tabIconDefault },
+                  ]}
+                >
+                  What&apos;s included:
+                </Text>
                 {plan.features.map((feature, idx) => (
                   <View key={idx} style={styles.planFeature}>
                     <Ionicons
@@ -683,6 +802,30 @@ export default function PaywallScreen({ navigation }: any) {
 
         <View style={styles.ctaSection}>
           <Text style={styles.disclosureText}>{renewalDisclosure}</Text>
+          <Text style={[styles.includedText, { color: theme.tabIconDefault }]}>
+            What&apos;s included: {PREMIUM_FEATURES.join(", ")}
+          </Text>
+          <View style={styles.legalLinksContainer}>
+            <TouchableOpacity onPress={() => openUrl(TERMS_OF_SERVICE_URL)}>
+              <Text style={[styles.legalLink, { color: theme.primary }]}>
+                Terms of Use (EULA)
+              </Text>
+            </TouchableOpacity>
+            <Text
+              style={[
+                styles.legalLinkSeparator,
+                { color: theme.tabIconDefault },
+              ]}
+            >
+              {" "}
+              •{" "}
+            </Text>
+            <TouchableOpacity onPress={() => openUrl(PRIVACY_POLICY_URL)}>
+              <Text style={[styles.legalLink, { color: theme.primary }]}>
+                Privacy Policy
+              </Text>
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity
             style={styles.subscribeButton}
             onPress={handlePurchase}
@@ -715,25 +858,6 @@ export default function PaywallScreen({ navigation }: any) {
               <Text style={styles.restoreButtonText}>Restore Purchases</Text>
             )}
           </TouchableOpacity>
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Cancel anytime. Auto-renews unless cancelled.{"\n"}
-            <Text
-              style={styles.footerLink}
-              onPress={() => openUrl(TERMS_OF_SERVICE_URL)}
-            >
-              Terms of Use (EULA)
-            </Text>
-            {" • "}
-            <Text
-              style={styles.footerLink}
-              onPress={() => openUrl(PRIVACY_POLICY_URL)}
-            >
-              Privacy Policy
-            </Text>
-          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>

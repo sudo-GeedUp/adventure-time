@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -6,6 +6,8 @@ import {
   Pressable,
   Alert,
   Platform,
+  Modal,
+  TextInput,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
@@ -13,7 +15,10 @@ import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { storage, StatusUpdate } from "@/utils/storage";
 import { Spacing, Typography, BorderRadius } from "@/constants/theme";
-import { subscribeToFriends, saveFriendToFirebase } from "@/utils/firebaseHelpers";
+import {
+  subscribeToFriends,
+  saveFriendToFirebase,
+} from "@/utils/firebaseHelpers";
 
 let MapView: any = null;
 let Marker: any = null;
@@ -66,6 +71,11 @@ export default function FriendsScreen() {
   const [userLocation, setUserLocation] = useState(INITIAL_REGION);
   const [useFirebase, setUseFirebase] = useState(false);
   const [unsubscribe, setUnsubscribe] = useState<(() => void) | null>(null);
+  const [addModalVisible, setAddModalVisible] = useState(false);
+  const [newFriendName, setNewFriendName] = useState("");
+  const [newFriendVehicle, setNewFriendVehicle] = useState("");
+  const dbRef = useRef<any>(null);
+  const userRef = useRef<any>(null);
   const mapsAvailable = MapView !== null;
 
   useEffect(() => {
@@ -86,11 +96,17 @@ export default function FriendsScreen() {
         const user = getCurrentUser();
         if (user) {
           const { subscribeToFriends } = require("@/utils/firebaseHelpers");
-          const unsubscribeFn = subscribeToFriends(db, user.uid, (friendsData: Friend[]) => {
-            setFriends(friendsData);
-            setUseFirebase(true);
-          });
+          const unsubscribeFn = subscribeToFriends(
+            db,
+            user.uid,
+            (friendsData: Friend[]) => {
+              setFriends(friendsData);
+              setUseFirebase(true);
+            },
+          );
           setUnsubscribe(() => unsubscribeFn);
+          dbRef.current = db;
+          userRef.current = user;
           return;
         }
       }
@@ -107,75 +123,48 @@ export default function FriendsScreen() {
     setUpdates(recentUpdates);
   };
 
-  const addSampleFriends = async () => {
-    if (!useFirebase) {
-      Alert.alert(
-        "Firebase Not Configured",
-        "Add your Firebase credentials to .env to enable real-time friends. For now, using local storage.",
-        [{ text: "OK" }]
-      );
-    }
-    const sampleFriends: Friend[] = [
-      {
-        id: "friend_1",
-        name: "Alex Mountain",
-        vehicleType: "Jeep Wrangler",
-        location: { latitude: 40.75, longitude: -73.98 },
-        lastSeen: Date.now() - 10 * 60 * 1000,
-        adventures: [
-          {
-            id: "adv_1",
-            title: "Rocky trail recovery",
-            location: "Bear Mountain",
-            timestamp: Date.now() - 30 * 60 * 1000,
-            difficulty: "Hard",
-          },
-          {
-            id: "adv_2",
-            title: "Sand dune exploration",
-            location: "Desert Valley",
-            timestamp: Date.now() - 2 * 60 * 60 * 1000,
-            difficulty: "Moderate",
-          },
-        ],
-      },
-      {
-        id: "friend_2",
-        name: "Jordan Trail",
-        vehicleType: "Ford F-150",
-        location: { latitude: 40.73, longitude: -74.01 },
-        lastSeen: Date.now() - 5 * 60 * 1000,
-        adventures: [
-          {
-            id: "adv_3",
-            title: "Mud pit rescue",
-            location: "Swamp Creek",
-            timestamp: Date.now() - 1 * 60 * 60 * 1000,
-            difficulty: "Hard",
-          },
-        ],
-      },
-      {
-        id: "friend_3",
-        name: "Casey Off-Road",
-        vehicleType: "Toyota 4Runner",
-        location: { latitude: 40.72, longitude: -74.02 },
-        lastSeen: Date.now() - 15 * 60 * 1000,
-        adventures: [
-          {
-            id: "adv_4",
-            title: "Rock crawling adventure",
-            location: "Stone Valley",
-            timestamp: Date.now() - 45 * 60 * 1000,
-            difficulty: "Hard",
-          },
-        ],
-      },
-    ];
+  const openAddFriendModal = () => {
+    setNewFriendName("");
+    setNewFriendVehicle("");
+    setAddModalVisible(true);
+  };
 
-    // Using local storage for friends data
-    await storage.saveFriendsData(sampleFriends);
-    setFriends(sampleFriends);
+  const handleAddFriend = async () => {
+    const name = newFriendName.trim();
+    const vehicle = newFriendVehicle.trim();
+
+    if (!name || !vehicle) {
+      Alert.alert("Missing Info", "Please enter a name and vehicle type.");
+      return;
+    }
+
+    const friend: Friend = {
+      id: `friend_${Date.now()}`,
+      name,
+      vehicleType: vehicle,
+      location: {
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+      },
+      lastSeen: Date.now(),
+      adventures: [],
+    };
+
+    try {
+      await storage.addFriend(friend);
+      setFriends((prev) => [...prev, friend]);
+
+      if (dbRef.current && userRef.current) {
+        await saveFriendToFirebase(dbRef.current, userRef.current.uid, friend);
+      }
+
+      setAddModalVisible(false);
+      setNewFriendName("");
+      setNewFriendVehicle("");
+    } catch (error) {
+      console.error("Error adding friend:", error);
+      Alert.alert("Error", "Unable to add friend. Please try again.");
+    }
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -219,7 +208,12 @@ export default function FriendsScreen() {
   const StatusUpdateCard = ({ update }: { update: StatusUpdate }) => {
     const { icon, color } = getStatusIcon(update.status);
     return (
-      <View style={[styles.updateCard, { backgroundColor: theme.backgroundDefault }]}>
+      <View
+        style={[
+          styles.updateCard,
+          { backgroundColor: theme.backgroundDefault },
+        ]}
+      >
         <View style={[styles.updateIcon, { backgroundColor: color + "20" }]}>
           <Feather name={icon as any} size={20} color={color} />
         </View>
@@ -240,8 +234,8 @@ export default function FriendsScreen() {
             {update.status === "mobile"
               ? "is mobile again"
               : update.status === "recovering"
-              ? "is recovering"
-              : "is stuck"}
+                ? "is recovering"
+                : "is stuck"}
             {update.location ? ` • ${update.location}` : ""}
           </ThemedText>
         </View>
@@ -253,7 +247,9 @@ export default function FriendsScreen() {
   };
 
   const FriendCard = ({ friend }: { friend: Friend }) => (
-    <View style={[styles.friendCard, { backgroundColor: theme.backgroundDefault }]}>
+    <View
+      style={[styles.friendCard, { backgroundColor: theme.backgroundDefault }]}
+    >
       <View style={styles.friendHeader}>
         <View style={styles.friendInfo}>
           <ThemedText style={[Typography.h4, { marginBottom: Spacing.xs }]}>
@@ -294,7 +290,10 @@ export default function FriendsScreen() {
                   {adventure.title}
                 </ThemedText>
                 <ThemedText
-                  style={[Typography.small, { color: theme.text, opacity: 0.7 }]}
+                  style={[
+                    Typography.small,
+                    { color: theme.text, opacity: 0.7 },
+                  ]}
                 >
                   {adventure.location}
                 </ThemedText>
@@ -362,87 +361,154 @@ export default function FriendsScreen() {
   }
 
   return (
-    <ScreenScrollView
-      contentContainerStyle={{ paddingBottom: Spacing.xl }}
-    >
-      <View style={styles.header}>
-        <View>
-          <ThemedText style={[Typography.h3, { marginBottom: Spacing.xs }]}>
-            Adventure Friends
-          </ThemedText>
-          <ThemedText style={[Typography.small, { color: theme.text }]}>
-            {friends.length} friends online
-          </ThemedText>
-        </View>
-        {mapsAvailable && (
-          <Pressable
-            onPress={() => setMapView(true)}
-            style={[
-              styles.mapButton,
-              { backgroundColor: theme.primary },
-            ]}
-          >
-            <Feather name="map" size={18} color="#fff" />
-          </Pressable>
-        )}
-      </View>
-
-      {updates.length > 0 && (
-        <View style={styles.updatesSection}>
-          <ThemedText style={[Typography.h4, styles.sectionTitle]}>
-            Recent Updates
-          </ThemedText>
-          {updates.map((update) => (
-            <StatusUpdateCard key={update.id} update={update} />
-          ))}
-        </View>
-      )}
-
-      {friends.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Feather
-            name="users"
-            size={48}
-            color={theme.tabIconDefault}
-            style={{ marginBottom: Spacing.lg }}
-          />
-          <ThemedText style={[Typography.h4, { marginBottom: Spacing.sm }]}>
-            No Friends Yet
-          </ThemedText>
-          <ThemedText
-            style={[
-              Typography.small,
-              { textAlign: "center", color: theme.text },
-            ]}
-          >
-            {useFirebase
-              ? "Waiting for friends to connect..."
-              : "Add friends to see their adventures and locations"}
-          </ThemedText>
-          {!useFirebase && (
+    <>
+      <ScreenScrollView contentContainerStyle={{ paddingBottom: Spacing.xl }}>
+        <View style={styles.header}>
+          <View>
+            <ThemedText style={[Typography.h3, { marginBottom: Spacing.xs }]}>
+              Adventure Friends
+            </ThemedText>
+            <ThemedText style={[Typography.small, { color: theme.text }]}>
+              {friends.length} friends online
+            </ThemedText>
+          </View>
+          {mapsAvailable && (
             <Pressable
-              onPress={addSampleFriends}
-              style={[
-                styles.addFriendsButton,
-                { backgroundColor: theme.primary },
-              ]}
+              onPress={() => setMapView(true)}
+              style={[styles.mapButton, { backgroundColor: theme.primary }]}
             >
-              <ThemedText style={[Typography.button, { color: "#fff" }]}>
-                Add Sample Friends
-              </ThemedText>
+              <Feather name="map" size={18} color="#fff" />
             </Pressable>
           )}
         </View>
-      ) : (
-        <FlatList
-          scrollEnabled={false}
-          data={friends}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <FriendCard friend={item} />}
-          contentContainerStyle={{ gap: Spacing.lg }}
-        />
-      )}
-    </ScreenScrollView>
+
+        {updates.length > 0 && (
+          <View style={styles.updatesSection}>
+            <ThemedText style={[Typography.h4, styles.sectionTitle]}>
+              Recent Updates
+            </ThemedText>
+            {updates.map((update) => (
+              <StatusUpdateCard key={update.id} update={update} />
+            ))}
+          </View>
+        )}
+
+        {friends.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Feather
+              name="users"
+              size={48}
+              color={theme.tabIconDefault}
+              style={{ marginBottom: Spacing.lg }}
+            />
+            <ThemedText style={[Typography.h4, { marginBottom: Spacing.sm }]}>
+              No Friends Yet
+            </ThemedText>
+            <ThemedText
+              style={[
+                Typography.small,
+                { textAlign: "center", color: theme.text },
+              ]}
+            >
+              {useFirebase
+                ? "Waiting for friends to connect..."
+                : "Add friends to see their adventures and locations"}
+            </ThemedText>
+            {!useFirebase && (
+              <Pressable
+                onPress={openAddFriendModal}
+                style={[
+                  styles.addFriendsButton,
+                  { backgroundColor: theme.primary },
+                ]}
+              >
+                <ThemedText style={[Typography.button, { color: "#fff" }]}>
+                  Add Friends
+                </ThemedText>
+              </Pressable>
+            )}
+          </View>
+        ) : (
+          <FlatList
+            scrollEnabled={false}
+            data={friends}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <FriendCard friend={item} />}
+            contentContainerStyle={{ gap: Spacing.lg }}
+          />
+        )}
+      </ScreenScrollView>
+
+      <Modal
+        visible={addModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setAddModalVisible(false)}
+      >
+        <View
+          style={[
+            styles.modalOverlay,
+            { backgroundColor: "rgba(0, 0, 0, 0.5)" },
+          ]}
+        >
+          <View
+            style={[
+              styles.modalContainer,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
+            <ThemedText style={[Typography.h4, { marginBottom: Spacing.md }]}>
+              Add Friend
+            </ThemedText>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  color: theme.text,
+                  borderColor: theme.border,
+                  backgroundColor: theme.backgroundSecondary,
+                },
+              ]}
+              placeholder="Friend name"
+              placeholderTextColor={theme.tabIconDefault}
+              value={newFriendName}
+              onChangeText={setNewFriendName}
+            />
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  color: theme.text,
+                  borderColor: theme.border,
+                  backgroundColor: theme.backgroundSecondary,
+                },
+              ]}
+              placeholder="Vehicle type"
+              placeholderTextColor={theme.tabIconDefault}
+              value={newFriendVehicle}
+              onChangeText={setNewFriendVehicle}
+            />
+            <View style={styles.modalButtons}>
+              <Pressable
+                style={[
+                  styles.modalButton,
+                  { backgroundColor: theme.backgroundSecondary },
+                ]}
+                onPress={() => setAddModalVisible(false)}
+              >
+                <ThemedText style={{ color: theme.text }}>Cancel</ThemedText>
+              </Pressable>
+              <Pressable
+                style={[styles.modalButton, { backgroundColor: theme.primary }]}
+                onPress={handleAddFriend}
+              >
+                <ThemedText style={{ color: "#fff" }}>Save</ThemedText>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -549,5 +615,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.lg,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    marginHorizontal: Spacing.lg,
+    width: "85%",
+    maxWidth: 400,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.md,
+    fontSize: 16,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: Spacing.md,
+    marginTop: Spacing.md,
+  },
+  modalButton: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
   },
 });

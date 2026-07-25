@@ -1,7 +1,7 @@
 {
   "configVersion": 0,
   "apple": {
-    "version": "2.0.0(11)",
+    "version": "2.0.1(14)",
     "copyright": "© 2026 Mason Gallegos. All Rights Reserved",
     "release": {
       "automaticRelease": false
@@ -85,7 +85,7 @@
       "demoUsername": "",
       "demoPassword": "",
       "demoRequired": false,
-      "notes": "This is an off-road navigation and trail tracking app. No login is required to use the basic features. Users can immediately start exploring trails and tracking their adventures.\n\nKey features to test:\n- Live GPS tracking and speed display\n- Rally navigator with audio callouts\n- Community trail database\n- AI Recovery Scan feature\n- SOS emergency sharing\n\nBusiness model: The app is free to download. A premium monthly subscription (com.masongallegos.itsadventuretime.premium.monthly.v2) and yearly subscription (com.masongallegos.itsadventuretime.premium.yearly.v2) unlock premium features. The subscriptions are handled through RevenueCat.\n\nThe app works offline once trails are downloaded.\nNo demo account is required."
+      "notes": "This is an off-road navigation and trail tracking app. No login is required to use the basic features. Users can immediately start exploring trails and tracking their adventures.\n\nKey features to test:\n- Live GPS tracking and speed display\n- Rally navigator with audio callouts\n- Community trail database\n- AI Recovery Scan feature\n- SOS emergency sharing\n\nBusiness model: The app is free to download. A premium monthly subscription (com.masongallegos.itsadventuretime.premium.monthly.v2) and yearly subscription (com.masongallegos.itsadventuretime.premium.yearly.v2) unlock premium features. The subscriptions are handled through RevenueCat.\n\nThe app works offline once trails are downloaded.\nNo demo account is required.\n\nThe paywall and subscription screen now clearly display the App Store Connect product title, subscription length, price, a 'What's included' list, and tappable Terms of Use (EULA) and Privacy Policy links before any purchase button.\n\nA screen recording demonstrating the updated paywall, subscription disclosure, and tappable legal links is attached in the App Review Information section below."
     }
   }
 }
