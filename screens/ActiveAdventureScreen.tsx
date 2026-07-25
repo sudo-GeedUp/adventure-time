@@ -24,6 +24,7 @@ import {
   AssistanceWaypoint,
   CompletedAdventure,
 } from "@/utils/storage";
+import { MapLayerType, getTileSource } from "@/utils/mapTiles";
 import * as Location from "expo-location";
 import { calculateDistance } from "@/utils/location";
 import { useSubscription } from "@/contexts/SubscriptionContext";
@@ -42,6 +43,7 @@ import { EmergencySOS } from "@/utils/emergencySOS";
 let MapView: any = null;
 let Marker: any = null;
 let Polyline: any = null;
+let UrlTile: any = null;
 
 if (Platform.OS !== "web") {
   try {
@@ -50,6 +52,7 @@ if (Platform.OS !== "web") {
     MapView = maps.default;
     Marker = maps.Marker;
     Polyline = maps.Polyline;
+    UrlTile = maps.UrlTile;
   } catch {
     console.log("Maps not available");
   }
@@ -419,6 +422,23 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: "rgba(255,255,255,0.1)",
   },
+  mapLayerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: Spacing.sm,
+    gap: Spacing.xs,
+  },
+  mapLayerButton: {
+    flex: 1,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.sm,
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.2)",
+  },
+  mapLayerButtonText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
 });
 
 export default function ActiveAdventureScreen() {
@@ -447,11 +467,17 @@ export default function ActiveAdventureScreen() {
   const [hazardDescription, setHazardDescription] = useState("");
   const [assistanceDescription, setAssistanceDescription] = useState("");
   const [showMap] = useState(true);
+  const [mapLayer, setMapLayer] = useState<MapLayerType>("default");
   const [navigationCallouts, setNavigationCallouts] = useState<
     NavigationCallout[]
   >([]);
   const [showNavigator, setShowNavigator] = useState(true);
   const [communityTrails, setCommunityTrails] = useState<any[]>([]);
+
+  const tileSource = useMemo(
+    () => getTileSource(mapLayer, isPremium),
+    [mapLayer, isPremium],
+  );
   const mapRef = React.useRef<any>(null);
   const endAdventureRef = React.useRef<(() => Promise<void>) | null>(null);
   const isTrackingRef = React.useRef(isTracking);
@@ -1047,7 +1073,7 @@ export default function ActiveAdventureScreen() {
               followsUserLocation
               showsMyLocationButton={false}
               showsCompass
-              mapType="hybrid"
+              mapType={mapLayer === "default" ? "hybrid" : "standard"}
               camera={{
                 center: {
                   latitude:
@@ -1062,6 +1088,15 @@ export default function ActiveAdventureScreen() {
                 altitude: 100,
               }}
             >
+              {tileSource && UrlTile && (
+                <UrlTile
+                  urlTemplate={tileSource.url}
+                  maximumZ={tileSource.maxZoom ?? 18}
+                  flipY={tileSource.flipY ?? false}
+                  zIndex={1}
+                />
+              )}
+
               {/* Community Trail Routes - Past User Logs */}
               {communityTrails.map(
                 (trail) =>
@@ -1139,6 +1174,38 @@ export default function ActiveAdventureScreen() {
                 { backgroundColor: theme.backgroundDefault + "F0" },
               ]}
             >
+              <View style={styles.mapLayerRow}>
+                {(["default", "satellite", "topo"] as MapLayerType[]).map(
+                  (layer) => (
+                    <Pressable
+                      key={layer}
+                      style={[
+                        styles.mapLayerButton,
+                        mapLayer === layer && {
+                          backgroundColor: theme.primary,
+                        },
+                      ]}
+                      onPress={() => setMapLayer(layer)}
+                    >
+                      <ThemedText
+                        style={[
+                          styles.mapLayerButtonText,
+                          {
+                            color: mapLayer === layer ? "white" : theme.text,
+                          },
+                        ]}
+                      >
+                        {layer === "default"
+                          ? "Default"
+                          : layer === "satellite"
+                            ? "Sat"
+                            : "Topo"}
+                      </ThemedText>
+                    </Pressable>
+                  ),
+                )}
+              </View>
+
               <View style={styles.trailInfoRow}>
                 <Feather name="navigation" size={16} color={theme.primary} />
                 <ThemedText

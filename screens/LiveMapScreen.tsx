@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { View, StyleSheet, Pressable, Alert, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
@@ -7,7 +13,9 @@ import ThemedText from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
+import { MapLayerType, getTileSource } from "@/utils/mapTiles";
 import { SAMPLE_TRAILS, Trail } from "@/utils/trails";
 import { calculateDistance } from "@/utils/location";
 import { OfflineMapsManager } from "@/utils/offlineMaps";
@@ -26,6 +34,7 @@ let MapView: any = null;
 let Marker: any = null;
 let Circle: any = null;
 let Polyline: any = null;
+let UrlTile: any = null;
 
 if (Platform.OS !== "web") {
   try {
@@ -35,6 +44,7 @@ if (Platform.OS !== "web") {
     Marker = maps.Marker;
     Circle = maps.Circle;
     Polyline = maps.Polyline;
+    UrlTile = maps.UrlTile;
     console.log("Maps loaded successfully:", !!MapView);
   } catch (e: any) {
     console.log("Maps load error:", e?.message || "Unknown error loading maps");
@@ -49,6 +59,7 @@ const MAX_REASONABLE_SPEED_MPS = 100;
 export default function LiveMapScreen() {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
+  const { isPremium } = useSubscription();
   const insets = useSafeAreaInsets();
   const mapRef = useRef<any>(null);
   const lastAcceptedLocationRef = useRef<any>(null);
@@ -74,6 +85,18 @@ export default function LiveMapScreen() {
     { adventure: CompletedAdventure; waypoint: AssistanceWaypoint }[]
   >([]);
   const [showCommunityTrails] = useState(true);
+  const [mapLayer, setMapLayer] = useState<MapLayerType>("default");
+
+  const tileSource = useMemo(
+    () => getTileSource(mapLayer, isPremium),
+    [mapLayer, isPremium],
+  );
+
+  const cycleMapLayer = () => {
+    const layers: MapLayerType[] = ["default", "satellite", "topo"];
+    const nextIndex = (layers.indexOf(mapLayer) + 1) % layers.length;
+    setMapLayer(layers[nextIndex]);
+  };
 
   const gpsAccuracyIsPoor =
     typeof gpsAccuracy === "number" &&
@@ -395,6 +418,15 @@ export default function LiveMapScreen() {
         onMapReady={() => setMapReady(true)}
         mapType="standard"
       >
+        {tileSource && UrlTile && (
+          <UrlTile
+            urlTemplate={tileSource.url}
+            maximumZ={tileSource.maxZoom ?? 18}
+            flipY={tileSource.flipY ?? false}
+            zIndex={1}
+          />
+        )}
+
         {/* User location accuracy circle */}
         {location && (
           <Circle
@@ -563,6 +595,24 @@ export default function LiveMapScreen() {
               color={isTracking ? theme.success : theme.warning}
             />
           </Pressable>
+
+          <Pressable
+            style={[
+              styles.controlButton,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+            onPress={cycleMapLayer}
+          >
+            <ThemedText
+              style={[styles.layerButtonText, { color: theme.primary }]}
+            >
+              {mapLayer === "default"
+                ? "D"
+                : mapLayer === "satellite"
+                  ? "S"
+                  : "T"}
+            </ThemedText>
+          </Pressable>
         </View>
       </View>
 
@@ -727,6 +777,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
+  },
+  layerButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
   },
   trailMarker: {
     width: 32,
