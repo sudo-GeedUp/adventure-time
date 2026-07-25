@@ -132,12 +132,16 @@ class AnalyticsService {
     }
   }
 
-  logSOSActivation(location: { latitude: number; longitude: number }) {
+  logSOSActivation(
+    location: { latitude: number; longitude: number },
+    contactCount?: number,
+  ) {
     if (!this.isInitialized) return;
     try {
       firebaseLogEvent(this.analytics, "sos_activation", {
         latitude: location.latitude,
         longitude: location.longitude,
+        contact_count: contactCount ?? 0,
         timestamp: Date.now(),
       });
     } catch (error) {

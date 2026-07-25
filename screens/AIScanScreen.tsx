@@ -11,6 +11,7 @@ import { storage } from "@/utils/storage";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { hapticFeedback } from "@/utils/haptics";
 import { isFirebaseAvailable, ScanSubmissionsService } from "@/utils/firebase";
+import { analyticsService } from "@/services/analyticsService";
 
 export default function AIScanScreen() {
   const navigation = useNavigation<any>();
@@ -171,6 +172,7 @@ export default function AIScanScreen() {
 
       if (!result.canceled && result.assets[0]) {
         hapticFeedback.success();
+        analyticsService.logAIScanUsage("camera", isPremium);
         try {
           const analysis = await analyzeImage(result.assets[0].uri);
           setAnalysisResult(analysis);
@@ -230,6 +232,7 @@ export default function AIScanScreen() {
 
     if (!result.canceled && result.assets[0]) {
       hapticFeedback.success();
+      analyticsService.logAIScanUsage("upload", isPremium);
       navigation.navigate("AIResults", { imageUri: result.assets[0].uri });
     }
   };

@@ -49,6 +49,7 @@ import {
   NavigationCallout,
 } from "@/services/rallyNavigatorService";
 import { EmergencySOS } from "@/utils/emergencySOS";
+import { analyticsService } from "@/services/analyticsService";
 
 let MapView: any = null;
 let Marker: any = null;
@@ -693,6 +694,12 @@ export default function ActiveAdventureScreen() {
       FirebaseLocationService.startLocationBroadcast(
         userProfile?.id || "anonymous",
       );
+
+      analyticsService.logAdventureStart(
+        trail.id || trail.name || "unknown",
+        trail.name || "Unknown Trail",
+        trail.difficulty || "Moderate",
+      );
     } catch {
       hapticFeedback.error();
       Alert.alert(
@@ -700,7 +707,7 @@ export default function ActiveAdventureScreen() {
         "Could not get your location. Please enable location services.",
       );
     }
-  }, []);
+  }, [trail.id, trail.name, trail.difficulty]);
 
   // Load community trail data
   const loadCommunityTrails = useCallback(async () => {
@@ -1007,6 +1014,12 @@ export default function ActiveAdventureScreen() {
     } as CompletedAdventure;
 
     await storage.saveCompletedAdventure(completedAdventure);
+
+    analyticsService.logAdventureComplete(
+      completedAdventure.id,
+      Date.now() - session.startTime,
+      session.currentDistance,
+    );
 
     // Only save to profile if premium
     if (isPremium) {

@@ -22,6 +22,8 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { ListItemSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import { EmptyState } from "@/components/EmptyState";
+import { notificationService } from "@/services/notificationService";
+import { analyticsService } from "@/services/analyticsService";
 
 const CATEGORIES = [
   { id: "recovery", label: "Recovery", icon: "tool" },
@@ -134,6 +136,19 @@ export default function CommunityTipsScreen() {
     };
 
     await storage.saveCommunityTip(newTip);
+
+    analyticsService.logTrailEvent(
+      newTip.category,
+      "info",
+      newTip.location
+        ? `${newTip.location.latitude.toFixed(4)},${newTip.location.longitude.toFixed(4)}`
+        : "no-location",
+    );
+    notificationService.sendTrailUpdateNotification(
+      newTip.title,
+      newTip.description,
+    );
+
     setTitle("");
     setDescription("");
     setIncludeLocation(false);

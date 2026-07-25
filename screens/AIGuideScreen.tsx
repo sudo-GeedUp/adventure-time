@@ -26,6 +26,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useNavigation } from "@react-navigation/native";
 import { hapticFeedback } from "@/utils/haptics";
 import * as Location from "expo-location";
+import { analyticsService } from "@/services/analyticsService";
 
 interface ChatMessage extends GuideMessage {
   id: string;
@@ -136,6 +137,7 @@ export default function AIGuideScreen() {
     }
 
     hapticFeedback.light();
+    analyticsService.logAIGuideQuery("chat", inputText.trim().length);
 
     if (!aiGuideService.isAvailable()) {
       Alert.alert(

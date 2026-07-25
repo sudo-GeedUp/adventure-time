@@ -153,6 +153,24 @@ class NotificationService {
     });
   }
 
+  async sendFriendAddedNotification(friendName: string, friendId: string) {
+    return this.scheduleLocalNotification({
+      type: "friend_request",
+      title: "Friend Added",
+      body: `${friendName} was added to your Adventure Friends.`,
+      data: { friendId },
+    });
+  }
+
+  async sendLocationSharedNotification(location: string, contactCount: number) {
+    return this.scheduleLocalNotification({
+      type: "trail_update",
+      title: "Location Shared",
+      body: `Your location was shared with ${contactCount} contact(s) at ${location}.`,
+      data: { location, contactCount },
+    });
+  }
+
   async sendTrailAlertNotification(
     trailName: string,
     alertType: string,

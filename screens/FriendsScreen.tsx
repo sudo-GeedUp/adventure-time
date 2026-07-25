@@ -19,6 +19,11 @@ import {
   subscribeToFriends,
   saveFriendToFirebase,
 } from "@/utils/firebaseHelpers";
+import { notificationService } from "@/services/notificationService";
+import { analyticsService } from "@/services/analyticsService";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
+import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
 
 let MapView: any = null;
 let Marker: any = null;
@@ -74,6 +79,8 @@ export default function FriendsScreen() {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [newFriendName, setNewFriendName] = useState("");
   const [newFriendVehicle, setNewFriendVehicle] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const dbRef = useRef<any>(null);
   const userRef = useRef<any>(null);
   const mapsAvailable = MapView !== null;
@@ -81,13 +88,17 @@ export default function FriendsScreen() {
   useEffect(() => {
     loadFriendsData();
     loadStatusUpdates();
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, []);
+  }, [unsubscribe]);
 
   const loadFriendsData = async () => {
-    // Try Firebase first, fallback to local storage
+    setIsLoading(true);
+    setError(null);
     try {
       const { getFirebaseServices } = require("@/config/firebase");
       const { db } = getFirebaseServices();
@@ -102,6 +113,7 @@ export default function FriendsScreen() {
             (friendsData: Friend[]) => {
               setFriends(friendsData);
               setUseFirebase(true);
+              setIsLoading(false);
             },
           );
           setUnsubscribe(() => unsubscribeFn);
@@ -114,8 +126,15 @@ export default function FriendsScreen() {
       // Firebase not available
     }
     // Fallback to local storage
-    const friendsData = await storage.getFriendsData();
-    setFriends(friendsData);
+    try {
+      const friendsData = await storage.getFriendsData();
+      setFriends(friendsData);
+    } catch (err) {
+      console.error("Error loading friends:", err);
+      setError("Unable to load friends. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const loadStatusUpdates = async () => {
@@ -157,6 +176,9 @@ export default function FriendsScreen() {
       if (dbRef.current && userRef.current) {
         await saveFriendToFirebase(dbRef.current, userRef.current.uid, friend);
       }
+
+      analyticsService.logFriendRequest("sent");
+      notificationService.sendFriendAddedNotification(friend.name, friend.id);
 
       setAddModalVisible(false);
       setNewFriendName("");
@@ -360,6 +382,48 @@ export default function FriendsScreen() {
     );
   }
 
+  if (isLoading) {
+    return (
+      <ScreenScrollView>
+        <View style={styles.header}>
+          <LoadingSkeleton
+            width="60%"
+            height={28}
+            style={{ marginBottom: Spacing.sm }}
+          />
+          <LoadingSkeleton
+            width={48}
+            height={48}
+            borderRadius={BorderRadius.md}
+          />
+        </View>
+        <LoadingSkeleton
+          height={120}
+          borderRadius={BorderRadius.lg}
+          style={{ marginBottom: Spacing.lg }}
+        />
+        <LoadingSkeleton
+          height={100}
+          borderRadius={BorderRadius.lg}
+          style={{ marginBottom: Spacing.lg }}
+        />
+        <LoadingSkeleton height={100} borderRadius={BorderRadius.lg} />
+      </ScreenScrollView>
+    );
+  }
+
+  if (error) {
+    return (
+      <ScreenScrollView>
+        <ErrorState
+          title="Couldn't load friends"
+          message={error}
+          onRetry={loadFriendsData}
+        />
+      </ScreenScrollView>
+    );
+  }
+
   return (
     <>
       <ScreenScrollView contentContainerStyle={{ paddingBottom: Spacing.xl }}>
@@ -394,40 +458,17 @@ export default function FriendsScreen() {
         )}
 
         {friends.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Feather
-              name="users"
-              size={48}
-              color={theme.tabIconDefault}
-              style={{ marginBottom: Spacing.lg }}
-            />
-            <ThemedText style={[Typography.h4, { marginBottom: Spacing.sm }]}>
-              No Friends Yet
-            </ThemedText>
-            <ThemedText
-              style={[
-                Typography.small,
-                { textAlign: "center", color: theme.text },
-              ]}
-            >
-              {useFirebase
+          <EmptyState
+            icon="users"
+            title="No Friends Yet"
+            description={
+              useFirebase
                 ? "Waiting for friends to connect..."
-                : "Add friends to see their adventures and locations"}
-            </ThemedText>
-            {!useFirebase && (
-              <Pressable
-                onPress={openAddFriendModal}
-                style={[
-                  styles.addFriendsButton,
-                  { backgroundColor: theme.primary },
-                ]}
-              >
-                <ThemedText style={[Typography.button, { color: "#fff" }]}>
-                  Add Friends
-                </ThemedText>
-              </Pressable>
-            )}
-          </View>
+                : "Add friends to see their adventures and locations"
+            }
+            actionLabel={!useFirebase ? "Add Friends" : undefined}
+            onAction={!useFirebase ? openAddFriendModal : undefined}
+          />
         ) : (
           <FlatList
             scrollEnabled={false}

@@ -7,3 +7,11 @@ android/
 upload_cert_new.der
 *.pem
 upload_cert_new.pem
+*.p8
+*.ipa
+build/
+private_keys/
+website/.firebase/
+website/node_modules/
+screenshot*.png
+RoutingAppCoverage*.geojson
