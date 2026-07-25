@@ -32,18 +32,16 @@
             "store/apple/screenshot/en-US/APP_IPAD_PRO_3GEN_129/Simulator Screenshot - iPad Pro 13-inch (M5) - 2026-07-13 at 01.32.43.png"
           ],
           "APP_IPHONE_67": [
-            "store/apple/screenshot/en-US/APP_IPHONE_67/6.9_display.png",
-            "store/apple/screenshot/en-US/APP_IPHONE_67/6.9_display.png",
-            "store/apple/screenshot/en-US/APP_IPHONE_67/6.9_display.png"
+            "images/6.9_display.png",
+            "images/6.9_display.png",
+            "images/6.9_display.png"
           ],
           "APP_IPHONE_55": [
-            "store/apple/screenshot/en-US/APP_IPHONE_55/5.5_display.png",
-            "store/apple/screenshot/en-US/APP_IPHONE_55/5.5_display.png",
-            "store/apple/screenshot/en-US/APP_IPHONE_55/5.5_display.png"
+            "images/5.5_display.png",
+            "images/5.5_display.png",
+            "images/5.5_display.png"
           ],
-          "APP_IPHONE_65": [
-            "store/apple/screenshot/en-US/APP_IPHONE_65/6.5_display.png"
-          ]
+          "APP_IPHONE_65": ["images/6.5_display.png"]
         }
       }
     },

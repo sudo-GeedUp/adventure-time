@@ -1,7 +1,0 @@
-Environment variables with visibility "Plain text" and "Sensitive" loaded from the "production" environment on EAS: EXPO_PUBLIC_REVENUECAT_ANDROID_KEY, EXPO_PUBLIC_REVENUECAT_IOS_KEY.
-
-✔ Using remote iOS credentials (Expo server)
-
-Distribution Certificate is not validated for non-interactive builds.
-Using App Store Connect API Key from EAS credentials service.
-⠋ Fetching Apple provisioning profiles
