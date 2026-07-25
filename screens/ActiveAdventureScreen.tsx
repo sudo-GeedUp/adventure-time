@@ -9,6 +9,7 @@ import {
   TextInput,
   ScrollView,
   KeyboardAvoidingView,
+  FlatList,
 } from "react-native";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
@@ -25,6 +26,7 @@ import {
   CompletedAdventure,
 } from "@/utils/storage";
 import { MapLayerType, getTileSource } from "@/utils/mapTiles";
+import { gpxRecorder } from "@/utils/gpxRecording";
 import * as Location from "expo-location";
 import { calculateDistance } from "@/utils/location";
 import { useSubscription } from "@/contexts/SubscriptionContext";
@@ -439,6 +441,38 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
+  selectRouteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.xs,
+    paddingVertical: Spacing.xs,
+    marginBottom: Spacing.sm,
+  },
+  selectRouteText: {
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  routeList: {
+    maxHeight: 300,
+  },
+  routeItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.sm,
+  },
+  routeItemText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  routeItemSource: {
+    fontSize: 12,
+    marginTop: Spacing.xs,
+    opacity: 0.7,
+  },
 });
 
 export default function ActiveAdventureScreen() {
@@ -452,7 +486,7 @@ export default function ActiveAdventureScreen() {
     [route],
   );
 
-  const targetRoute = useMemo(() => {
+  const targetRouteFromParams = useMemo(() => {
     const params = route.params as any;
     const completed = params?.completedAdventure as
       | CompletedAdventure
@@ -467,13 +501,79 @@ export default function ActiveAdventureScreen() {
     return null;
   }, [route]);
 
+  const [selectedRoute, setSelectedRoute] = useState<any[] | null>(
+    targetRouteFromParams,
+  );
+  const [showRouteSelector, setShowRouteSelector] = useState(false);
+  const [routesForSelection, setRoutesForSelection] = useState<
+    {
+      id: string;
+      title: string;
+      source: "community" | "gpx";
+      route: any[];
+      timestamp: number;
+    }[]
+  >([]);
+  const [isLoadingRoutes, setIsLoadingRoutes] = useState(false);
+
   const targetRoutePolyline = useMemo(() => {
-    if (!targetRoute) return null;
-    return targetRoute.map((point: any) => ({
+    if (!selectedRoute || selectedRoute.length < 2) return null;
+    return selectedRoute.map((point: any) => ({
       latitude: point.latitude,
       longitude: point.longitude,
     }));
-  }, [targetRoute]);
+  }, [selectedRoute]);
+
+  const loadRoutesForSelection = useCallback(async () => {
+    setIsLoadingRoutes(true);
+    try {
+      const [adventures, gpxTracks] = await Promise.all([
+        storage.getCommunityAdventures(),
+        gpxRecorder.getAllTracks(),
+      ]);
+
+      const communityRoutes = adventures
+        .filter((adv) => adv.route && adv.route.length > 1)
+        .map((adv) => ({
+          id: `community-${adv.id}`,
+          title: adv.title || adv.trailName || "Recorded Adventure",
+          source: "community" as const,
+          route: adv.route,
+          timestamp: adv.endTime || adv.startTime || 0,
+        }));
+
+      const gpxRoutes = gpxTracks
+        .filter((track) => track.trackPoints && track.trackPoints.length > 1)
+        .map((track) => ({
+          id: `gpx-${track.id}`,
+          title: track.name || "Imported GPX Track",
+          source: "gpx" as const,
+          route: track.trackPoints,
+          timestamp: track.endTime || track.startTime || 0,
+        }));
+
+      const allRoutes = [...communityRoutes, ...gpxRoutes].sort(
+        (a, b) => b.timestamp - a.timestamp,
+      );
+
+      setRoutesForSelection(allRoutes);
+    } catch (error) {
+      console.error("Error loading routes for selection:", error);
+      Alert.alert("Error", "Could not load routes.");
+    } finally {
+      setIsLoadingRoutes(false);
+    }
+  }, []);
+
+  const openRouteSelector = () => {
+    loadRoutesForSelection();
+    setShowRouteSelector(true);
+  };
+
+  const handleSelectRoute = (routeItem: (typeof routesForSelection)[0]) => {
+    setSelectedRoute(routeItem.route);
+    setShowRouteSelector(false);
+  };
 
   const [session, setSession] = useState<AdventureSession | null>(null);
   const [isTracking, setIsTracking] = useState(true);
@@ -1238,6 +1338,20 @@ export default function ActiveAdventureScreen() {
                 )}
               </View>
 
+              <Pressable
+                style={styles.selectRouteButton}
+                onPress={openRouteSelector}
+              >
+                <Feather name="map" size={16} color={theme.primary} />
+                <ThemedText
+                  style={[styles.selectRouteText, { color: theme.text }]}
+                >
+                  {selectedRoute
+                    ? "Change Target Route"
+                    : "Select Target Route"}
+                </ThemedText>
+              </Pressable>
+
               <View style={styles.trailInfoRow}>
                 <Feather name="navigation" size={16} color={theme.primary} />
                 <ThemedText
@@ -1791,6 +1905,80 @@ export default function ActiveAdventureScreen() {
             </View>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Route Selector Modal */}
+      <Modal
+        visible={showRouteSelector}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowRouteSelector(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <ThemedText style={[Typography.h3, styles.modalTitle]}>
+                Select Target Route
+              </ThemedText>
+              <Pressable onPress={() => setShowRouteSelector(false)}>
+                <Feather name="x" size={24} color={theme.tabIconDefault} />
+              </Pressable>
+            </View>
+
+            {isLoadingRoutes ? (
+              <ThemedText style={{ color: theme.tabIconDefault }}>
+                Loading routes...
+              </ThemedText>
+            ) : routesForSelection.length === 0 ? (
+              <ThemedText style={{ color: theme.tabIconDefault }}>
+                No recorded adventures or GPX tracks found.
+              </ThemedText>
+            ) : (
+              <FlatList
+                data={routesForSelection}
+                keyExtractor={(item) => item.id}
+                style={styles.routeList}
+                renderItem={({ item }) => (
+                  <Pressable
+                    style={[
+                      styles.routeItem,
+                      { backgroundColor: theme.backgroundSecondary },
+                    ]}
+                    onPress={() => handleSelectRoute(item)}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <ThemedText
+                        style={[styles.routeItemText, { color: theme.text }]}
+                      >
+                        {item.title}
+                      </ThemedText>
+                      <ThemedText
+                        style={[
+                          styles.routeItemSource,
+                          { color: theme.tabIconDefault },
+                        ]}
+                      >
+                        {item.source === "community"
+                          ? "Recorded Adventure"
+                          : "Imported GPX"}
+                      </ThemedText>
+                    </View>
+                    <Feather
+                      name="chevron-right"
+                      size={20}
+                      color={theme.tabIconDefault}
+                    />
+                  </Pressable>
+                )}
+              />
+            )}
+          </View>
+        </View>
       </Modal>
     </ThemedView>
   );
