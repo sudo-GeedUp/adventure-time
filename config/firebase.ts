@@ -1,7 +1,12 @@
-import { initializeApp } from "firebase/app";
-import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { initializeApp, getApps, getApp } from "firebase/app";
+import {
+  getAuth,
+  setPersistence,
+  browserLocalPersistence,
+} from "firebase/auth";
 import { getDatabase } from "firebase/database";
 import { getFirestore } from "firebase/firestore";
+import { Platform } from "react-native";
 
 // Replace these with your Firebase project credentials
 // Get these from Firebase Console: https://console.firebase.google.com
@@ -27,21 +32,23 @@ export const initializeFirebase = async () => {
       return null;
     }
 
-    app = initializeApp(firebaseConfig);
+    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getDatabase(app);
     firestore = getFirestore(app);
 
-    // Set persistence for auth
-    try {
-      await setPersistence(auth, browserLocalPersistence);
-    } catch (error) {
-      console.log("Persistence not available, using default");
+    // Set persistence for auth on web only; React Native uses its own default
+    if (Platform.OS === "web") {
+      try {
+        await setPersistence(auth, browserLocalPersistence);
+      } catch {
+        console.log("Persistence not available, using default");
+      }
     }
 
     return { auth, db, firestore };
-  } catch (error) {
-    console.error("Firebase initialization error:", error);
+  } catch {
+    console.error("Firebase initialization error");
     return null;
   }
 };
