@@ -143,20 +143,22 @@ export function getNextTurn(
     (1 - segmentProgress) *
     segmentDistance(route[segmentIndex], route[segmentIndex + 1]);
 
-  for (let i = segmentIndex + 1; i < route.length - 2; i++) {
-    const b1 = bearing(route[i], route[i + 1]);
-    const b2 = bearing(route[i + 1], route[i + 2]);
-    let delta = ((b2 - b1 + 540) % 360) - 180;
+  for (let i = segmentIndex + 1; i < route.length - 1; i++) {
+    distanceToTurn += segmentDistance(route[i], route[i + 1]);
 
-    if (Math.abs(delta) > TURN_THRESHOLD_DEGREES) {
-      return {
-        distance: distanceToTurn,
-        direction: delta > 0 ? "left" : "right",
-        bearingChange: Math.abs(delta),
-      };
+    if (i < route.length - 2) {
+      const b1 = bearing(route[i], route[i + 1]);
+      const b2 = bearing(route[i + 1], route[i + 2]);
+      let delta = ((b2 - b1 + 540) % 360) - 180;
+
+      if (Math.abs(delta) > TURN_THRESHOLD_DEGREES) {
+        return {
+          distance: distanceToTurn,
+          direction: delta > 0 ? "left" : "right",
+          bearingChange: Math.abs(delta),
+        };
+      }
     }
-
-    distanceToTurn += segmentDistance(route[i + 1], route[i + 2]);
   }
 
   return null;
