@@ -1,7 +1,7 @@
 {
   "name": "my-app",
   "main": "index.js",
-  "version": "1.0.0",
+  "version": "2.1.1",
   "scripts": {
     "dev": "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start",
     "start": "npx expo start",

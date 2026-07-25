@@ -5,7 +5,7 @@ export default {
     owner: "sinjingallegos",
     icon: "./assets/images/icon.png",
     reactCompiler: false,
-    version: "2.0.1",
+    version: "2.1.1",
 
     runtimeVersion: {
       policy: "sdkVersion",
@@ -56,7 +56,7 @@ export default {
 
     ios: {
       bundleIdentifier: "com.masongallegos.itsadventuretime",
-      buildNumber: "14",
+      buildNumber: "2",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },
@@ -64,7 +64,7 @@ export default {
 
     android: {
       package: "com.masongallegos.itsadventuretime",
-      versionCode: 9,
+      versionCode: 10,
       adaptiveIcon: {
         foregroundImage: "./assets/images/icon.png",
         backgroundColor: "#FF6B35",
