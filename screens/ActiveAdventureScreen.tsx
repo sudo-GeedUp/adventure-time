@@ -452,6 +452,29 @@ export default function ActiveAdventureScreen() {
     [route],
   );
 
+  const targetRoute = useMemo(() => {
+    const params = route.params as any;
+    const completed = params?.completedAdventure as
+      | CompletedAdventure
+      | undefined;
+    if (completed?.route && completed.route.length > 1) {
+      return completed.route;
+    }
+    const routeData = params?.targetRoute as any[] | undefined;
+    if (routeData && routeData.length > 1) {
+      return routeData;
+    }
+    return null;
+  }, [route]);
+
+  const targetRoutePolyline = useMemo(() => {
+    if (!targetRoute) return null;
+    return targetRoute.map((point: any) => ({
+      latitude: point.latitude,
+      longitude: point.longitude,
+    }));
+  }, [targetRoute]);
+
   const [session, setSession] = useState<AdventureSession | null>(null);
   const [isTracking, setIsTracking] = useState(true);
   const [speed, setSpeed] = useState(0);
@@ -1094,6 +1117,15 @@ export default function ActiveAdventureScreen() {
                   maximumZ={tileSource.maxZoom ?? 18}
                   flipY={tileSource.flipY ?? false}
                   zIndex={1}
+                />
+              )}
+
+              {/* Target Route Polyline */}
+              {targetRoutePolyline && targetRoutePolyline.length > 1 && (
+                <Polyline
+                  coordinates={targetRoutePolyline}
+                  strokeColor={theme.accent}
+                  strokeWidth={5}
                 />
               )}
 
