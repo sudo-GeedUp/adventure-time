@@ -10,7 +10,7 @@ import Constants from "expo-constants";
 
 export default function SettingsScreen() {
   const { theme } = useTheme();
-  const appVersion = Constants.expoConfig?.version ?? "1.0.0";
+  const appVersion = Constants.expoConfig?.version ?? "2.1.1";
   const buildNumber = Constants.expoConfig?.ios?.buildNumber;
   const versionText = buildNumber
     ? `${appVersion} (${buildNumber})`

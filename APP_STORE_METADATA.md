@@ -1,9 +1,11 @@
 # Adventure Time - App Store Metadata
 
 ## App Name
+
 Adventure Time
 
 ## Subtitle (30 characters max)
+
 Off-Road Trail Tracker & GPS
 
 ## Description
@@ -49,31 +51,40 @@ Discover, track, and share your off-road adventures with Adventure Time - the ul
 Whether you're exploring desert trails, mountain passes, or forest roads, Adventure Time keeps you safe, connected, and ready for your next adventure.
 
 ## Keywords (100 characters max, comma-separated)
+
 off-road,4x4,trails,GPS,adventure,tracking,recovery,offroad,jeep,overlanding,navigation,hiking
 
 ## Promotional Text (170 characters max)
+
 Track your off-road adventures with live GPS, discover nearby trails, and get AI-powered recovery assistance. Join the Adventure Time community today!
 
 ## Support URL
+
 https://adventuretime.app/support
 
 ## Marketing URL
+
 https://adventuretime.app
 
 ## Privacy Policy URL
+
 https://adventuretime.app/privacy
 
 ## Category
+
 Primary: Navigation
 Secondary: Travel
 
 ## Age Rating
+
 4+ (No objectionable content)
 
 ## Copyright
+
 © 2025 Adventure Time
 
 ## Screenshots Needed
+
 1. Navigate Screen - Trail list with "Take Me There" buttons
 2. Active Adventure Screen - Live GPS map tracking
 3. AI Scan Screen - Recovery analysis example
@@ -82,13 +93,15 @@ Secondary: Travel
 6. Friends Screen - Social connections
 
 ## App Preview Video (Optional)
+
 - Show starting an adventure
 - Live GPS tracking in action
 - Using "Take Me There" navigation
 - AI Recovery Scan demo
 - Community features
 
-## What's New (Version 1.0.0)
+## What's New (Version 2.1.1)
+
 Welcome to Adventure Time!
 
 • Track your off-road adventures with live GPS
