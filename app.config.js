@@ -5,7 +5,7 @@ export default {
     owner: "sinjingallegos",
     icon: "./assets/images/icon.png",
     reactCompiler: false,
-    version: "2.0.0",
+    version: "2.0.1",
 
     runtimeVersion: {
       policy: "sdkVersion",
@@ -44,7 +44,7 @@ export default {
 
     ios: {
       bundleIdentifier: "com.masongallegos.itsadventuretime",
-      buildNumber: "11",
+      buildNumber: "14",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },
@@ -68,6 +68,8 @@ export default {
       eas: {
         projectId: "02cac41b-21af-4ee7-bda0-26b4042a9013",
       },
+      mapboxAccessToken: process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN,
+      mapTilerKey: process.env.EXPO_PUBLIC_MAPTILER_KEY,
     },
   },
 };

@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { Trail, getTrailsNearLocation } from "@/utils/trails";
 import { calculateDistance } from "@/utils/location";
-import { storage } from "@/utils/storage";
+import { storage, CompletedAdventure } from "@/utils/storage";
 import { useNavigation } from "@react-navigation/native";
 import { pickSmartRandomAdventure } from "@/utils/adventurePicker";
 import { OfflineMapsManager } from "@/utils/offlineMaps";
@@ -298,6 +298,47 @@ export default function ExploreMapScreen() {
         longitudeDelta: 0.1,
       });
     }
+  };
+
+  const startCommunityAdventure = (adventure: Adventure) => {
+    const fullAdventure = rawCommunityAdventures.find(
+      (adv: CompletedAdventure) => adv.id === adventure.id,
+    );
+
+    if (!fullAdventure || !fullAdventure.route?.length) {
+      Alert.alert(
+        "No Route",
+        "This community adventure does not have a recorded route.",
+      );
+      return;
+    }
+
+    const trail: Trail = {
+      id: fullAdventure.id,
+      name: fullAdventure.trailName || fullAdventure.title || "Community Route",
+      description: `Community route by ${fullAdventure.userName || "Unknown"}`,
+      difficulty: fullAdventure.difficulty || "Moderate",
+      distance: fullAdventure.totalDistance || 0,
+      duration:
+        fullAdventure.endTime && fullAdventure.startTime
+          ? Math.round(
+              (fullAdventure.endTime - fullAdventure.startTime) / 1000 / 60,
+            )
+          : 0,
+      landType: "public",
+      location: fullAdventure.route[0] || { latitude: 0, longitude: 0 },
+      elevation: fullAdventure.maxAltitude || 0,
+      features: [],
+      vehicleTypes: [fullAdventure.vehicleType || "All"],
+      safetyRating: 7,
+      popularity: 5,
+    };
+
+    setSelectedItem(null);
+    navigation.navigate("ActiveAdventure", {
+      trail,
+      completedAdventure: fullAdventure,
+    });
   };
 
   const handleRandomAdventure = () => {
@@ -584,13 +625,12 @@ export default function ExploreMapScreen() {
             <Pressable
               style={[styles.cardButton, { backgroundColor: theme.accent }]}
               onPress={() => {
-                setSelectedItem(null);
-                // Navigate to adventure details
+                startCommunityAdventure(data);
               }}
             >
-              <Feather name="eye" size={18} color="white" />
+              <Feather name="navigation" size={18} color="white" />
               <ThemedText style={styles.cardButtonText}>
-                View Details
+                Follow Route
               </ThemedText>
             </Pressable>
           </>

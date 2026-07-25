@@ -26,6 +26,7 @@ import {
   CompletedAdventure,
 } from "@/utils/storage";
 import { MapLayerType, getTileSource } from "@/utils/mapTiles";
+import { OfflineMapsManager } from "@/utils/offlineMaps";
 import { gpxRecorder } from "@/utils/gpxRecording";
 import * as Location from "expo-location";
 import { calculateDistance } from "@/utils/location";
@@ -586,6 +587,14 @@ export default function ActiveAdventureScreen() {
   const handleSelectRoute = (routeItem: (typeof routesForSelection)[0]) => {
     setSelectedRoute(routeItem.route);
     setShowRouteSelector(false);
+
+    // Cache the selected route for offline navigation
+    OfflineMapsManager.cacheSelectedRoute(
+      routeItem.route,
+      routeItem.title,
+      routeItem.source,
+      routeItem.id,
+    );
   };
 
   const [snappedLocation, setSnappedLocation] = useState<NavPoint | null>(null);
@@ -708,6 +717,55 @@ export default function ActiveAdventureScreen() {
       console.error("[Community Data] Error loading trails:", error);
     }
   }, []);
+
+  // Restore the last cached route when no route was passed via navigation
+  useEffect(() => {
+    if (targetRouteFromParams) return;
+
+    const restoreCachedRoute = async () => {
+      try {
+        const cached = await OfflineMapsManager.getCachedSelectedRoute();
+        if (cached?.route && cached.route.length > 1) {
+          setSelectedRoute(cached.route);
+        }
+      } catch (error) {
+        console.error("Error restoring cached route:", error);
+      }
+    };
+
+    restoreCachedRoute();
+  }, [targetRouteFromParams]);
+
+  // Cache the selected route whenever it changes (including routes passed via navigation)
+  useEffect(() => {
+    if (!selectedRoute || selectedRoute.length < 2) return;
+
+    const navParams = route.params as any;
+    const completedAdventure = navParams?.completedAdventure as
+      | CompletedAdventure
+      | undefined;
+    if (completedAdventure?.route === selectedRoute) {
+      OfflineMapsManager.cacheSelectedRoute(
+        selectedRoute,
+        completedAdventure.title ||
+          completedAdventure.trailName ||
+          "Community Route",
+        "community",
+        completedAdventure.id,
+      );
+      return;
+    }
+
+    const targetRoute = navParams?.targetRoute as any[] | undefined;
+    if (targetRoute === selectedRoute && trail?.name) {
+      OfflineMapsManager.cacheSelectedRoute(
+        selectedRoute,
+        trail.name,
+        "gpx",
+        trail.id,
+      );
+    }
+  }, [selectedRoute, route, trail]);
 
   // Initialize adventure session
   useEffect(() => {

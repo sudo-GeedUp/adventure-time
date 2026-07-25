@@ -4,17 +4,22 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import NavigateScreen from "@/screens/NavigateScreen";
 import ActiveAdventureScreen from "@/screens/ActiveAdventureScreen";
 import { useTheme } from "@/hooks/useTheme";
+import { CompletedAdventure } from "@/utils/storage";
 import { Trail } from "@/utils/trails";
 
 // Conditionally import LiveMapScreen only on native platforms
-const LiveMapScreen = Platform.OS !== "web" 
-  ? require("@/screens/LiveMapScreen").default 
-  : null;
+const LiveMapScreen =
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Platform.OS !== "web" ? require("@/screens/LiveMapScreen").default : null;
 
 export type NavigateStackParamList = {
   LiveMap: undefined;
   NavigateMain: undefined;
-  ActiveAdventure: { trail: Trail };
+  ActiveAdventure: {
+    trail: Trail;
+    completedAdventure?: CompletedAdventure;
+    targetRoute?: { latitude: number; longitude: number }[];
+  };
 };
 
 const Stack = createNativeStackNavigator<NavigateStackParamList>();

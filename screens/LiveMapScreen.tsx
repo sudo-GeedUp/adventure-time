@@ -5,7 +5,15 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { View, StyleSheet, Pressable, Alert, Platform } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  Alert,
+  Platform,
+  Modal,
+  FlatList,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
@@ -29,6 +37,7 @@ import {
   CompletedAdventure,
   AssistanceWaypoint,
 } from "@/utils/storage";
+import { gpxRecorder } from "@/utils/gpxRecording";
 
 let MapView: any = null;
 let Marker: any = null;
@@ -86,6 +95,17 @@ export default function LiveMapScreen() {
   >([]);
   const [showCommunityTrails] = useState(true);
   const [mapLayer, setMapLayer] = useState<MapLayerType>("default");
+  const [showRouteSelector, setShowRouteSelector] = useState(false);
+  const [routesForSelection, setRoutesForSelection] = useState<
+    {
+      id: string;
+      title: string;
+      source: "community" | "gpx";
+      route: any[];
+      timestamp: number;
+    }[]
+  >([]);
+  const [isLoadingRoutes, setIsLoadingRoutes] = useState(false);
 
   const tileSource = useMemo(
     () => getTileSource(mapLayer, isPremium),
@@ -96,6 +116,96 @@ export default function LiveMapScreen() {
     const layers: MapLayerType[] = ["default", "satellite", "topo"];
     const nextIndex = (layers.indexOf(mapLayer) + 1) % layers.length;
     setMapLayer(layers[nextIndex]);
+  };
+
+  const loadRoutesForSelection = useCallback(async () => {
+    setIsLoadingRoutes(true);
+    try {
+      const [adventures, gpxTracks] = await Promise.all([
+        storage.getCommunityAdventures(),
+        gpxRecorder.getAllTracks(),
+      ]);
+
+      const communityRoutes = adventures
+        .filter((adv) => adv.route && adv.route.length > 1)
+        .map((adv) => ({
+          id: `community-${adv.id}`,
+          title: adv.title || adv.trailName || "Recorded Adventure",
+          source: "community" as const,
+          route: adv.route,
+          timestamp: adv.endTime || adv.startTime || 0,
+        }));
+
+      const gpxRoutes = gpxTracks
+        .filter((track) => track.trackPoints && track.trackPoints.length > 1)
+        .map((track) => ({
+          id: `gpx-${track.id}`,
+          title: track.name || "Imported GPX Track",
+          source: "gpx" as const,
+          route: track.trackPoints,
+          timestamp: track.endTime || track.startTime || 0,
+        }));
+
+      setRoutesForSelection(
+        [...communityRoutes, ...gpxRoutes].sort(
+          (a, b) => b.timestamp - a.timestamp,
+        ),
+      );
+    } catch (error) {
+      console.error("Error loading routes for selection:", error);
+      Alert.alert("Error", "Could not load routes.");
+    } finally {
+      setIsLoadingRoutes(false);
+    }
+  }, []);
+
+  const openRouteSelector = () => {
+    loadRoutesForSelection();
+    setShowRouteSelector(true);
+  };
+
+  const startAdventureWithRoute = (
+    routeItem: (typeof routesForSelection)[0],
+  ) => {
+    setShowRouteSelector(false);
+
+    const location = routeItem.route[0] || { latitude: 0, longitude: 0 };
+    const trail: Trail = {
+      id: routeItem.id,
+      name: routeItem.title,
+      description:
+        routeItem.source === "community"
+          ? "Community recorded route"
+          : "Imported GPX track",
+      difficulty: "Moderate",
+      distance: 0,
+      duration: 0,
+      landType: "public",
+      location,
+      elevation: 0,
+      features: [],
+      vehicleTypes: ["All"],
+      safetyRating: 7,
+      popularity: 5,
+    };
+
+    if (routeItem.source === "community") {
+      const adventure = communityAdventures.find(
+        (adv) => `community-${adv.id}` === routeItem.id,
+      );
+      if (adventure) {
+        navigation.navigate("ActiveAdventure", {
+          trail,
+          completedAdventure: adventure,
+        });
+        return;
+      }
+    }
+
+    navigation.navigate("ActiveAdventure", {
+      trail,
+      targetRoute: routeItem.route,
+    });
   };
 
   const gpsAccuracyIsPoor =
@@ -613,6 +723,16 @@ export default function LiveMapScreen() {
                   : "T"}
             </ThemedText>
           </Pressable>
+
+          <Pressable
+            style={[
+              styles.controlButton,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+            onPress={openRouteSelector}
+          >
+            <Feather name="map" size={20} color={theme.primary} />
+          </Pressable>
         </View>
       </View>
 
@@ -668,6 +788,80 @@ export default function LiveMapScreen() {
         </View>
       )}
 
+      {/* Route Selector Modal */}
+      <Modal
+        visible={showRouteSelector}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowRouteSelector(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <ThemedText style={[Typography.h3, styles.modalTitle]}>
+                Select Target Route
+              </ThemedText>
+              <Pressable onPress={() => setShowRouteSelector(false)}>
+                <Feather name="x" size={24} color={theme.tabIconDefault} />
+              </Pressable>
+            </View>
+
+            {isLoadingRoutes ? (
+              <ThemedText style={{ color: theme.tabIconDefault }}>
+                Loading routes...
+              </ThemedText>
+            ) : routesForSelection.length === 0 ? (
+              <ThemedText style={{ color: theme.tabIconDefault }}>
+                No recorded adventures or GPX tracks found.
+              </ThemedText>
+            ) : (
+              <FlatList
+                data={routesForSelection}
+                keyExtractor={(item) => item.id}
+                style={styles.routeList}
+                renderItem={({ item }) => (
+                  <Pressable
+                    style={[
+                      styles.routeItem,
+                      { backgroundColor: theme.backgroundSecondary },
+                    ]}
+                    onPress={() => startAdventureWithRoute(item)}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <ThemedText
+                        style={[styles.routeItemText, { color: theme.text }]}
+                      >
+                        {item.title}
+                      </ThemedText>
+                      <ThemedText
+                        style={[
+                          styles.routeItemSource,
+                          { color: theme.tabIconDefault },
+                        ]}
+                      >
+                        {item.source === "community"
+                          ? "Recorded Adventure"
+                          : "Imported GPX"}
+                      </ThemedText>
+                    </View>
+                    <Feather
+                      name="chevron-right"
+                      size={20}
+                      color={theme.tabIconDefault}
+                    />
+                  </Pressable>
+                )}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
+
       {/* Nearby Trails List */}
       <View
         style={[
@@ -721,6 +915,46 @@ export default function LiveMapScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    borderTopLeftRadius: BorderRadius.lg,
+    borderTopRightRadius: BorderRadius.lg,
+    padding: Spacing.xl,
+    maxHeight: "85%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+  },
+  modalTitle: {
+    flex: 1,
+  },
+  routeList: {
+    maxHeight: 300,
+  },
+  routeItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.sm,
+  },
+  routeItemText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  routeItemSource: {
+    fontSize: 12,
+    marginTop: Spacing.xs,
+    opacity: 0.7,
   },
   header: {
     paddingHorizontal: Spacing.lg,
