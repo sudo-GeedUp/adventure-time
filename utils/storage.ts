@@ -14,6 +14,7 @@ const KEYS = {
   FIRST_LAUNCH: "@adventure-time/first_launch",
   SPECIAL_THANKS_SHOWN: "@adventure-time/special_thanks_shown",
   COMMUNITY_ADVENTURES: "@adventure-time/community_adventures",
+  EXPO_PUSH_TOKEN: "@adventure-time/expo_push_token",
 };
 
 export interface TrailStats {
@@ -1000,6 +1001,23 @@ export const storage = {
       await AsyncStorage.setItem(key, String(value));
     } catch (error) {
       console.error("Error setting value:", error);
+    }
+  },
+
+  async saveExpoPushToken(token: string): Promise<void> {
+    try {
+      await AsyncStorage.setItem(KEYS.EXPO_PUSH_TOKEN, token);
+    } catch (error) {
+      console.error("Error saving push token:", error);
+    }
+  },
+
+  async getExpoPushToken(): Promise<string | null> {
+    try {
+      return await AsyncStorage.getItem(KEYS.EXPO_PUSH_TOKEN);
+    } catch (error) {
+      console.error("Error getting push token:", error);
+      return null;
     }
   },
 };

@@ -17,6 +17,9 @@ import { useTheme } from "@/hooks/useTheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
+import { TrailCardSkeleton } from "@/components/LoadingSkeleton";
+import { EmptyState } from "@/components/EmptyState";
+import { ErrorState } from "@/components/ErrorState";
 import ExploreMapScreen from "./ExploreMapScreen";
 import {
   getTrailsNearLocation,
@@ -53,6 +56,8 @@ export default function NavigateScreen() {
   const [cachedTrails, setCachedTrails] = useState<Set<string>>(new Set());
   const [communityTrails, setCommunityTrails] = useState<Trail[]>([]);
   const [viewMode, setViewMode] = useState<"map" | "list">("list");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const requestLocationPermission = useCallback(async () => {
     try {
@@ -154,29 +159,39 @@ export default function NavigateScreen() {
   const loadNearbyTrails = useCallback(async () => {
     if (!location) return;
 
-    let nearbyTrails = getTrailsNearLocation(location.coords, 50);
+    setIsLoading(true);
+    setError(null);
 
-    // Merge offline cached trails
     try {
-      const cachedTrails = await OfflineMapsManager.getTrailsNearLocation(
-        location.coords,
-        50,
-      );
-      const trailMap = new Map<string, Trail>();
-      nearbyTrails.forEach((t) => trailMap.set(t.id, t));
-      cachedTrails.forEach((t) => trailMap.set(t.id, t as Trail));
-      nearbyTrails = Array.from(trailMap.values());
-    } catch (error) {
-      console.error("Error loading cached trails:", error);
-    }
+      let nearbyTrails = getTrailsNearLocation(location.coords, 50);
 
-    const allTrails = [...nearbyTrails, ...communityTrails];
-    const sortedByDistance = allTrails.sort((a, b) => {
-      const distA = calculateDistance(location.coords, a.location);
-      const distB = calculateDistance(location.coords, b.location);
-      return distA - distB;
-    });
-    setTrails(sortedByDistance);
+      // Merge offline cached trails
+      try {
+        const cachedTrails = await OfflineMapsManager.getTrailsNearLocation(
+          location.coords,
+          50,
+        );
+        const trailMap = new Map<string, Trail>();
+        nearbyTrails.forEach((t) => trailMap.set(t.id, t));
+        cachedTrails.forEach((t) => trailMap.set(t.id, t as Trail));
+        nearbyTrails = Array.from(trailMap.values());
+      } catch (cacheError) {
+        console.error("Error loading cached trails:", cacheError);
+      }
+
+      const allTrails = [...nearbyTrails, ...communityTrails];
+      const sortedByDistance = allTrails.sort((a, b) => {
+        const distA = calculateDistance(location.coords, a.location);
+        const distB = calculateDistance(location.coords, b.location);
+        return distA - distB;
+      });
+      setTrails(sortedByDistance);
+    } catch (err) {
+      console.error("Error loading nearby trails:", err);
+      setError("Failed to load trails.");
+    } finally {
+      setIsLoading(false);
+    }
   }, [location, communityTrails]);
 
   const applyFilters = useCallback(() => {
@@ -711,7 +726,19 @@ export default function NavigateScreen() {
         </View>
       </View>
 
-      {filteredTrails.length > 0 ? (
+      {error ? (
+        <ErrorState
+          title="Couldn't load trails"
+          message={error}
+          onRetry={loadNearbyTrails}
+        />
+      ) : isLoading ? (
+        <View style={{ gap: Spacing.md }}>
+          <TrailCardSkeleton />
+          <TrailCardSkeleton />
+          <TrailCardSkeleton />
+        </View>
+      ) : filteredTrails.length > 0 ? (
         <>
           <ThemedText style={[Typography.label, styles.resultCount]}>
             {filteredTrails.length} trail
@@ -724,16 +751,17 @@ export default function NavigateScreen() {
           </View>
         </>
       ) : (
-        <View style={styles.emptyState}>
-          <Feather name="search" size={48} color={theme.tabIconDefault} />
-          <ThemedText
-            style={[styles.emptyText, { color: theme.tabIconDefault }]}
-          >
-            {trails.length === 0
-              ? "Loading trails..."
-              : "No trails match your filters or search."}
-          </ThemedText>
-        </View>
+        <EmptyState
+          icon="search"
+          title="No trails found"
+          description={
+            trails.length === 0
+              ? "No trails available nearby. Try again later."
+              : "No trails match your filters or search."
+          }
+          actionLabel="Refresh"
+          onAction={loadNearbyTrails}
+        />
       )}
     </ScrollView>
   );

@@ -40,6 +40,18 @@ export default {
           recordAudioAndroid: false,
         },
       ],
+      [
+        "expo-notifications",
+        {
+          mode:
+            process.env.EXPO_PUBLIC_NOTIFICATIONS_MODE ||
+            (process.env.EAS_BUILD_PROFILE === "development"
+              ? "development"
+              : "production"),
+          color: "#FF6B35",
+          defaultChannel: "default",
+        },
+      ],
     ],
 
     ios: {

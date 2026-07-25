@@ -1,5 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, TextInput, Alert, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  TextInput,
+  Alert,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import * as Location from "expo-location";
 import { Feather } from "@expo/vector-icons";
@@ -8,8 +17,11 @@ import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
-import { storage, CommunityTip, UserProfile } from "@/utils/storage";
+import { storage, CommunityTip } from "@/utils/storage";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { ListItemSkeleton } from "@/components/LoadingSkeleton";
+import { ErrorState } from "@/components/ErrorState";
+import { EmptyState } from "@/components/EmptyState";
 
 const CATEGORIES = [
   { id: "recovery", label: "Recovery", icon: "tool" },
@@ -25,33 +37,39 @@ export default function CommunityTipsScreen() {
   const { isPremium } = useSubscription();
   const insets = useSafeAreaInsets();
   const [tips, setTips] = useState<CommunityTip[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<CommunityTip["category"]>("recovery");
+  const [selectedCategory, setSelectedCategory] =
+    useState<CommunityTip["category"]>("recovery");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [includeLocation, setIncludeLocation] = useState(false);
   const [suggestedSpeed, setSuggestedSpeed] = useState("");
 
-  useEffect(() => {
-    loadTips();
-  }, []);
+  const loadTips = useCallback(async () => {
+    setError(null);
 
-  const loadTips = async () => {
     if (!isPremium) {
-      Alert.alert(
-        "Premium Feature",
-        "Viewing community tips and trail conditions is a premium feature. Subscribe to access this feature!",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Subscribe", onPress: () => (navigation as any).navigate("ProfileTab", { screen: "Subscription" }) }
-        ]
-      );
+      setTips([]);
       return;
     }
 
-    const communityTips = await storage.getCommunityTips();
-    setTips(communityTips);
-  };
+    setIsLoading(true);
+    try {
+      const communityTips = await storage.getCommunityTips();
+      setTips(communityTips);
+    } catch (err) {
+      console.error("Error loading community tips:", err);
+      setError("Failed to load community tips.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isPremium]);
+
+  useEffect(() => {
+    loadTips();
+  }, [loadTips]);
 
   const handleSubmitTip = async () => {
     if (!isPremium) {
@@ -60,14 +78,23 @@ export default function CommunityTipsScreen() {
         "Posting community tips and trail conditions is a premium feature. Subscribe to share your knowledge!",
         [
           { text: "Cancel", style: "cancel" },
-          { text: "Subscribe", onPress: () => (navigation as any).navigate("ProfileTab", { screen: "Subscription" }) }
-        ]
+          {
+            text: "Subscribe",
+            onPress: () =>
+              (navigation as any).navigate("ProfileTab", {
+                screen: "Subscription",
+              }),
+          },
+        ],
       );
       return;
     }
 
     if (!title.trim() || !description.trim()) {
-      Alert.alert("Missing Information", "Please provide both a title and description");
+      Alert.alert(
+        "Missing Information",
+        "Please provide both a title and description",
+      );
       return;
     }
 
@@ -90,7 +117,7 @@ export default function CommunityTipsScreen() {
     }
 
     const speedValue = suggestedSpeed ? parseFloat(suggestedSpeed) : undefined;
-    
+
     const newTip: CommunityTip = {
       id: Date.now().toString(),
       title: title.trim(),
@@ -126,17 +153,29 @@ export default function CommunityTipsScreen() {
     const timeAgo = getTimeAgo(item.timestamp);
 
     return (
-      <View style={[styles.tipCard, { backgroundColor: theme.backgroundDefault }]}>
+      <View
+        style={[styles.tipCard, { backgroundColor: theme.backgroundDefault }]}
+      >
         <View style={styles.tipHeader}>
           <View style={styles.categoryBadge}>
-            <Feather name={category?.icon as any} size={14} color={theme.primary} />
-            <ThemedText style={styles.categoryText}>{category?.label}</ThemedText>
+            <Feather
+              name={category?.icon as any}
+              size={14}
+              color={theme.primary}
+            />
+            <ThemedText style={styles.categoryText}>
+              {category?.label}
+            </ThemedText>
           </View>
           <ThemedText style={styles.timeText}>{timeAgo}</ThemedText>
         </View>
 
-        <ThemedText style={[Typography.h4, styles.tipTitle]}>{item.title}</ThemedText>
-        <ThemedText style={styles.tipDescription}>{item.description}</ThemedText>
+        <ThemedText style={[Typography.h4, styles.tipTitle]}>
+          {item.title}
+        </ThemedText>
+        <ThemedText style={styles.tipDescription}>
+          {item.description}
+        </ThemedText>
 
         <View style={styles.tipFooter}>
           <View style={styles.authorInfo}>
@@ -146,7 +185,12 @@ export default function CommunityTipsScreen() {
             </ThemedText>
           </View>
           {item.suggestedSpeed ? (
-            <View style={[styles.speedBadge, { backgroundColor: theme.primary + "20" }]}>
+            <View
+              style={[
+                styles.speedBadge,
+                { backgroundColor: theme.primary + "20" },
+              ]}
+            >
               <Feather name="navigation" size={14} color={theme.primary} />
               <ThemedText style={[styles.speedText, { color: theme.primary }]}>
                 {item.suggestedSpeed} mph
@@ -156,7 +200,9 @@ export default function CommunityTipsScreen() {
           {item.location ? (
             <View style={styles.locationBadge}>
               <Feather name="map-pin" size={14} color={theme.tabIconDefault} />
-              <ThemedText style={styles.locationText}>Location included</ThemedText>
+              <ThemedText style={styles.locationText}>
+                Location included
+              </ThemedText>
             </View>
           ) : null}
         </View>
@@ -203,147 +249,243 @@ export default function CommunityTipsScreen() {
           }}
         >
           <View style={styles.container}>
-          <ThemedText style={[Typography.h3, styles.formTitle]}>Share a Tip</ThemedText>
-
-          <View style={styles.section}>
-            <ThemedText style={styles.label}>Category</ThemedText>
-            <View style={styles.categoryGrid}>
-              {CATEGORIES.map((cat) => (
-                <Pressable
-                  key={cat.id}
-                  style={[
-                    styles.categoryChip,
-                    {
-                      backgroundColor:
-                        selectedCategory === cat.id
-                          ? theme.primary + "20"
-                          : theme.backgroundDefault,
-                      borderColor:
-                        selectedCategory === cat.id ? theme.primary : theme.border,
-                    },
-                  ]}
-                  onPress={() => setSelectedCategory(cat.id as CommunityTip["category"])}
-                >
-                  <Feather
-                    name={cat.icon as any}
-                    size={18}
-                    color={selectedCategory === cat.id ? theme.primary : theme.tabIconDefault}
-                  />
-                  <ThemedText
-                    style={[
-                      styles.categoryChipText,
-                      { color: selectedCategory === cat.id ? theme.primary : theme.text },
-                    ]}
-                  >
-                    {cat.label}
-                  </ThemedText>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <ThemedText style={styles.label}>Title</ThemedText>
-            <TextInput
-              style={[styles.input, { backgroundColor: theme.backgroundDefault, color: theme.text }]}
-              placeholder="Brief, descriptive title"
-              placeholderTextColor={theme.tabIconDefault}
-              value={title}
-              onChangeText={setTitle}
-            />
-          </View>
-
-          <View style={styles.section}>
-            <ThemedText style={styles.label}>Description</ThemedText>
-            <TextInput
-              style={[
-                styles.input,
-                styles.textArea,
-                { backgroundColor: theme.backgroundDefault, color: theme.text },
-              ]}
-              placeholder="Share your tip or trail condition report in detail..."
-              placeholderTextColor={theme.tabIconDefault}
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={6}
-              textAlignVertical="top"
-            />
-          </View>
-
-          <View style={styles.section}>
-            <ThemedText style={styles.label}>Suggested Trail Speed (Optional)</ThemedText>
-            <ThemedText style={[styles.speedHintText, { color: theme.tabIconDefault }]}>
-              Help others know a safe speed for this area
+            <ThemedText style={[Typography.h3, styles.formTitle]}>
+              Share a Tip
             </ThemedText>
-            <View style={styles.speedInputRow}>
-              <Feather name="navigation" size={20} color={theme.primary} />
+
+            <View style={styles.section}>
+              <ThemedText style={styles.label}>Category</ThemedText>
+              <View style={styles.categoryGrid}>
+                {CATEGORIES.map((cat) => (
+                  <Pressable
+                    key={cat.id}
+                    style={[
+                      styles.categoryChip,
+                      {
+                        backgroundColor:
+                          selectedCategory === cat.id
+                            ? theme.primary + "20"
+                            : theme.backgroundDefault,
+                        borderColor:
+                          selectedCategory === cat.id
+                            ? theme.primary
+                            : theme.border,
+                      },
+                    ]}
+                    onPress={() =>
+                      setSelectedCategory(cat.id as CommunityTip["category"])
+                    }
+                  >
+                    <Feather
+                      name={cat.icon as any}
+                      size={18}
+                      color={
+                        selectedCategory === cat.id
+                          ? theme.primary
+                          : theme.tabIconDefault
+                      }
+                    />
+                    <ThemedText
+                      style={[
+                        styles.categoryChipText,
+                        {
+                          color:
+                            selectedCategory === cat.id
+                              ? theme.primary
+                              : theme.text,
+                        },
+                      ]}
+                    >
+                      {cat.label}
+                    </ThemedText>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <ThemedText style={styles.label}>Title</ThemedText>
               <TextInput
                 style={[
-                  styles.speedFormInput,
+                  styles.input,
                   {
                     backgroundColor: theme.backgroundDefault,
                     color: theme.text,
-                    borderColor: theme.border,
                   },
                 ]}
-                placeholder="e.g. 15"
+                placeholder="Brief, descriptive title"
                 placeholderTextColor={theme.tabIconDefault}
-                keyboardType="numeric"
-                value={suggestedSpeed}
-                onChangeText={setSuggestedSpeed}
-                maxLength={3}
+                value={title}
+                onChangeText={setTitle}
               />
-              <ThemedText style={[styles.speedUnitText, { color: theme.tabIconDefault }]}>
-                mph
+            </View>
+
+            <View style={styles.section}>
+              <ThemedText style={styles.label}>Description</ThemedText>
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.textArea,
+                  {
+                    backgroundColor: theme.backgroundDefault,
+                    color: theme.text,
+                  },
+                ]}
+                placeholder="Share your tip or trail condition report in detail..."
+                placeholderTextColor={theme.tabIconDefault}
+                value={description}
+                onChangeText={setDescription}
+                multiline
+                numberOfLines={6}
+                textAlignVertical="top"
+              />
+            </View>
+
+            <View style={styles.section}>
+              <ThemedText style={styles.label}>
+                Suggested Trail Speed (Optional)
               </ThemedText>
+              <ThemedText
+                style={[styles.speedHintText, { color: theme.tabIconDefault }]}
+              >
+                Help others know a safe speed for this area
+              </ThemedText>
+              <View style={styles.speedInputRow}>
+                <Feather name="navigation" size={20} color={theme.primary} />
+                <TextInput
+                  style={[
+                    styles.speedFormInput,
+                    {
+                      backgroundColor: theme.backgroundDefault,
+                      color: theme.text,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                  placeholder="e.g. 15"
+                  placeholderTextColor={theme.tabIconDefault}
+                  keyboardType="numeric"
+                  value={suggestedSpeed}
+                  onChangeText={setSuggestedSpeed}
+                  maxLength={3}
+                />
+                <ThemedText
+                  style={[
+                    styles.speedUnitText,
+                    { color: theme.tabIconDefault },
+                  ]}
+                >
+                  mph
+                </ThemedText>
+              </View>
+            </View>
+
+            <Pressable
+              style={styles.locationToggle}
+              onPress={() => setIncludeLocation(!includeLocation)}
+            >
+              <View style={styles.locationToggleLeft}>
+                <Feather
+                  name="map-pin"
+                  size={20}
+                  color={theme.tabIconDefault}
+                />
+                <ThemedText style={styles.locationToggleText}>
+                  Include current location
+                </ThemedText>
+              </View>
+              <View
+                style={[
+                  styles.checkbox,
+                  {
+                    backgroundColor: includeLocation
+                      ? theme.primary
+                      : "transparent",
+                    borderColor: includeLocation ? theme.primary : theme.border,
+                  },
+                ]}
+              >
+                {includeLocation ? (
+                  <Feather name="check" size={16} color="white" />
+                ) : null}
+              </View>
+            </Pressable>
+
+            <View style={styles.buttonRow}>
+              <Pressable
+                style={[
+                  styles.button,
+                  styles.cancelButton,
+                  { borderColor: theme.border },
+                ]}
+                onPress={() => {
+                  setShowAddForm(false);
+                  setTitle("");
+                  setDescription("");
+                  setIncludeLocation(false);
+                  setSuggestedSpeed("");
+                }}
+              >
+                <ThemedText style={styles.cancelButtonText}>Cancel</ThemedText>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.button,
+                  styles.submitButton,
+                  { backgroundColor: theme.primary },
+                ]}
+                onPress={handleSubmitTip}
+              >
+                <ThemedText style={styles.submitButtonText}>
+                  Share Tip
+                </ThemedText>
+              </Pressable>
             </View>
           </View>
-
-          <Pressable
-            style={styles.locationToggle}
-            onPress={() => setIncludeLocation(!includeLocation)}
-          >
-            <View style={styles.locationToggleLeft}>
-              <Feather name="map-pin" size={20} color={theme.tabIconDefault} />
-              <ThemedText style={styles.locationToggleText}>Include current location</ThemedText>
-            </View>
-            <View
-              style={[
-                styles.checkbox,
-                {
-                  backgroundColor: includeLocation ? theme.primary : "transparent",
-                  borderColor: includeLocation ? theme.primary : theme.border,
-                },
-              ]}
-            >
-              {includeLocation ? <Feather name="check" size={16} color="white" /> : null}
-            </View>
-          </Pressable>
-
-          <View style={styles.buttonRow}>
-            <Pressable
-              style={[styles.button, styles.cancelButton, { borderColor: theme.border }]}
-              onPress={() => {
-                setShowAddForm(false);
-                setTitle("");
-                setDescription("");
-                setIncludeLocation(false);
-                setSuggestedSpeed("");
-              }}
-            >
-              <ThemedText style={styles.cancelButtonText}>Cancel</ThemedText>
-            </Pressable>
-            <Pressable
-              style={[styles.button, styles.submitButton, { backgroundColor: theme.primary }]}
-              onPress={handleSubmitTip}
-            >
-              <ThemedText style={styles.submitButtonText}>Share Tip</ThemedText>
-            </Pressable>
-          </View>
-        </View>
         </ScrollView>
       </KeyboardAvoidingView>
+    );
+  }
+
+  const renderListHeader = () => (
+    <View style={styles.header}>
+      <ThemedText style={[Typography.h3, styles.headerTitle]}>
+        Community Tips {!isPremium && "🔒"}
+      </ThemedText>
+      <ThemedText style={styles.headerSubtitle}>
+        {isPremium
+          ? "Share recovery tips and trail conditions with fellow offroaders"
+          : "Premium feature: Subscribe to view and share trail conditions"}
+      </ThemedText>
+    </View>
+  );
+
+  if (error) {
+    return (
+      <ScreenFlatList
+        data={[]}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={() => null}
+        ListHeaderComponent={renderListHeader}
+        ListEmptyComponent={
+          <ErrorState
+            title="Couldn't load tips"
+            message={error}
+            onRetry={loadTips}
+          />
+        }
+      />
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <ScreenFlatList
+        data={[1, 2, 3]}
+        keyExtractor={(item) => item.toString()}
+        renderItem={() => <ListItemSkeleton />}
+        ListHeaderComponent={renderListHeader}
+        contentContainerStyle={styles.listContent}
+      />
     );
   }
 
@@ -356,22 +498,22 @@ export default function CommunityTipsScreen() {
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <View style={styles.header}>
-            <ThemedText style={[Typography.h3, styles.headerTitle]}>Community Tips {!isPremium && "🔒"}</ThemedText>
+            <ThemedText style={[Typography.h3, styles.headerTitle]}>
+              Community Tips {!isPremium && "🔒"}
+            </ThemedText>
             <ThemedText style={styles.headerSubtitle}>
-              {isPremium 
+              {isPremium
                 ? "Share recovery tips and trail conditions with fellow offroaders"
                 : "Premium feature: Subscribe to view and share trail conditions"}
             </ThemedText>
           </View>
         }
         ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Feather name="message-square" size={48} color={theme.tabIconDefault} />
-            <ThemedText style={styles.emptyText}>No community tips yet</ThemedText>
-            <ThemedText style={styles.emptySubtext}>
-              Be the first to share a recovery tip or trail condition!
-            </ThemedText>
-          </View>
+          <EmptyState
+            icon="message-square"
+            title="No community tips yet"
+            description="Be the first to share a recovery tip or trail condition!"
+          />
         }
       />
 

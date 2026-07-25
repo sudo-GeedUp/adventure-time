@@ -1,5 +1,14 @@
-import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, Pressable, TextInput, Switch, Image } from "react-native";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  TextInput,
+  Switch,
+  Image,
+  Modal,
+  Alert,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
@@ -9,7 +18,15 @@ import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 import type { ProfileStackParamList } from "@/navigation/ProfileStackNavigator";
-import { storage, UserProfile, EmergencyContact, MILESTONE_BADGES, Badge } from "@/utils/storage";
+import { useSubscription } from "@/contexts/SubscriptionContext";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
+import { ErrorState } from "@/components/ErrorState";
+import {
+  storage,
+  UserProfile,
+  EmergencyContact,
+  MILESTONE_BADGES,
+} from "@/utils/storage";
 
 const COMMON_EQUIPMENT = [
   { id: "winch", label: "Winch", icon: "anchor" },
@@ -27,10 +44,10 @@ type ProfileScreenNavigationProp = NativeStackNavigationProp<
   "Profile"
 >;
 
-
 export default function ProfileScreen() {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const { theme } = useTheme();
+  const { isPremium } = useSubscription();
   const [profile, setProfile] = useState<UserProfile>({
     id: "1",
     name: "",
@@ -44,14 +61,33 @@ export default function ProfileScreen() {
     },
     equipment: [],
   });
-  const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([]);
+  const [emergencyContacts, setEmergencyContacts] = useState<
+    EmergencyContact[]
+  >([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [emergencyModalVisible, setEmergencyModalVisible] = useState(false);
+  const [newEmergencyName, setNewEmergencyName] = useState("");
+  const [newEmergencyPhone, setNewEmergencyPhone] = useState("");
   const isInitialLoad = useRef(true);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    loadProfile();
-    loadEmergencyContacts();
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await Promise.all([loadProfile(), loadEmergencyContacts()]);
+    } catch (err) {
+      console.error("Error loading profile data:", err);
+      setError("Failed to load profile data.");
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   useEffect(() => {
     if (isInitialLoad.current) {
@@ -93,13 +129,42 @@ export default function ProfileScreen() {
     setEmergencyContacts(contacts);
   };
 
+  const openEmergencyContactModal = () => {
+    setNewEmergencyName("");
+    setNewEmergencyPhone("");
+    setEmergencyModalVisible(true);
+  };
+
+  const handleAddEmergencyContact = async () => {
+    const name = newEmergencyName.trim();
+    const phone = newEmergencyPhone.trim();
+
+    if (!name || !phone) {
+      Alert.alert("Missing Info", "Please enter a name and phone number.");
+      return;
+    }
+
+    const contact: EmergencyContact = {
+      id: `emergency_${Date.now()}`,
+      name,
+      phone,
+    };
+
+    const updated = [...emergencyContacts, contact];
+    await storage.saveEmergencyContacts(updated);
+    setEmergencyContacts(updated);
+    setEmergencyModalVisible(false);
+    setNewEmergencyName("");
+    setNewEmergencyPhone("");
+  };
+
   const handleSaveProfile = async () => {
     await storage.saveUserProfile(profile);
   };
 
   const handlePhotoUpload = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
+      mediaTypes: "images",
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
@@ -126,383 +191,651 @@ export default function ProfileScreen() {
     const updatedEquipment = equipment.includes(equipmentId)
       ? equipment.filter((id) => id !== equipmentId)
       : [...equipment, equipmentId];
-    
+
     const updatedProfile = { ...profile, equipment: updatedEquipment };
     setProfile(updatedProfile);
     await storage.saveUserProfile(updatedProfile);
   };
 
-  return (
-    <ScreenScrollView>
-      <View style={styles.section}>
-        <ThemedText style={[Typography.h4, styles.sectionTitle]}>Avatar</ThemedText>
-        
-        {profile.customPhotoUri ? (
-          <View>
-            <View style={[styles.photoPreview, { backgroundColor: theme.backgroundDefault }]}>
-              <Image
-                source={{ uri: profile.customPhotoUri }}
-                style={styles.photoImage}
-              />
-            </View>
-            <View style={styles.photoActions}>
-              <Pressable
-                style={[styles.actionButton, { backgroundColor: theme.primary + "20" }]}
-                onPress={handlePhotoUpload}
-              >
-                <Feather name="edit-2" size={20} color={theme.primary} />
-                <ThemedText style={styles.actionButtonText}>Change Photo</ThemedText>
-              </Pressable>
-              <Pressable
-                style={[styles.actionButton, { backgroundColor: theme.error + "20" }]}
-                onPress={handleRemovePhoto}
-              >
-                <Feather name="trash-2" size={20} color={theme.error} />
-                <ThemedText style={[styles.actionButtonText, { color: theme.error }]}>Remove</ThemedText>
-              </Pressable>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.noPhotoContainer}>
-            <View style={[styles.placeholderAvatar, { backgroundColor: theme.backgroundDefault, borderColor: theme.border }]}>
-              <Feather name="user" size={48} color={theme.tabIconDefault} />
-            </View>
-            <Pressable
-              style={[styles.uploadButton, { backgroundColor: theme.primary + "20" }]}
-              onPress={handlePhotoUpload}
-            >
-              <Feather name="camera" size={24} color={theme.primary} />
-              <ThemedText style={[styles.uploadButtonText, { color: theme.primary }]}>
-                Add Profile Photo
-              </ThemedText>
-            </Pressable>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText style={[Typography.h4, styles.sectionTitle]}>Trail Milestones</ThemedText>
-        
-        <View style={[styles.statsCard, { backgroundColor: theme.backgroundDefault }]}>
-          <View style={styles.statItem}>
-            <ThemedText style={[styles.statValue, { color: theme.primary }]}>
-              {profile.trailStats?.totalMiles?.toFixed(1) || "0"}
-            </ThemedText>
-            <ThemedText style={[styles.statLabel, { color: theme.tabIconDefault }]}>
-              Off-Highway Miles
-            </ThemedText>
-          </View>
-          <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
-          <View style={styles.statItem}>
-            <ThemedText style={[styles.statValue, { color: theme.primary }]}>
-              {profile.trailStats?.trailsCompleted || 0}
-            </ThemedText>
-            <ThemedText style={[styles.statLabel, { color: theme.tabIconDefault }]}>
-              Trails Completed
-            </ThemedText>
-          </View>
+  if (isLoading) {
+    return (
+      <ScreenScrollView>
+        <View style={styles.section}>
+          <LoadingSkeleton
+            height={120}
+            borderRadius={BorderRadius.lg}
+            style={{ marginBottom: Spacing.lg }}
+          />
+          <LoadingSkeleton
+            width="60%"
+            height={28}
+            style={{ marginBottom: Spacing.md }}
+          />
+          <LoadingSkeleton
+            width="40%"
+            height={18}
+            style={{ marginBottom: Spacing["2xl"] }}
+          />
+          <LoadingSkeleton
+            height={100}
+            borderRadius={BorderRadius.lg}
+            style={{ marginBottom: Spacing.lg }}
+          />
+          <LoadingSkeleton height={180} borderRadius={BorderRadius.lg} />
         </View>
+      </ScreenScrollView>
+    );
+  }
 
-        {(() => {
-          const nextBadge = storage.getNextBadge(profile.trailStats?.totalMiles || 0);
-          if (nextBadge) {
-            const currentMiles = profile.trailStats?.totalMiles || 0;
-            const progress = (currentMiles / nextBadge.milesRequired) * 100;
-            return (
-              <View style={[styles.progressCard, { backgroundColor: theme.backgroundDefault }]}>
-                <View style={styles.progressHeader}>
-                  <Feather name={nextBadge.icon as any} size={20} color={theme.primary} />
-                  <ThemedText style={styles.progressTitle}>Next: {nextBadge.name}</ThemedText>
-                </View>
-                <View style={[styles.progressBar, { backgroundColor: theme.border }]}>
-                  <View style={[styles.progressFill, { width: `${Math.min(progress, 100)}%`, backgroundColor: theme.primary }]} />
-                </View>
-                <ThemedText style={[styles.progressText, { color: theme.tabIconDefault }]}>
-                  {currentMiles.toFixed(1)} / {nextBadge.milesRequired} miles
-                </ThemedText>
-              </View>
-            );
-          }
-          return null;
-        })()}
+  if (error) {
+    return (
+      <ScreenScrollView>
+        <ErrorState
+          title="Couldn't load profile"
+          message={error}
+          onRetry={loadData}
+        />
+      </ScreenScrollView>
+    );
+  }
 
-        <ThemedText style={[styles.badgesLabel, { color: theme.tabIconDefault }]}>Earned Badges</ThemedText>
-        <View style={styles.badgesGrid}>
-          {MILESTONE_BADGES.map((badge) => {
-            const isEarned = (profile.earnedBadges || []).includes(badge.id);
-            const isValidIcon = badge.icon && typeof badge.icon === 'string';
-            return (
+  return (
+    <>
+      <ScreenScrollView>
+        <View style={styles.section}>
+          <ThemedText style={[Typography.h4, styles.sectionTitle]}>
+            Avatar
+          </ThemedText>
+
+          {profile.customPhotoUri ? (
+            <View>
               <View
-                key={badge.id}
                 style={[
-                  styles.badgeItem,
+                  styles.photoPreview,
+                  { backgroundColor: theme.backgroundDefault },
+                ]}
+              >
+                <Image
+                  source={{ uri: profile.customPhotoUri }}
+                  style={styles.photoImage}
+                />
+              </View>
+              <View style={styles.photoActions}>
+                <Pressable
+                  style={[
+                    styles.actionButton,
+                    { backgroundColor: theme.primary + "20" },
+                  ]}
+                  onPress={handlePhotoUpload}
+                >
+                  <Feather name="edit-2" size={20} color={theme.primary} />
+                  <ThemedText style={styles.actionButtonText}>
+                    Change Photo
+                  </ThemedText>
+                </Pressable>
+                <Pressable
+                  style={[
+                    styles.actionButton,
+                    { backgroundColor: theme.error + "20" },
+                  ]}
+                  onPress={handleRemovePhoto}
+                >
+                  <Feather name="trash-2" size={20} color={theme.error} />
+                  <ThemedText
+                    style={[styles.actionButtonText, { color: theme.error }]}
+                  >
+                    Remove
+                  </ThemedText>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.noPhotoContainer}>
+              <View
+                style={[
+                  styles.placeholderAvatar,
                   {
-                    backgroundColor: isEarned ? theme.primary + "20" : theme.backgroundDefault,
-                    borderColor: isEarned ? theme.primary : theme.border,
-                    opacity: isEarned ? 1 : 0.5,
+                    backgroundColor: theme.backgroundDefault,
+                    borderColor: theme.border,
                   },
                 ]}
               >
-                {isValidIcon ? (
-                  <Feather
-                    name={badge.icon as any}
-                    size={24}
-                    color={isEarned ? theme.primary : theme.tabIconDefault}
-                  />
-                ) : (
-                  <Feather
-                    name="award"
-                    size={24}
-                    color={isEarned ? theme.primary : theme.tabIconDefault}
-                  />
-                )}
+                <Feather name="user" size={48} color={theme.tabIconDefault} />
+              </View>
+              <Pressable
+                style={[
+                  styles.uploadButton,
+                  { backgroundColor: theme.primary + "20" },
+                ]}
+                onPress={handlePhotoUpload}
+              >
+                <Feather name="camera" size={24} color={theme.primary} />
                 <ThemedText
-                  style={[
-                    styles.badgeName,
-                    { color: isEarned ? theme.text : theme.tabIconDefault },
-                  ]}
-                  numberOfLines={2}
+                  style={[styles.uploadButtonText, { color: theme.primary }]}
                 >
-                  {badge.name}
+                  Add Profile Photo
                 </ThemedText>
-                <ThemedText style={[styles.badgeMiles, { color: theme.tabIconDefault }]}>
-                  {badge.milesRequired} mi
-                </ThemedText>
-              </View>
-            );
-          })}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText style={[Typography.h4, styles.sectionTitle]}>Profile Info</ThemedText>
-        <View style={[styles.input, { backgroundColor: theme.backgroundDefault }]}>
-          <Feather name="user" size={20} color={theme.tabIconDefault} />
-          <TextInput
-            style={[styles.textInput, { color: theme.text }]}
-            placeholder="Display Name"
-            placeholderTextColor={theme.tabIconDefault}
-            value={profile.name}
-            onChangeText={(text) => setProfile({ ...profile, name: text })}
-            onBlur={handleSaveProfile}
-          />
-        </View>
-        <View style={[styles.input, { backgroundColor: theme.backgroundDefault }]}>
-          <Feather name="truck" size={20} color={theme.tabIconDefault} />
-          <TextInput
-            style={[styles.textInput, { color: theme.text }]}
-            placeholder="Vehicle Type (e.g., Jeep Wrangler)"
-            placeholderTextColor={theme.tabIconDefault}
-            value={profile.vehicleType}
-            onChangeText={(text) => setProfile({ ...profile, vehicleType: text })}
-            onBlur={handleSaveProfile}
-          />
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText style={[Typography.h4, styles.sectionTitle]}>
-          Vehicle Specifications
-        </ThemedText>
-        <View style={[styles.input, { backgroundColor: theme.backgroundDefault }]}>
-          <Feather name="tag" size={20} color={theme.tabIconDefault} />
-          <TextInput
-            style={[styles.textInput, { color: theme.text }]}
-            placeholder="Make (e.g., Jeep)"
-            placeholderTextColor={theme.tabIconDefault}
-            value={profile.vehicleSpecs?.make || ""}
-            onChangeText={(text) =>
-              setProfile({
-                ...profile,
-                vehicleSpecs: {
-                  ...(profile.vehicleSpecs || { make: "", model: "", year: "", modifications: "" }),
-                  make: text,
-                },
-              })
-            }
-            onBlur={handleSaveProfile}
-          />
-        </View>
-        <View style={[styles.input, { backgroundColor: theme.backgroundDefault }]}>
-          <Feather name="tag" size={20} color={theme.tabIconDefault} />
-          <TextInput
-            style={[styles.textInput, { color: theme.text }]}
-            placeholder="Model (e.g., Wrangler JL)"
-            placeholderTextColor={theme.tabIconDefault}
-            value={profile.vehicleSpecs?.model || ""}
-            onChangeText={(text) =>
-              setProfile({
-                ...profile,
-                vehicleSpecs: {
-                  ...(profile.vehicleSpecs || { make: "", model: "", year: "", modifications: "" }),
-                  model: text,
-                },
-              })
-            }
-            onBlur={handleSaveProfile}
-          />
-        </View>
-        <View style={[styles.input, { backgroundColor: theme.backgroundDefault }]}>
-          <Feather name="calendar" size={20} color={theme.tabIconDefault} />
-          <TextInput
-            style={[styles.textInput, { color: theme.text }]}
-            placeholder="Year (e.g., 2023)"
-            placeholderTextColor={theme.tabIconDefault}
-            value={profile.vehicleSpecs?.year || ""}
-            onChangeText={(text) =>
-              setProfile({
-                ...profile,
-                vehicleSpecs: {
-                  ...(profile.vehicleSpecs || { make: "", model: "", year: "", modifications: "" }),
-                  year: text,
-                },
-              })
-            }
-            onBlur={handleSaveProfile}
-            keyboardType="numeric"
-          />
-        </View>
-        <View
-          style={[
-            styles.input,
-            styles.multilineInput,
-            { backgroundColor: theme.backgroundDefault },
-          ]}
-        >
-          <Feather
-            name="settings"
-            size={20}
-            color={theme.tabIconDefault}
-            style={styles.iconTop}
-          />
-          <TextInput
-            style={[styles.textInput, styles.multilineTextInput, { color: theme.text }]}
-            placeholder="Modifications (e.g., 3.5 inch lift, 35 inch tires, winch)"
-            placeholderTextColor={theme.tabIconDefault}
-            value={profile.vehicleSpecs?.modifications || ""}
-            onChangeText={(text) =>
-              setProfile({
-                ...profile,
-                vehicleSpecs: {
-                  ...(profile.vehicleSpecs || { make: "", model: "", year: "", modifications: "" }),
-                  modifications: text,
-                },
-              })
-            }
-            onBlur={handleSaveProfile}
-            multiline
-            numberOfLines={3}
-            textAlignVertical="top"
-          />
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText style={[Typography.h4, styles.sectionTitle]}>
-          Recovery Equipment
-        </ThemedText>
-        <View style={[styles.equipmentCard, { backgroundColor: theme.backgroundDefault }]}>
-          {COMMON_EQUIPMENT.map((item) => (
-            <View key={item.id} style={styles.equipmentRow}>
-              <View style={styles.equipmentInfo}>
-                <Feather name={item.icon as any} size={20} color={theme.tabIconDefault} />
-                <ThemedText style={styles.equipmentLabel}>{item.label}</ThemedText>
-              </View>
-              <Switch
-                value={profile.equipment?.includes(item.id) || false}
-                onValueChange={() => toggleEquipment(item.id)}
-                trackColor={{ false: theme.border, true: theme.primary + "80" }}
-                thumbColor={
-                  profile.equipment?.includes(item.id) ? theme.primary : theme.tabIconDefault
-                }
-              />
+              </Pressable>
             </View>
-          ))}
+          )}
         </View>
-      </View>
 
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
+        <View style={styles.section}>
           <ThemedText style={[Typography.h4, styles.sectionTitle]}>
-            Emergency Contacts
+            Trail Milestones
           </ThemedText>
-          <Pressable style={styles.addButton}>
-            <Feather name="plus-circle" size={24} color={theme.primary} />
+
+          <View
+            style={[
+              styles.statsCard,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
+            <View style={styles.statItem}>
+              <ThemedText style={[styles.statValue, { color: theme.primary }]}>
+                {profile.trailStats?.totalMiles?.toFixed(1) || "0"}
+              </ThemedText>
+              <ThemedText
+                style={[styles.statLabel, { color: theme.tabIconDefault }]}
+              >
+                Off-Highway Miles
+              </ThemedText>
+            </View>
+            <View
+              style={[styles.statDivider, { backgroundColor: theme.border }]}
+            />
+            <View style={styles.statItem}>
+              <ThemedText style={[styles.statValue, { color: theme.primary }]}>
+                {profile.trailStats?.trailsCompleted || 0}
+              </ThemedText>
+              <ThemedText
+                style={[styles.statLabel, { color: theme.tabIconDefault }]}
+              >
+                Trails Completed
+              </ThemedText>
+            </View>
+          </View>
+
+          {(() => {
+            const nextBadge = storage.getNextBadge(
+              profile.trailStats?.totalMiles || 0,
+            );
+            if (nextBadge) {
+              const currentMiles = profile.trailStats?.totalMiles || 0;
+              const progress = (currentMiles / nextBadge.milesRequired) * 100;
+              return (
+                <View
+                  style={[
+                    styles.progressCard,
+                    { backgroundColor: theme.backgroundDefault },
+                  ]}
+                >
+                  <View style={styles.progressHeader}>
+                    <Feather
+                      name={nextBadge.icon as any}
+                      size={20}
+                      color={theme.primary}
+                    />
+                    <ThemedText style={styles.progressTitle}>
+                      Next: {nextBadge.name}
+                    </ThemedText>
+                  </View>
+                  <View
+                    style={[
+                      styles.progressBar,
+                      { backgroundColor: theme.border },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.progressFill,
+                        {
+                          width: `${Math.min(progress, 100)}%`,
+                          backgroundColor: theme.primary,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <ThemedText
+                    style={[
+                      styles.progressText,
+                      { color: theme.tabIconDefault },
+                    ]}
+                  >
+                    {currentMiles.toFixed(1)} / {nextBadge.milesRequired} miles
+                  </ThemedText>
+                </View>
+              );
+            }
+            return null;
+          })()}
+
+          <ThemedText
+            style={[styles.badgesLabel, { color: theme.tabIconDefault }]}
+          >
+            Earned Badges {!isPremium && "🔒"}
+          </ThemedText>
+
+          {!isPremium ? (
+            <Pressable
+              style={[
+                styles.premiumUpsellCard,
+                { backgroundColor: theme.backgroundDefault },
+              ]}
+              onPress={() => navigation.navigate("Subscription")}
+            >
+              <Feather name="star" size={28} color={theme.warning} />
+              <ThemedText
+                style={[styles.premiumUpsellTitle, { color: theme.text }]}
+              >
+                Premium Feature
+              </ThemedText>
+              <ThemedText
+                style={[
+                  styles.premiumUpsellText,
+                  { color: theme.tabIconDefault },
+                ]}
+              >
+                Unlock all milestone badges, detailed stats, and unlimited
+                history with a premium subscription.
+              </ThemedText>
+              <ThemedText
+                style={[styles.premiumUpsellCta, { color: theme.primary }]}
+              >
+                Subscribe
+              </ThemedText>
+            </Pressable>
+          ) : (
+            <View style={styles.badgesGrid}>
+              {MILESTONE_BADGES.map((badge) => {
+                const isEarned = (profile.earnedBadges || []).includes(
+                  badge.id,
+                );
+                const isValidIcon =
+                  badge.icon && typeof badge.icon === "string";
+                return (
+                  <View
+                    key={badge.id}
+                    style={[
+                      styles.badgeItem,
+                      {
+                        backgroundColor: isEarned
+                          ? theme.primary + "20"
+                          : theme.backgroundDefault,
+                        borderColor: isEarned ? theme.primary : theme.border,
+                        opacity: isEarned ? 1 : 0.5,
+                      },
+                    ]}
+                  >
+                    {isValidIcon ? (
+                      <Feather
+                        name={badge.icon as any}
+                        size={24}
+                        color={isEarned ? theme.primary : theme.tabIconDefault}
+                      />
+                    ) : (
+                      <Feather
+                        name="award"
+                        size={24}
+                        color={isEarned ? theme.primary : theme.tabIconDefault}
+                      />
+                    )}
+                    <ThemedText
+                      style={[
+                        styles.badgeName,
+                        { color: isEarned ? theme.text : theme.tabIconDefault },
+                      ]}
+                      numberOfLines={2}
+                    >
+                      {badge.name}
+                    </ThemedText>
+                    <ThemedText
+                      style={[
+                        styles.badgeMiles,
+                        { color: theme.tabIconDefault },
+                      ]}
+                    >
+                      {badge.milesRequired} mi
+                    </ThemedText>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText style={[Typography.h4, styles.sectionTitle]}>
+            Profile Info
+          </ThemedText>
+          <View
+            style={[styles.input, { backgroundColor: theme.backgroundDefault }]}
+          >
+            <Feather name="user" size={20} color={theme.tabIconDefault} />
+            <TextInput
+              style={[styles.textInput, { color: theme.text }]}
+              placeholder="Display Name"
+              placeholderTextColor={theme.tabIconDefault}
+              value={profile.name}
+              onChangeText={(text) => setProfile({ ...profile, name: text })}
+              onBlur={handleSaveProfile}
+            />
+          </View>
+          <View
+            style={[styles.input, { backgroundColor: theme.backgroundDefault }]}
+          >
+            <Feather name="truck" size={20} color={theme.tabIconDefault} />
+            <TextInput
+              style={[styles.textInput, { color: theme.text }]}
+              placeholder="Vehicle Type (e.g., Jeep Wrangler)"
+              placeholderTextColor={theme.tabIconDefault}
+              value={profile.vehicleType}
+              onChangeText={(text) =>
+                setProfile({ ...profile, vehicleType: text })
+              }
+              onBlur={handleSaveProfile}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText style={[Typography.h4, styles.sectionTitle]}>
+            Vehicle Specifications
+          </ThemedText>
+          <View
+            style={[styles.input, { backgroundColor: theme.backgroundDefault }]}
+          >
+            <Feather name="tag" size={20} color={theme.tabIconDefault} />
+            <TextInput
+              style={[styles.textInput, { color: theme.text }]}
+              placeholder="Make (e.g., Jeep)"
+              placeholderTextColor={theme.tabIconDefault}
+              value={profile.vehicleSpecs?.make || ""}
+              onChangeText={(text) =>
+                setProfile({
+                  ...profile,
+                  vehicleSpecs: {
+                    ...(profile.vehicleSpecs || {
+                      make: "",
+                      model: "",
+                      year: "",
+                      modifications: "",
+                    }),
+                    make: text,
+                  },
+                })
+              }
+              onBlur={handleSaveProfile}
+            />
+          </View>
+          <View
+            style={[styles.input, { backgroundColor: theme.backgroundDefault }]}
+          >
+            <Feather name="tag" size={20} color={theme.tabIconDefault} />
+            <TextInput
+              style={[styles.textInput, { color: theme.text }]}
+              placeholder="Model (e.g., Wrangler JL)"
+              placeholderTextColor={theme.tabIconDefault}
+              value={profile.vehicleSpecs?.model || ""}
+              onChangeText={(text) =>
+                setProfile({
+                  ...profile,
+                  vehicleSpecs: {
+                    ...(profile.vehicleSpecs || {
+                      make: "",
+                      model: "",
+                      year: "",
+                      modifications: "",
+                    }),
+                    model: text,
+                  },
+                })
+              }
+              onBlur={handleSaveProfile}
+            />
+          </View>
+          <View
+            style={[styles.input, { backgroundColor: theme.backgroundDefault }]}
+          >
+            <Feather name="calendar" size={20} color={theme.tabIconDefault} />
+            <TextInput
+              style={[styles.textInput, { color: theme.text }]}
+              placeholder="Year (e.g., 2023)"
+              placeholderTextColor={theme.tabIconDefault}
+              value={profile.vehicleSpecs?.year || ""}
+              onChangeText={(text) =>
+                setProfile({
+                  ...profile,
+                  vehicleSpecs: {
+                    ...(profile.vehicleSpecs || {
+                      make: "",
+                      model: "",
+                      year: "",
+                      modifications: "",
+                    }),
+                    year: text,
+                  },
+                })
+              }
+              onBlur={handleSaveProfile}
+              keyboardType="numeric"
+            />
+          </View>
+          <View
+            style={[
+              styles.input,
+              styles.multilineInput,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
+            <Feather
+              name="settings"
+              size={20}
+              color={theme.tabIconDefault}
+              style={styles.iconTop}
+            />
+            <TextInput
+              style={[
+                styles.textInput,
+                styles.multilineTextInput,
+                { color: theme.text },
+              ]}
+              placeholder="Modifications (e.g., 3.5 inch lift, 35 inch tires, winch)"
+              placeholderTextColor={theme.tabIconDefault}
+              value={profile.vehicleSpecs?.modifications || ""}
+              onChangeText={(text) =>
+                setProfile({
+                  ...profile,
+                  vehicleSpecs: {
+                    ...(profile.vehicleSpecs || {
+                      make: "",
+                      model: "",
+                      year: "",
+                      modifications: "",
+                    }),
+                    modifications: text,
+                  },
+                })
+              }
+              onBlur={handleSaveProfile}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText style={[Typography.h4, styles.sectionTitle]}>
+            Recovery Equipment
+          </ThemedText>
+          <View
+            style={[
+              styles.equipmentCard,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
+            {COMMON_EQUIPMENT.map((item) => (
+              <View key={item.id} style={styles.equipmentRow}>
+                <View style={styles.equipmentInfo}>
+                  <Feather
+                    name={item.icon as any}
+                    size={20}
+                    color={theme.tabIconDefault}
+                  />
+                  <ThemedText style={styles.equipmentLabel}>
+                    {item.label}
+                  </ThemedText>
+                </View>
+                <Switch
+                  value={profile.equipment?.includes(item.id) || false}
+                  onValueChange={() => toggleEquipment(item.id)}
+                  trackColor={{
+                    false: theme.border,
+                    true: theme.primary + "80",
+                  }}
+                  thumbColor={
+                    profile.equipment?.includes(item.id)
+                      ? theme.primary
+                      : theme.tabIconDefault
+                  }
+                />
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <ThemedText style={[Typography.h4, styles.sectionTitle]}>
+              Emergency Contacts
+            </ThemedText>
+            <Pressable
+              style={styles.addButton}
+              onPress={openEmergencyContactModal}
+            >
+              <Feather name="plus-circle" size={24} color={theme.primary} />
+            </Pressable>
+          </View>
+          {emergencyContacts.length === 0 ? (
+            <View
+              style={[
+                styles.emptyCard,
+                { backgroundColor: theme.backgroundDefault },
+              ]}
+            >
+              <Feather name="phone" size={32} color={theme.tabIconDefault} />
+              <ThemedText
+                style={[styles.emptyText, { color: theme.tabIconDefault }]}
+              >
+                No emergency contacts added yet
+              </ThemedText>
+            </View>
+          ) : (
+            emergencyContacts.map((contact) => (
+              <View
+                key={contact.id}
+                style={[
+                  styles.contactCard,
+                  { backgroundColor: theme.backgroundDefault },
+                ]}
+              >
+                <View style={styles.contactInfo}>
+                  <ThemedText style={Typography.label}>
+                    {contact.name}
+                  </ThemedText>
+                  <ThemedText
+                    style={[styles.phone, { color: theme.tabIconDefault }]}
+                  >
+                    {contact.phone}
+                  </ThemedText>
+                </View>
+                <Feather name="phone" size={20} color={theme.success} />
+              </View>
+            ))
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText style={[Typography.h4, styles.sectionTitle]}>
+            Social
+          </ThemedText>
+          <Pressable
+            style={[
+              styles.menuItem,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+            onPress={() =>
+              navigation.getParent()?.navigate("FriendsTab" as never)
+            }
+            android_ripple={{ color: theme.backgroundSecondary }}
+          >
+            <View style={styles.menuItemContent}>
+              <Feather name="users" size={24} color={theme.primary} />
+              <ThemedText style={styles.menuItemText}>
+                Friends & Community
+              </ThemedText>
+            </View>
+            <Feather
+              name="chevron-right"
+              size={24}
+              color={theme.tabIconDefault}
+            />
           </Pressable>
         </View>
-        {emergencyContacts.length === 0 ? (
-          <View style={[styles.emptyCard, { backgroundColor: theme.backgroundDefault }]}>
-            <Feather name="phone" size={32} color={theme.tabIconDefault} />
-            <ThemedText style={[styles.emptyText, { color: theme.tabIconDefault }]}>
-              No emergency contacts added yet
-            </ThemedText>
-          </View>
-        ) : (
-          emergencyContacts.map((contact) => (
-            <View
-              key={contact.id}
-              style={[styles.contactCard, { backgroundColor: theme.backgroundDefault }]}
-            >
-              <View style={styles.contactInfo}>
-                <ThemedText style={Typography.label}>{contact.name}</ThemedText>
-                <ThemedText style={[styles.phone, { color: theme.tabIconDefault }]}>
-                  {contact.phone}
-                </ThemedText>
-              </View>
-              <Feather name="phone" size={20} color={theme.success} />
+
+        <View style={styles.section}>
+          <ThemedText style={[Typography.h4, styles.sectionTitle]}>
+            Vehicle
+          </ThemedText>
+          <Pressable
+            style={[
+              styles.menuItem,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+            onPress={() => navigation.navigate("VehicleMaintenance")}
+            android_ripple={{ color: theme.backgroundSecondary }}
+          >
+            <View style={styles.menuItemContent}>
+              <Feather name="tool" size={24} color={theme.primary} />
+              <ThemedText style={styles.menuItemText}>
+                Maintenance Log
+              </ThemedText>
             </View>
-          ))
-        )}
-      </View>
+            <Feather
+              name="chevron-right"
+              size={24}
+              color={theme.tabIconDefault}
+            />
+          </Pressable>
+        </View>
 
+        <View style={styles.section}>
+          <ThemedText style={[Typography.h4, styles.sectionTitle]}>
+            Settings
+          </ThemedText>
+          <Pressable
+            style={[
+              styles.menuItem,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+            onPress={() => navigation.navigate("Settings")}
+            android_ripple={{ color: theme.backgroundSecondary }}
+          >
+            <View style={styles.menuItemContent}>
+              <Feather name="settings" size={24} color={theme.primary} />
+              <ThemedText style={styles.menuItemText}>App Settings</ThemedText>
+            </View>
+            <Feather
+              name="chevron-right"
+              size={24}
+              color={theme.tabIconDefault}
+            />
+          </Pressable>
+        </View>
 
-      <View style={styles.section}>
-        <ThemedText style={[Typography.h4, styles.sectionTitle]}>Social</ThemedText>
-        <Pressable
-          style={[styles.menuItem, { backgroundColor: theme.backgroundDefault }]}
-          onPress={() => navigation.getParent()?.navigate("FriendsTab" as never)}
-          android_ripple={{ color: theme.backgroundSecondary }}
-        >
-          <View style={styles.menuItemContent}>
-            <Feather name="users" size={24} color={theme.primary} />
-            <ThemedText style={styles.menuItemText}>Friends & Community</ThemedText>
-          </View>
-          <Feather name="chevron-right" size={24} color={theme.tabIconDefault} />
-        </Pressable>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText style={[Typography.h4, styles.sectionTitle]}>Vehicle</ThemedText>
-        <Pressable
-          style={[styles.menuItem, { backgroundColor: theme.backgroundDefault }]}
-          onPress={() => navigation.navigate("VehicleMaintenance")}
-          android_ripple={{ color: theme.backgroundSecondary }}
-        >
-          <View style={styles.menuItemContent}>
-            <Feather name="tool" size={24} color={theme.primary} />
-            <ThemedText style={styles.menuItemText}>Maintenance Log</ThemedText>
-          </View>
-          <Feather name="chevron-right" size={24} color={theme.tabIconDefault} />
-        </Pressable>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText style={[Typography.h4, styles.sectionTitle]}>Settings</ThemedText>
-        <Pressable
-          style={[styles.menuItem, { backgroundColor: theme.backgroundDefault }]}
-          onPress={() => navigation.navigate("Settings")}
-          android_ripple={{ color: theme.backgroundSecondary }}
-        >
-          <View style={styles.menuItemContent}>
-            <Feather name="settings" size={24} color={theme.primary} />
-            <ThemedText style={styles.menuItemText}>App Settings</ThemedText>
-          </View>
-          <Feather name="chevron-right" size={24} color={theme.tabIconDefault} />
-        </Pressable>
-      </View>
-
-      {/* Donation link removed for production - using Apple In-App Purchases via RevenueCat */}
-      {/* 
+        {/* Donation link removed for production - using Apple In-App Purchases via RevenueCat */}
+        {/* 
       <View style={styles.section}>
         <ThemedText style={[Typography.h4, styles.sectionTitle]}>Support</ThemedText>
         <Pressable
@@ -518,7 +851,79 @@ export default function ProfileScreen() {
         </Pressable>
       </View>
       */}
-    </ScreenScrollView>
+      </ScreenScrollView>
+
+      <Modal
+        visible={emergencyModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setEmergencyModalVisible(false)}
+      >
+        <View
+          style={[
+            styles.modalOverlay,
+            { backgroundColor: "rgba(0, 0, 0, 0.5)" },
+          ]}
+        >
+          <View
+            style={[
+              styles.modalContainer,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
+            <ThemedText style={[Typography.h4, { marginBottom: Spacing.md }]}>
+              Add Emergency Contact
+            </ThemedText>
+            <TextInput
+              style={[
+                styles.modalInput,
+                {
+                  color: theme.text,
+                  borderColor: theme.border,
+                  backgroundColor: theme.backgroundSecondary,
+                },
+              ]}
+              placeholder="Contact name"
+              placeholderTextColor={theme.tabIconDefault}
+              value={newEmergencyName}
+              onChangeText={setNewEmergencyName}
+            />
+            <TextInput
+              style={[
+                styles.modalInput,
+                {
+                  color: theme.text,
+                  borderColor: theme.border,
+                  backgroundColor: theme.backgroundSecondary,
+                },
+              ]}
+              placeholder="Phone number"
+              placeholderTextColor={theme.tabIconDefault}
+              keyboardType="phone-pad"
+              value={newEmergencyPhone}
+              onChangeText={setNewEmergencyPhone}
+            />
+            <View style={styles.modalButtons}>
+              <Pressable
+                style={[
+                  styles.modalButton,
+                  { backgroundColor: theme.backgroundSecondary },
+                ]}
+                onPress={() => setEmergencyModalVisible(false)}
+              >
+                <ThemedText style={{ color: theme.text }}>Cancel</ThemedText>
+              </Pressable>
+              <Pressable
+                style={[styles.modalButton, { backgroundColor: theme.primary }]}
+                onPress={handleAddEmergencyContact}
+              >
+                <ThemedText style={{ color: "#fff" }}>Save</ThemedText>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -777,5 +1182,59 @@ const styles = StyleSheet.create({
   badgeMiles: {
     fontSize: 9,
     marginTop: 2,
+  },
+  premiumUpsellCard: {
+    alignItems: "center",
+    borderRadius: BorderRadius.md,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+  },
+  premiumUpsellTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginTop: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  premiumUpsellText: {
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: Spacing.md,
+  },
+  premiumUpsellCta: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    marginHorizontal: Spacing.lg,
+    width: "85%",
+    maxWidth: 400,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.md,
+    fontSize: 16,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: Spacing.md,
+    marginTop: Spacing.md,
+  },
+  modalButton: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
   },
 });
