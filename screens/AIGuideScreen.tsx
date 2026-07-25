@@ -24,6 +24,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useNavigation } from "@react-navigation/native";
+import { hapticFeedback } from "@/utils/haptics";
 import * as Location from "expo-location";
 
 interface ChatMessage extends GuideMessage {
@@ -109,6 +110,7 @@ export default function AIGuideScreen() {
   };
 
   const handlePremiumRequired = () => {
+    hapticFeedback.warning();
     Alert.alert(
       "Premium Feature",
       "Trail Buddy is a premium feature. Subscribe to unlock unlimited AI guide conversations.",
@@ -132,6 +134,8 @@ export default function AIGuideScreen() {
       handlePremiumRequired();
       return;
     }
+
+    hapticFeedback.light();
 
     if (!aiGuideService.isAvailable()) {
       Alert.alert(
@@ -163,6 +167,7 @@ export default function AIGuideScreen() {
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+      hapticFeedback.success();
 
       // Scroll to bottom
       setTimeout(() => {
@@ -170,6 +175,7 @@ export default function AIGuideScreen() {
       }, 100);
     } catch (error) {
       console.error("Error sending message:", error);
+      hapticFeedback.error();
       Alert.alert("Error", "Failed to get response. Please try again.");
     } finally {
       setLoading(false);
@@ -181,6 +187,7 @@ export default function AIGuideScreen() {
       handlePremiumRequired();
       return;
     }
+    hapticFeedback.selection();
     setInputText(suggestion.message);
   };
 
@@ -189,6 +196,7 @@ export default function AIGuideScreen() {
       handlePremiumRequired();
       return;
     }
+    hapticFeedback.selection();
     setInputText(action);
   };
 

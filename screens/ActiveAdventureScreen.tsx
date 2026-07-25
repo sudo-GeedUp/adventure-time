@@ -37,6 +37,7 @@ import {
   NavPoint,
 } from "@/utils/routeNavigation";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { hapticFeedback } from "@/utils/haptics";
 import { Trail } from "@/utils/trails";
 import {
   FirebaseLocationService,
@@ -653,6 +654,7 @@ export default function ActiveAdventureScreen() {
   const startAdventure = useCallback(async () => {
     try {
       const location = await Location.getCurrentPositionAsync({});
+      hapticFeedback.medium();
       const initialAltitude = location.coords.altitude || 0;
       setAltitude(initialAltitude);
       const userProfile = await storage.getUserProfile();
@@ -692,6 +694,7 @@ export default function ActiveAdventureScreen() {
         userProfile?.id || "anonymous",
       );
     } catch {
+      hapticFeedback.error();
       Alert.alert(
         "Error",
         "Could not get your location. Please enable location services.",
@@ -1124,9 +1127,12 @@ export default function ActiveAdventureScreen() {
 
   const handleRequestAssistance = async () => {
     if (!assistanceDescription.trim() || !session) {
+      hapticFeedback.error();
       Alert.alert("Error", "Please describe what help you need");
       return;
     }
+
+    hapticFeedback.heavy();
 
     try {
       const location = await Location.getCurrentPositionAsync({});
@@ -1155,8 +1161,10 @@ export default function ActiveAdventureScreen() {
 
       setShowAssistanceModal(false);
       setAssistanceDescription("");
+      hapticFeedback.success();
     } catch (error) {
       console.error("[Emergency SOS] Error sending assistance request:", error);
+      hapticFeedback.error();
       Alert.alert(
         "Error",
         "Could not send assistance request. Please try again.",
