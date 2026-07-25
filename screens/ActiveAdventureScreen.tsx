@@ -29,6 +29,12 @@ import { MapLayerType, getTileSource } from "@/utils/mapTiles";
 import { gpxRecorder } from "@/utils/gpxRecording";
 import * as Location from "expo-location";
 import { calculateDistance } from "@/utils/location";
+import {
+  snapToRoute,
+  isOffRoute,
+  getNextTurn,
+  NavPoint,
+} from "@/utils/routeNavigation";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Trail } from "@/utils/trails";
 import {
@@ -473,6 +479,13 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
     opacity: 0.7,
   },
+  snappedLocationMarker: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: "white",
+  },
 });
 
 export default function ActiveAdventureScreen() {
@@ -574,6 +587,18 @@ export default function ActiveAdventureScreen() {
     setSelectedRoute(routeItem.route);
     setShowRouteSelector(false);
   };
+
+  const [snappedLocation, setSnappedLocation] = useState<NavPoint | null>(null);
+  const [navigationProgress, setNavigationProgress] = useState<{
+    traveled: number;
+    remaining: number;
+    total: number;
+  } | null>(null);
+  const [offRouteAlert, setOffRouteAlert] = useState(false);
+  const [nextTurn, setNextTurn] = useState<{
+    distance: number;
+    direction: "left" | "right";
+  } | null>(null);
 
   const [session, setSession] = useState<AdventureSession | null>(null);
   const [isTracking, setIsTracking] = useState(true);
@@ -760,6 +785,35 @@ export default function ActiveAdventureScreen() {
               timestamp: Date.now(),
             };
 
+            // Snap to target route if one is selected
+            if (selectedRoute && selectedRoute.length > 1) {
+              const snap = snapToRoute(newLocation, selectedRoute);
+              if (snap) {
+                setSnappedLocation(snap.snappedPoint);
+                setNavigationProgress({
+                  traveled: snap.distanceTraveledMiles,
+                  remaining: snap.distanceRemainingMiles,
+                  total: snap.totalRouteDistanceMiles,
+                });
+                setOffRouteAlert(isOffRoute(snap));
+                const turn = getNextTurn(
+                  selectedRoute,
+                  snap.segmentIndex,
+                  snap.segmentProgress,
+                );
+                setNextTurn(
+                  turn
+                    ? { distance: turn.distance, direction: turn.direction }
+                    : null,
+                );
+              }
+            } else {
+              setSnappedLocation(null);
+              setNavigationProgress(null);
+              setOffRouteAlert(false);
+              setNextTurn(null);
+            }
+
             // Calculate distance from last location
             const lastLocation = prev.locations[prev.locations.length - 1];
             let addedDistance = 0;
@@ -861,7 +915,7 @@ export default function ActiveAdventureScreen() {
         locationSubscription.remove();
       }
     };
-  }, [isTracking, session, speedHistory]);
+  }, [isTracking, session, speedHistory, selectedRoute]);
 
   const endAdventure = useCallback(async () => {
     if (!session) return;
@@ -1192,13 +1246,13 @@ export default function ActiveAdventureScreen() {
                 latitudeDelta: 0.002, // Zoomed in for better road visibility
                 longitudeDelta: 0.002,
               }}
-              showsUserLocation
-              followsUserLocation
+              showsUserLocation={!selectedRoute}
+              followsUserLocation={!selectedRoute}
               showsMyLocationButton={false}
               showsCompass
               mapType={mapLayer === "default" ? "hybrid" : "standard"}
               camera={{
-                center: {
+                center: snappedLocation || {
                   latitude:
                     session.locations[session.locations.length - 1].latitude,
                   longitude:
@@ -1227,6 +1281,18 @@ export default function ActiveAdventureScreen() {
                   strokeColor={theme.accent}
                   strokeWidth={5}
                 />
+              )}
+
+              {/* Snapped Location Marker */}
+              {selectedRoute && snappedLocation && (
+                <Marker coordinate={snappedLocation}>
+                  <View
+                    style={[
+                      styles.snappedLocationMarker,
+                      { backgroundColor: theme.primary },
+                    ]}
+                  />
+                </Marker>
               )}
 
               {/* Community Trail Routes - Past User Logs */}
@@ -1351,6 +1417,50 @@ export default function ActiveAdventureScreen() {
                     : "Select Target Route"}
                 </ThemedText>
               </Pressable>
+
+              {navigationProgress && (
+                <View style={styles.trailInfoRow}>
+                  <Feather name="activity" size={16} color={theme.primary} />
+                  <ThemedText
+                    style={[styles.trailInfoText, { color: theme.text }]}
+                  >
+                    {navigationProgress.traveled.toFixed(1)} /{" "}
+                    {navigationProgress.total.toFixed(1)} mi
+                  </ThemedText>
+                </View>
+              )}
+
+              {nextTurn && (
+                <View style={styles.trailInfoRow}>
+                  <Feather
+                    name="corner-up-left"
+                    size={16}
+                    color={theme.primary}
+                  />
+                  <ThemedText
+                    style={[styles.trailInfoText, { color: theme.text }]}
+                  >
+                    Turn {nextTurn.direction} in {nextTurn.distance.toFixed(1)}{" "}
+                    mi
+                  </ThemedText>
+                </View>
+              )}
+
+              {offRouteAlert && (
+                <View
+                  style={[
+                    styles.trailAlertRow,
+                    { backgroundColor: theme.error + "20" },
+                  ]}
+                >
+                  <Feather name="alert-circle" size={14} color={theme.error} />
+                  <ThemedText
+                    style={[styles.trailAlertText, { color: theme.error }]}
+                  >
+                    Off route — return to target route
+                  </ThemedText>
+                </View>
+              )}
 
               <View style={styles.trailInfoRow}>
                 <Feather name="navigation" size={16} color={theme.primary} />
