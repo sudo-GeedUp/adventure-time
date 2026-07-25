@@ -25,6 +25,7 @@
     },
     "production": {
       "environment": "production",
+      "distribution": "store",
       "channel": "production",
       "ios": {
         "scheme": "ItsAdventureTime",
@@ -54,4 +55,3 @@
     }
   }
 }
-
