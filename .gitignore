@@ -3,6 +3,7 @@ node_modules
 .expo
 ios/
 android/
+.DS_Store
 *.der
 upload_cert_new.der
 *.pem
