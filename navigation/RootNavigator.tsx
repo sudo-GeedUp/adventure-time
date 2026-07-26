@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ActivityIndicator, View } from "react-native";
-import MainTabNavigator from "@/navigation/MainTabNavigator";
+import { NavigatorScreenParams } from "@react-navigation/native";
+import MainTabNavigator, {
+  MainTabParamList,
+} from "@/navigation/MainTabNavigator";
 import AuthStackNavigator from "@/navigation/AuthStackNavigator";
 import ChatScreen from "@/screens/ChatScreen";
 import WelcomeScreen from "@/screens/WelcomeScreen";
@@ -13,7 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export type RootStackParamList = {
   Welcome: undefined;
   Auth: undefined;
-  MainTabs: undefined;
+  MainTabs: NavigatorScreenParams<MainTabParamList>;
   Chat: {
     participantId: string;
     participantName: string;
@@ -32,34 +35,44 @@ export default function RootNavigator() {
   useEffect(() => {
     const checkFirstLaunch = async () => {
       const hasLaunched = await storage.getFirstLaunchDone();
-      console.log('RootNavigator: First launch check:', !hasLaunched);
+      console.log("RootNavigator: First launch check:", !hasLaunched);
       setIsFirstLaunch(!hasLaunched);
     };
     checkFirstLaunch();
   }, []);
 
-  console.log('RootNavigator: Rendering with state:', {
+  console.log("RootNavigator: Rendering with state:", {
     isFirstLaunch,
     authLoading,
-    isAuthenticated
+    isAuthenticated,
   });
 
-  if (authLoading) {
-    console.log('RootNavigator: Showing loading indicator');
+  if (authLoading || isFirstLaunch === null) {
+    console.log("RootNavigator: Showing loading indicator");
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: theme.backgroundDefault }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: theme.backgroundDefault,
+        }}
+      >
         <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
 
-  console.log('RootNavigator: Rendering navigator - going directly to MainTabs');
+  console.log(
+    "RootNavigator: Rendering navigator - going directly to MainTabs",
+  );
 
   return (
-    <Stack.Navigator 
-      initialRouteName="MainTabs"
+    <Stack.Navigator
+      initialRouteName={isFirstLaunch ? "Welcome" : "MainTabs"}
       screenOptions={{ headerShown: false }}
     >
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="MainTabs" component={MainTabNavigator} />
       <Stack.Screen
         name="Chat"
@@ -73,7 +86,7 @@ export default function RootNavigator() {
         name="Paywall"
         component={PaywallScreen}
         options={{
-          presentation: 'modal',
+          presentation: "modal",
           headerShown: false,
         }}
       />

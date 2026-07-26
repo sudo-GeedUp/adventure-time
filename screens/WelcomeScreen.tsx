@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, StyleSheet, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -7,9 +7,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import ThemedText from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
-import { Typography, Spacing, BorderRadius, Colors } from "@/constants/theme";
+import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 import type { RootStackParamList } from "@/navigation/RootNavigator";
 import { storage } from "@/utils/storage";
+import SpecialThanksModal from "@/components/SpecialThanksModal";
 
 type WelcomeScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -19,19 +20,35 @@ type WelcomeScreenNavigationProp = NativeStackNavigationProp<
 export default function WelcomeScreen() {
   const navigation = useNavigation<WelcomeScreenNavigationProp>();
   const { theme } = useTheme();
+  const [showSpecialThanks, setShowSpecialThanks] = useState(false);
 
   const handleGetStarted = async () => {
     await storage.setFirstLaunchDone();
-    navigation.replace("MainTabs");
+    setShowSpecialThanks(true);
+  };
+
+  const handleCloseThanks = async () => {
+    await storage.setSpecialThanksShown();
+    setShowSpecialThanks(false);
+    navigation.replace("MainTabs", {
+      screen: "NavigateTab",
+      params: { screen: "LiveMap" },
+    });
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.backgroundDefault }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.backgroundDefault }]}
+    >
       <ThemedView style={styles.content}>
         <View style={styles.header}>
           <Feather name="compass" size={64} color={theme.primary} />
-          <ThemedText style={[Typography.h1, styles.title]}>Adventure Time</ThemedText>
-          <ThemedText style={[styles.subtitle, { color: theme.tabIconDefault }]}>
+          <ThemedText style={[Typography.h1, styles.title]}>
+            Adventure Time
+          </ThemedText>
+          <ThemedText
+            style={[styles.subtitle, { color: theme.tabIconDefault }]}
+          >
             Offroad Recovery Assistance
           </ThemedText>
         </View>
@@ -68,12 +85,22 @@ export default function WelcomeScreen() {
           onPress={handleGetStarted}
           android_ripple={{ color: theme.secondary }}
         >
-          <ThemedText style={[styles.buttonText, { color: theme.backgroundDefault }]}>
+          <ThemedText
+            style={[styles.buttonText, { color: theme.backgroundDefault }]}
+          >
             Get Started
           </ThemedText>
-          <Feather name="arrow-right" size={20} color={theme.backgroundDefault} />
+          <Feather
+            name="arrow-right"
+            size={20}
+            color={theme.backgroundDefault}
+          />
         </Pressable>
       </ThemedView>
+      <SpecialThanksModal
+        visible={showSpecialThanks}
+        onClose={handleCloseThanks}
+      />
     </SafeAreaView>
   );
 }
@@ -88,12 +115,18 @@ interface FeatureItemProps {
 function FeatureItem({ icon, title, description, theme }: FeatureItemProps) {
   return (
     <View style={styles.featureItem}>
-      <View style={[styles.featureIcon, { backgroundColor: theme.primary + "20" }]}>
+      <View
+        style={[styles.featureIcon, { backgroundColor: theme.primary + "20" }]}
+      >
         <Feather name={icon} size={24} color={theme.primary} />
       </View>
       <View style={styles.featureContent}>
-        <ThemedText style={[Typography.label, { fontWeight: "600" }]}>{title}</ThemedText>
-        <ThemedText style={[styles.featureDescription, { color: theme.tabIconDefault }]}>
+        <ThemedText style={[Typography.label, { fontWeight: "600" }]}>
+          {title}
+        </ThemedText>
+        <ThemedText
+          style={[styles.featureDescription, { color: theme.tabIconDefault }]}
+        >
           {description}
         </ThemedText>
       </View>
