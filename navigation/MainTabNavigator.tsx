@@ -1,12 +1,15 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { NavigatorScreenParams } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { Platform, StyleSheet } from "react-native";
 import GuidesStackNavigator from "@/navigation/GuidesStackNavigator";
 import AIScanStackNavigator from "@/navigation/AIScanStackNavigator";
 import NearbyStackNavigator from "@/navigation/NearbyStackNavigator";
-import NavigateStackNavigator from "@/navigation/NavigateStackNavigator";
+import NavigateStackNavigator, {
+  NavigateStackParamList,
+} from "@/navigation/NavigateStackNavigator";
 import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -14,7 +17,7 @@ export type MainTabParamList = {
   GuidesTab: undefined;
   AIScanTab: undefined;
   NearbyTab: undefined;
-  NavigateTab: undefined;
+  NavigateTab: NavigatorScreenParams<NavigateStackParamList> | undefined;
   ProfileTab: undefined;
 };
 

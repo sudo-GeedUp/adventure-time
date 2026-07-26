@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { StyleSheet } from "react-native";
+import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -8,10 +7,8 @@ import { StatusBar } from "expo-status-bar";
 
 import RootNavigator from "@/navigation/RootNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import SpecialThanksModal from "@/components/SpecialThanksModal";
 import { initializeFirebase } from "@/config/firebase";
 import { initializeAuth } from "@/utils/firebaseHelpers";
-import { storage } from "@/utils/storage";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { sentryService } from "@/services/sentryService";
@@ -19,15 +16,7 @@ import { analyticsService } from "@/services/analyticsService";
 import { notificationService } from "@/services/notificationService";
 
 export default function App() {
-  const [showSpecialThanks, setShowSpecialThanks] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
-
   useEffect(() => {
-    // Render app immediately for testing
-    setIsInitialized(true);
-
-    // RevenueCat is initialized inside SubscriptionProvider
-
     // Initialize services in background (non-blocking)
     const init = async () => {
       try {
@@ -36,7 +25,7 @@ export default function App() {
         // Initialize Sentry for crash reporting (optional)
         try {
           sentryService.initialize();
-        } catch (error) {
+        } catch {
           console.log("Sentry initialization skipped");
         }
 
@@ -46,7 +35,7 @@ export default function App() {
           if (firebaseServices && firebaseServices.auth) {
             initializeAuth(firebaseServices.auth);
           }
-        } catch (error) {
+        } catch {
           console.log("Firebase initialization skipped");
         }
 
@@ -55,13 +44,6 @@ export default function App() {
 
         // Initialize notifications
         notificationService.initialize();
-
-        // Show special thanks modal once
-        const hasSeenThanks = storage.getBoolean("hasSeenSpecialThanks");
-        if (!hasSeenThanks) {
-          setShowSpecialThanks(true);
-          storage.set("hasSeenSpecialThanks", true);
-        }
 
         console.log("Background initialization complete");
       } catch (error) {
@@ -75,16 +57,11 @@ export default function App() {
     return () => {
       try {
         notificationService.removeListeners();
-      } catch (error) {
+      } catch {
         // Ignore cleanup errors
       }
     };
   }, []);
-
-  const handleCloseThanks = async () => {
-    await storage.setSpecialThanksShown();
-    setShowSpecialThanks(false);
-  };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -95,10 +72,6 @@ export default function App() {
               <AuthProvider>
                 <SubscriptionProvider>
                   <RootNavigator />
-                  <SpecialThanksModal
-                    visible={showSpecialThanks}
-                    onClose={handleCloseThanks}
-                  />
                 </SubscriptionProvider>
               </AuthProvider>
             </ErrorBoundary>
@@ -109,6 +82,3 @@ export default function App() {
     </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({});
-
