@@ -1609,7 +1609,7 @@ export default function ActiveAdventureScreen() {
             longitudeDelta: 0.002,
           }}
           showsUserLocation={!selectedRoute}
-          followsUserLocation={!selectedRoute}
+          followsUserLocation={false}
           showsMyLocationButton={false}
           showsCompass={false}
           showsTraffic
@@ -2090,7 +2090,7 @@ export default function ActiveAdventureScreen() {
                   longitudeDelta: 0.002,
                 }}
                 showsUserLocation={!selectedRoute}
-                followsUserLocation={!selectedRoute}
+                followsUserLocation={false}
                 showsMyLocationButton={false}
                 showsCompass
                 mapType={mapLayer === "default" ? "hybrid" : "standard"}
