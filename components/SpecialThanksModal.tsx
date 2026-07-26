@@ -3,7 +3,7 @@ import { Modal, View, StyleSheet, Pressable } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { Typography, Spacing, BorderRadius, Colors } from "@/constants/theme";
+import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 
 interface SpecialThanksModalProps {
   visible: boolean;
@@ -73,7 +73,7 @@ export default function SpecialThanksModal({
             <ThemedText
               style={[styles.buttonText, { color: theme.backgroundDefault }]}
             >
-              Let's Go Adventure
+              Let&apos;s Go Adventure
             </ThemedText>
           </Pressable>
         </View>

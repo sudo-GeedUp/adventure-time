@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { View, StyleSheet, Image, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import ThemedText from "./ThemedText";
@@ -22,11 +22,7 @@ export default function WeatherWidget({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
-    loadWeather();
-  }, [latitude, longitude]);
-
-  const loadWeather = async () => {
+  const loadWeather = useCallback(async () => {
     setLoading(true);
     setError(false);
     try {
@@ -42,7 +38,11 @@ export default function WeatherWidget({
     } finally {
       setLoading(false);
     }
-  };
+  }, [latitude, longitude]);
+
+  useEffect(() => {
+    void loadWeather();
+  }, [loadWeather]);
 
   if (loading) {
     return (
