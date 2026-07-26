@@ -100,6 +100,14 @@ interface AdventureSession {
 const METERS_PER_SECOND_TO_MPH = 2.237;
 const MAX_REASONABLE_SPEED_MPS = 55;
 
+interface TrackingLifecycle {
+  cancelled: boolean;
+  adventureStarted: boolean;
+  sosStartPromise: Promise<void> | null;
+  broadcastStartPromise: Promise<void> | null;
+  stopPromise: Promise<void> | null;
+}
+
 function isValidCoordinate(point: any): point is NavPoint {
   return (
     point && Number.isFinite(point.latitude) && Number.isFinite(point.longitude)
@@ -666,7 +674,6 @@ export default function ActiveAdventureScreen() {
   const [speed, setSpeed] = useState(0);
   const [altitude, setAltitude] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [newBadges, setNewBadges] = useState<string[]>([]);
   const [showHazardModal, setShowHazardModal] = useState(false);
   const [showAssistanceModal, setShowAssistanceModal] = useState(false);
   const [selectedHazardType, setSelectedHazardType] = useState<string | null>(
@@ -688,15 +695,13 @@ export default function ActiveAdventureScreen() {
   const locationSubscriptionRef = useRef<Location.LocationSubscription | null>(
     null,
   );
-  const adventureStartedRef = useRef(false);
+  const lifecycleRef = useRef<TrackingLifecycle | null>(null);
   const tileSource = useMemo(
     () => getTileSource(mapLayer, isPremium),
     [mapLayer, isPremium],
   );
   const mapRef = React.useRef<any>(null);
-  const sosStartPromiseRef = useRef<Promise<void> | null>(null);
-  const broadcastStartPromiseRef = useRef<Promise<void> | null>(null);
-  const servicesStopPromiseRef = useRef<Promise<void> | null>(null);
+  const trailRef = useRef(trail);
 
   useEffect(() => {
     screenActiveRef.current = true;
@@ -714,6 +719,10 @@ export default function ActiveAdventureScreen() {
     sessionRef.current = session;
   }, [session]);
 
+  useEffect(() => {
+    trailRef.current = trail;
+  }, [trail]);
+
   const HAZARD_TYPES = [
     { id: "washout", label: "Washout", icon: "alert-triangle" },
     { id: "rockslide", label: "Rockslide", icon: "alert-octagon" },
@@ -725,33 +734,35 @@ export default function ActiveAdventureScreen() {
     { id: "other", label: "Other Hazard", icon: "alert-circle" },
   ];
 
-  const stopTrackingServices = useCallback(() => {
-    if (servicesStopPromiseRef.current) {
-      return servicesStopPromiseRef.current;
+  const stopTrackingServices = useCallback((lifecycle: TrackingLifecycle) => {
+    if (lifecycle.stopPromise) {
+      return lifecycle.stopPromise;
     }
 
-    servicesStopPromiseRef.current = (async () => {
-      if (broadcastStartPromiseRef.current) {
-        await broadcastStartPromiseRef.current.catch((error) => {
+    lifecycle.cancelled = true;
+    lifecycle.stopPromise = (async () => {
+      if (lifecycle.broadcastStartPromise) {
+        await lifecycle.broadcastStartPromise.catch((error) => {
           console.error("Error starting location broadcast:", error);
         });
       }
       FirebaseLocationService.stopLocationBroadcast();
 
-      if (sosStartPromiseRef.current) {
-        await sosStartPromiseRef.current.catch((error) => {
+      if (lifecycle.sosStartPromise) {
+        await lifecycle.sosStartPromise.catch((error) => {
           console.error("Error starting SOS route tracking:", error);
         });
       }
       await EmergencySOS.stopRouteTracking();
     })();
 
-    return servicesStopPromiseRef.current;
+    return lifecycle.stopPromise;
   }, []);
 
-  const startAdventure = useCallback(async () => {
-    if (adventureStartedRef.current) return;
-    adventureStartedRef.current = true;
+  const startAdventure = useCallback(async (lifecycle: TrackingLifecycle) => {
+    if (lifecycle.adventureStarted) return;
+    lifecycle.adventureStarted = true;
+    const currentTrail = trailRef.current;
 
     try {
       const location = await Location.getCurrentPositionAsync({});
@@ -764,7 +775,7 @@ export default function ActiveAdventureScreen() {
       }
       const initialAltitude = location.coords.altitude || 0;
       const userProfile = await storage.getUserProfile();
-      if (!screenActiveRef.current) return;
+      if (lifecycle.cancelled || !screenActiveRef.current) return;
 
       const initialGpsSpeed = location.coords.speed;
       const initialSpeedMps =
@@ -812,26 +823,26 @@ export default function ActiveAdventureScreen() {
       const broadcastStart = FirebaseLocationService.startLocationBroadcast(
         userProfile?.id || "anonymous",
       );
-      broadcastStartPromiseRef.current = broadcastStart;
+      lifecycle.broadcastStartPromise = broadcastStart;
       broadcastStart.catch((error) => {
         console.error("Error starting location broadcast:", error);
       });
 
       analyticsService.logAdventureStart(
-        trail.id || trail.name || "unknown",
-        trail.name || "Unknown Trail",
-        trail.difficulty || "Moderate",
+        currentTrail.id || currentTrail.name || "unknown",
+        currentTrail.name || "Unknown Trail",
+        currentTrail.difficulty || "Moderate",
       );
     } catch {
       hapticFeedback.error();
-      if (screenActiveRef.current) {
+      if (!lifecycle.cancelled && screenActiveRef.current) {
         Alert.alert(
           "Error",
           "Could not get your location. Please enable location services.",
         );
       }
     }
-  }, [trail.id, trail.name, trail.difficulty]);
+  }, []);
 
   // Load community trail data
   const loadCommunityTrails = useCallback(async () => {
@@ -911,42 +922,64 @@ export default function ActiveAdventureScreen() {
 
   // Initialize adventure session
   useEffect(() => {
-    startAdventure();
-    loadCommunityTrails();
-    // Initialize rally navigator with trail data
-    console.log("[Rally Navigator] Initializing with trail:", trail.name);
-    rallyNavigatorService.initialize(
-      trail,
-      [],
-      [], // Hazards will be added dynamically during the adventure
-    );
-    console.log("[Rally Navigator] Initialized successfully");
-
-    // Show initial welcome callout
-    const welcomeCallout: NavigationCallout = {
-      id: `welcome-${Date.now()}`,
-      type: "info",
-      message: `🏁 Adventure started on ${trail.name}! Stay safe and have fun!`,
-      priority: "medium",
-      timestamp: Date.now(),
-      icon: "flag",
+    const previousLifecycle = lifecycleRef.current;
+    const lifecycle: TrackingLifecycle = {
+      cancelled: false,
+      adventureStarted: false,
+      sosStartPromise: null,
+      broadcastStartPromise: null,
+      stopPromise: null,
     };
-    setNavigationCallouts([welcomeCallout]);
+    lifecycleRef.current = lifecycle;
 
-    // Start route tracking for emergency contact feature
-    if (!sosStartPromiseRef.current) {
+    const currentTrail = trailRef.current;
+    const initializeLifecycle = async () => {
+      if (previousLifecycle?.stopPromise) {
+        await previousLifecycle.stopPromise;
+      }
+      if (lifecycle.cancelled || !screenActiveRef.current) return;
+
+      void startAdventure(lifecycle);
+      loadCommunityTrails();
+      // Initialize rally navigator with trail data
+      console.log(
+        "[Rally Navigator] Initializing with trail:",
+        currentTrail.name,
+      );
+      rallyNavigatorService.initialize(
+        currentTrail,
+        [],
+        [], // Hazards will be added dynamically during the adventure
+      );
+      console.log("[Rally Navigator] Initialized successfully");
+
+      // Show initial welcome callout
+      const welcomeCallout: NavigationCallout = {
+        id: `welcome-${Date.now()}`,
+        type: "info",
+        message: `🏁 Adventure started on ${currentTrail.name}! Stay safe and have fun!`,
+        priority: "medium",
+        timestamp: Date.now(),
+        icon: "flag",
+      };
+      setNavigationCallouts([welcomeCallout]);
+
+      // Start route tracking for emergency contact feature
       const sosStart = EmergencySOS.startRouteTracking();
-      sosStartPromiseRef.current = sosStart;
+      lifecycle.sosStartPromise = sosStart;
       sosStart.catch((error) => {
         console.error("Error starting SOS route tracking:", error);
       });
-    }
-    console.log("[Emergency SOS] Route tracking started");
+      console.log("[Emergency SOS] Route tracking started");
+    };
+
+    void initializeLifecycle();
 
     return () => {
-      void stopTrackingServices();
+      lifecycle.cancelled = true;
+      void stopTrackingServices(lifecycle);
     };
-  }, [loadCommunityTrails, startAdventure, stopTrackingServices, trail]);
+  }, [loadCommunityTrails, startAdventure, stopTrackingServices]);
 
   // Update elapsed time every second
   useEffect(() => {
@@ -1154,7 +1187,10 @@ export default function ActiveAdventureScreen() {
     if (!session) return;
 
     setIsTracking(false);
-    await stopTrackingServices();
+    const lifecycle = lifecycleRef.current;
+    if (lifecycle) {
+      await stopTrackingServices(lifecycle);
+    }
 
     // Get user profile for community adventure
     const userProfile = await storage.getUserProfile();
@@ -1189,14 +1225,13 @@ export default function ActiveAdventureScreen() {
     );
 
     // Only save to profile if premium
+    let earnedBadgeIds: string[] = [];
     if (isPremium) {
       // Log miles to profile
       const { newBadges: earnedBadges } = await storage.addTrailMiles(
         session.currentDistance,
       );
-      if (screenActiveRef.current) {
-        setNewBadges(earnedBadges.map((b) => b.id));
-      }
+      earnedBadgeIds = earnedBadges.map((b) => b.id);
     }
 
     const showSummary = (isPublic: boolean = false) => {
@@ -1204,8 +1239,10 @@ export default function ActiveAdventureScreen() {
       const publicText = isPublic ? "\n\n🌎 Shared with the community!" : "";
       const message = isPremium
         ? `You traveled ${session.currentDistance.toFixed(1)} miles on ${trail.name}${
-            newBadges.length > 0
-              ? `\n\n🏆 New badge${newBadges.length > 1 ? "s" : ""} unlocked!`
+            earnedBadgeIds.length > 0
+              ? `\n\n🏆 New badge${
+                  earnedBadgeIds.length > 1 ? "s" : ""
+                } unlocked!`
               : ""
           }${publicText}\n\nAdventure saved to your profile!`
         : `You traveled ${session.currentDistance.toFixed(1)} miles on ${trail.name}${publicText}\n\n🔒 Subscribe to save adventures to your profile and unlock badges!`;
@@ -1267,7 +1304,7 @@ export default function ActiveAdventureScreen() {
     } else {
       showSummary(false);
     }
-  }, [isPremium, navigation, newBadges, session, stopTrackingServices, trail]);
+  }, [isPremium, navigation, session, stopTrackingServices, trail]);
 
   const handleMarkHazard = async () => {
     if (!selectedHazardType || !session) {
