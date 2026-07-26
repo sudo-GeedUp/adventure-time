@@ -60,15 +60,15 @@ Track your off-road adventures with live GPS, discover nearby trails, and get AI
 
 ## Support URL
 
-https://adventuretime.app/support
+[https://adventuretime.app/support](https://adventuretime.app/support)
 
 ## Marketing URL
 
-https://adventuretime.app
+[https://adventuretime.app](https://adventuretime.app)
 
 ## Privacy Policy URL
 
-https://adventuretime.app/privacy
+[https://adventuretime.app/privacy](https://adventuretime.app/privacy)
 
 ## Category
 
