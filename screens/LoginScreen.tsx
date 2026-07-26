@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   StyleSheet,
@@ -8,15 +8,15 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { Feather } from '@expo/vector-icons';
-import { ThemedView } from '@/components/ThemedView';
-import ThemedText from '@/components/ThemedText';
-import { useTheme } from '@/hooks/useTheme';
-import { useAuth } from '@/contexts/AuthContext';
-import { Spacing, BorderRadius, Typography } from '@/constants/theme';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Feather } from "@expo/vector-icons";
+import { ThemedView } from "@/components/ThemedView";
+import ThemedText from "@/components/ThemedText";
+import { useTheme } from "@/hooks/useTheme";
+import { useAuth } from "@/contexts/AuthContext";
+import { Spacing, BorderRadius, Typography } from "@/constants/theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
   const navigation = useNavigation<any>();
@@ -24,14 +24,14 @@ export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const { signIn } = useAuth();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password');
+      Alert.alert("Error", "Please enter both email and password");
       return;
     }
 
@@ -39,31 +39,35 @@ export default function LoginScreen() {
     try {
       await signIn(email, password);
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message);
+      Alert.alert("Login Failed", error.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleForgotPassword = () => {
-    navigation.navigate('ForgotPassword');
+    navigation.navigate("ForgotPassword");
   };
 
   const handleSignUp = () => {
-    navigation.navigate('SignUp');
+    navigation.navigate("SignUp");
   };
 
   return (
     <ThemedView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
       >
         <View style={[styles.content, { paddingTop: insets.top + Spacing.xl }]}>
           {/* Header */}
           <View style={styles.header}>
-            <ThemedText style={[Typography.h1, styles.title]}>Welcome Back</ThemedText>
-            <ThemedText style={[styles.subtitle, { color: theme.tabIconDefault }]}>
+            <ThemedText style={[Typography.h1, styles.title]}>
+              Welcome Back
+            </ThemedText>
+            <ThemedText
+              style={[styles.subtitle, { color: theme.tabIconDefault }]}
+            >
               Sign in to continue your adventure
             </ThemedText>
           </View>
@@ -73,7 +77,12 @@ export default function LoginScreen() {
             {/* Email Input */}
             <View style={styles.inputContainer}>
               <ThemedText style={styles.label}>Email</ThemedText>
-              <View style={[styles.inputWrapper, { backgroundColor: theme.backgroundSecondary }]}>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  { backgroundColor: theme.backgroundSecondary },
+                ]}
+              >
                 <Feather name="mail" size={20} color={theme.tabIconDefault} />
                 <TextInput
                   style={[styles.input, { color: theme.text }]}
@@ -92,7 +101,12 @@ export default function LoginScreen() {
             {/* Password Input */}
             <View style={styles.inputContainer}>
               <ThemedText style={styles.label}>Password</ThemedText>
-              <View style={[styles.inputWrapper, { backgroundColor: theme.backgroundSecondary }]}>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  { backgroundColor: theme.backgroundSecondary },
+                ]}
+              >
                 <Feather name="lock" size={20} color={theme.tabIconDefault} />
                 <TextInput
                   style={[styles.input, { color: theme.text }]}
@@ -107,7 +121,7 @@ export default function LoginScreen() {
                 />
                 <Pressable onPress={() => setShowPassword(!showPassword)}>
                   <Feather
-                    name={showPassword ? 'eye-off' : 'eye'}
+                    name={showPassword ? "eye-off" : "eye"}
                     size={20}
                     color={theme.tabIconDefault}
                   />
@@ -117,7 +131,9 @@ export default function LoginScreen() {
 
             {/* Forgot Password */}
             <Pressable onPress={handleForgotPassword} disabled={loading}>
-              <ThemedText style={[styles.forgotPassword, { color: theme.primary }]}>
+              <ThemedText
+                style={[styles.forgotPassword, { color: theme.primary }]}
+              >
                 Forgot Password?
               </ThemedText>
             </Pressable>
@@ -136,7 +152,9 @@ export default function LoginScreen() {
                 <ActivityIndicator color="white" />
               ) : (
                 <>
-                  <ThemedText style={styles.loginButtonText}>Sign In</ThemedText>
+                  <ThemedText style={styles.loginButtonText}>
+                    Sign In
+                  </ThemedText>
                   <Feather name="arrow-right" size={20} color="white" />
                 </>
               )}
@@ -144,17 +162,32 @@ export default function LoginScreen() {
 
             {/* Divider */}
             <View style={styles.divider}>
-              <View style={[styles.dividerLine, { backgroundColor: theme.tabIconDefault }]} />
-              <ThemedText style={[styles.dividerText, { color: theme.tabIconDefault }]}>
+              <View
+                style={[
+                  styles.dividerLine,
+                  { backgroundColor: theme.tabIconDefault },
+                ]}
+              />
+              <ThemedText
+                style={[styles.dividerText, { color: theme.tabIconDefault }]}
+              >
                 or
               </ThemedText>
-              <View style={[styles.dividerLine, { backgroundColor: theme.tabIconDefault }]} />
+              <View
+                style={[
+                  styles.dividerLine,
+                  { backgroundColor: theme.tabIconDefault },
+                ]}
+              />
             </View>
 
             {/* Social Login Buttons */}
             <View style={styles.socialButtons}>
               <Pressable
-                style={[styles.socialButton, { backgroundColor: theme.backgroundSecondary }]}
+                style={[
+                  styles.socialButton,
+                  { backgroundColor: theme.backgroundSecondary },
+                ]}
                 disabled
               >
                 <Feather name="chrome" size={20} color={theme.text} />
@@ -162,7 +195,10 @@ export default function LoginScreen() {
               </Pressable>
 
               <Pressable
-                style={[styles.socialButton, { backgroundColor: theme.backgroundSecondary }]}
+                style={[
+                  styles.socialButton,
+                  { backgroundColor: theme.backgroundSecondary },
+                ]}
                 disabled
               >
                 <Feather name="smartphone" size={20} color={theme.text} />
@@ -170,7 +206,9 @@ export default function LoginScreen() {
               </Pressable>
             </View>
 
-            <ThemedText style={[styles.comingSoon, { color: theme.tabIconDefault }]}>
+            <ThemedText
+              style={[styles.comingSoon, { color: theme.tabIconDefault }]}
+            >
               Social login coming soon
             </ThemedText>
           </View>
@@ -178,7 +216,7 @@ export default function LoginScreen() {
           {/* Sign Up Link */}
           <View style={styles.footer}>
             <ThemedText style={{ color: theme.tabIconDefault }}>
-              Don't have an account?{' '}
+              Don't have an account?{" "}
             </ThemedText>
             <Pressable onPress={handleSignUp} disabled={loading}>
               <ThemedText style={[styles.signUpLink, { color: theme.primary }]}>
@@ -202,10 +240,10 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: Spacing.xl,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   header: {
-    marginBottom: Spacing['2xl'],
+    marginBottom: Spacing["2xl"],
   },
   title: {
     marginBottom: Spacing.sm,
@@ -221,12 +259,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: Spacing.sm,
   },
   inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.md,
     height: 56,
@@ -235,18 +273,18 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    height: '100%',
+    height: "100%",
   },
   forgotPassword: {
     fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'right',
+    fontWeight: "600",
+    textAlign: "right",
     marginBottom: Spacing.xl,
   },
   loginButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: Spacing.lg,
     borderRadius: BorderRadius.md,
     gap: Spacing.sm,
@@ -256,13 +294,13 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   loginButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: Spacing.lg,
   },
   dividerLine: {
@@ -275,15 +313,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   socialButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: Spacing.md,
     marginBottom: Spacing.sm,
   },
   socialButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     gap: Spacing.sm,
@@ -291,20 +329,20 @@ const styles = StyleSheet.create({
   },
   socialButtonText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   comingSoon: {
     fontSize: 12,
-    textAlign: 'center',
-    fontStyle: 'italic',
+    textAlign: "center",
+    fontStyle: "italic",
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
   signUpLink: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

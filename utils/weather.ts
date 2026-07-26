@@ -11,11 +11,11 @@ interface CachedWeather {
 
 export async function fetchWeatherFromNWS(
   latitude: number,
-  longitude: number
+  longitude: number,
 ): Promise<WeatherCondition | null> {
   try {
     const pointsUrl = `https://api.weather.gov/points/${latitude.toFixed(4)},${longitude.toFixed(4)}`;
-    
+
     const pointsResponse = await fetch(pointsUrl, {
       headers: {
         "User-Agent": "(Adventure Time Offroad App, contact@adventuretime.app)",
@@ -60,7 +60,10 @@ export async function fetchWeatherFromNWS(
       condition: currentPeriod.shortForecast || "Unknown",
       temperature: currentPeriod.temperature || 0,
       windSpeed: windSpeedValue,
-      description: currentPeriod.detailedForecast || currentPeriod.shortForecast || "No description available",
+      description:
+        currentPeriod.detailedForecast ||
+        currentPeriod.shortForecast ||
+        "No description available",
     };
 
     return weatherCondition;
@@ -72,13 +75,13 @@ export async function fetchWeatherFromNWS(
 
 export async function getWeather(
   latitude: number,
-  longitude: number
+  longitude: number,
 ): Promise<WeatherCondition | null> {
   const cacheKey = `${CACHE_KEY_PREFIX}_${latitude.toFixed(4)}_${longitude.toFixed(4)}`;
 
   try {
     const cachedData = await AsyncStorage.getItem(cacheKey);
-    
+
     if (cachedData) {
       const cached: CachedWeather = JSON.parse(cachedData);
       const age = Date.now() - cached.timestamp;
@@ -125,8 +128,10 @@ export async function getWeather(
 export async function clearWeatherCache(): Promise<void> {
   try {
     const keys = await AsyncStorage.getAllKeys();
-    const weatherCacheKeys = keys.filter((key) => key.startsWith(CACHE_KEY_PREFIX));
-    
+    const weatherCacheKeys = keys.filter((key) =>
+      key.startsWith(CACHE_KEY_PREFIX),
+    );
+
     if (weatherCacheKeys.length > 0) {
       await AsyncStorage.multiRemove(weatherCacheKeys);
       console.log(`Cleared ${weatherCacheKeys.length} weather cache entries`);

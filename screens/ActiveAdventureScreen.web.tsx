@@ -1,10 +1,10 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { ScreenScrollView } from '@/components/ScreenScrollView';
-import ThemedText from '@/components/ThemedText';
-import { useTheme } from '@/hooks/useTheme';
-import { Spacing, Typography } from '@/constants/theme';
-import { Feather } from '@expo/vector-icons';
+import React from "react";
+import { View, StyleSheet } from "react-native";
+import { ScreenScrollView } from "@/components/ScreenScrollView";
+import ThemedText from "@/components/ThemedText";
+import { useTheme } from "@/hooks/useTheme";
+import { Spacing, Typography } from "@/constants/theme";
+import { Feather } from "@expo/vector-icons";
 
 export default function ActiveAdventureScreen() {
   const { theme } = useTheme();
@@ -12,13 +12,20 @@ export default function ActiveAdventureScreen() {
   return (
     <ScreenScrollView>
       <View style={styles.container}>
-        <Feather name="activity" size={64} color={theme.tabIconDefault} style={styles.icon} />
+        <Feather
+          name="activity"
+          size={64}
+          color={theme.tabIconDefault}
+          style={styles.icon}
+        />
         <ThemedText style={[Typography.h3, styles.title]}>
           Active Adventure Tracking Unavailable
         </ThemedText>
-        <ThemedText style={[Typography.body, styles.message, { color: theme.text }]}>
+        <ThemedText
+          style={[Typography.body, styles.message, { color: theme.text }]}
+        >
           Adventure tracking with GPS requires a mobile device.
-          {'\n\n'}
+          {"\n\n"}
           Use the iOS or Android app to track your adventures in real-time.
         </ThemedText>
       </View>
@@ -29,8 +36,8 @@ export default function ActiveAdventureScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: Spacing.xl,
   },
   icon: {
@@ -38,9 +45,9 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: Spacing.md,
-    textAlign: 'center',
+    textAlign: "center",
   },
   message: {
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

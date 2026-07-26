@@ -1,14 +1,23 @@
-import * as Location from 'expo-location';
-import * as Speech from 'expo-speech';
-import { Trail } from '@/utils/trails';
-import { RoutePoint, AdventureHazard } from '@/utils/storage';
-import { calculateDistance } from '@/utils/location';
+import * as Location from "expo-location";
+import * as Speech from "expo-speech";
+import { Trail } from "@/utils/trails";
+import { RoutePoint, AdventureHazard } from "@/utils/storage";
+import { calculateDistance } from "@/utils/location";
 
 export interface NavigationCallout {
   id: string;
-  type: 'direction' | 'speed' | 'obstacle' | 'warning' | 'info' | 'turn' | 'terrain' | 'altitude' | 'status';
+  type:
+    | "direction"
+    | "speed"
+    | "obstacle"
+    | "warning"
+    | "info"
+    | "turn"
+    | "terrain"
+    | "altitude"
+    | "status";
   message: string;
-  priority: 'low' | 'medium' | 'high' | 'critical';
+  priority: "low" | "medium" | "high" | "critical";
   timestamp: number;
   distance?: number; // Distance ahead in meters
   speed?: number; // Current or recommended speed in mph
@@ -21,7 +30,7 @@ export interface NavigatorState {
   currentHeading: number;
   distanceTraveled: number;
   upcomingTurn?: {
-    direction: 'left' | 'right' | 'straight';
+    direction: "left" | "right" | "straight";
     distance: number;
     description: string;
   };
@@ -44,22 +53,26 @@ class RallyNavigatorService {
   /**
    * Initialize navigator with trail and route data
    */
-  initialize(trail: Trail, routePoints: RoutePoint[] = [], hazards: AdventureHazard[] = []) {
+  initialize(
+    trail: Trail,
+    routePoints: RoutePoint[] = [],
+    hazards: AdventureHazard[] = [],
+  ) {
     this.currentTrail = trail;
     this.routePoints = routePoints;
     this.hazards = hazards;
     this.calloutHistory = [];
     this.lastCalloutTime = 0;
     this.lastSpeedWarning = 0;
-    
+
     // Generate initial welcome callout
     const welcomeCallout: NavigationCallout = {
       id: `welcome-${Date.now()}`,
-      type: 'info',
+      type: "info",
       message: `🏁 Adventure started on ${trail.name}! Stay safe and have fun!`,
-      priority: 'medium',
+      priority: "medium",
       timestamp: Date.now(),
-      icon: 'flag',
+      icon: "flag",
     };
     this.calloutHistory.push(welcomeCallout);
   }
@@ -76,9 +89,12 @@ class RallyNavigatorService {
 
     // Use enhanced speed if available (already in MPH from ActiveAdventureScreen)
     // Otherwise convert GPS speed from m/s to mph
-    const currentSpeed = (location as any).enhancedSpeed !== undefined 
-      ? (location as any).enhancedSpeed 
-      : (location.coords.speed ? location.coords.speed * 2.237 : 0);
+    const currentSpeed =
+      (location as any).enhancedSpeed !== undefined
+        ? (location as any).enhancedSpeed
+        : location.coords.speed
+          ? location.coords.speed * 2.237
+          : 0;
     const currentAltitude = location.coords.altitude || 0;
     const currentHeading = location.coords.heading || 0;
 
@@ -87,44 +103,54 @@ class RallyNavigatorService {
       return [];
     }
 
-    console.log(`[Rally Navigator] Speed: ${currentSpeed.toFixed(1)} MPH, Heading: ${currentHeading}°, Altitude: ${currentAltitude.toFixed(0)} ft`);
+    console.log(
+      `[Rally Navigator] Speed: ${currentSpeed.toFixed(1)} MPH, Heading: ${currentHeading}°, Altitude: ${currentAltitude.toFixed(0)} ft`,
+    );
 
     // Check for speed advisories (lower threshold for off-road)
     if (currentSpeed > 30) {
       callouts.push({
         id: `speed-${now}`,
         message: `⚠️ Speed ${Math.round(currentSpeed)} mph - Slow down for trail conditions`,
-        priority: 'high',
-        type: 'speed',
+        priority: "high",
+        type: "speed",
         timestamp: now,
-        icon: 'alert-triangle',
+        icon: "alert-triangle",
       });
     }
 
     // Check for direction changes
-    if (this.lastHeading !== null && Math.abs(currentHeading - this.lastHeading) > 45) {
+    if (
+      this.lastHeading !== null &&
+      Math.abs(currentHeading - this.lastHeading) > 45
+    ) {
       callouts.push({
         id: `turn-${now}`,
-        message: `🔄 Turn ${currentHeading > this.lastHeading ? 'right' : 'left'} ahead`,
-        priority: 'medium',
-        type: 'direction',
+        message: `🔄 Turn ${currentHeading > this.lastHeading ? "right" : "left"} ahead`,
+        priority: "medium",
+        type: "direction",
         timestamp: now,
-        icon: 'refresh-cw',
+        icon: "refresh-cw",
       });
       this.lastHeading = currentHeading;
     }
 
     // Check for altitude changes (steep ascent/descent)
     if (this.lastLocation && this.lastLocation.coords.altitude) {
-      const altitudeChange = currentAltitude - this.lastLocation.coords.altitude;
-      if (Math.abs(altitudeChange) > 100) { // 100 feet change
+      const altitudeChange =
+        currentAltitude - this.lastLocation.coords.altitude;
+      if (Math.abs(altitudeChange) > 100) {
+        // 100 feet change
         callouts.push({
           id: `altitude-${now}`,
-          message: altitudeChange > 0 ? `⬆️ Steep ascent ahead (${Math.round(altitudeChange)}ft gain)` : `⬇️ Steep descent ahead (${Math.abs(Math.round(altitudeChange))}ft drop)`,
-          priority: 'medium',
-          type: 'altitude',
+          message:
+            altitudeChange > 0
+              ? `⬆️ Steep ascent ahead (${Math.round(altitudeChange)}ft gain)`
+              : `⬇️ Steep descent ahead (${Math.abs(Math.round(altitudeChange))}ft drop)`,
+          priority: "medium",
+          type: "altitude",
           timestamp: now,
-          icon: altitudeChange > 0 ? 'trending-up' : 'trending-down',
+          icon: altitudeChange > 0 ? "trending-up" : "trending-down",
         });
       }
     }
@@ -133,7 +159,9 @@ class RallyNavigatorService {
     if (callouts.length > 1) {
       // Sort by priority: critical > high > medium > low
       const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-      callouts.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+      callouts.sort(
+        (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority],
+      );
       // Keep only the top priority callout
       callouts.splice(1);
     }
@@ -141,10 +169,10 @@ class RallyNavigatorService {
     if (callouts.length > 0) {
       this.lastCalloutTime = now;
       this.calloutHistory.push(...callouts);
-      
+
       // Speak the callouts over device speakers
       if (this.audioEnabled) {
-        callouts.forEach(callout => {
+        callouts.forEach((callout) => {
           this.speakCallout(callout);
         });
       }
@@ -158,20 +186,22 @@ class RallyNavigatorService {
    */
   private speakCallout(callout: NavigationCallout): void {
     // Remove emojis for cleaner speech
-    const cleanMessage = callout.message.replace(/[\u{1F300}-\u{1F9FF}]/gu, '').trim();
-    
+    const cleanMessage = callout.message
+      .replace(/[\u{1F300}-\u{1F9FF}]/gu, "")
+      .trim();
+
     // Determine speech rate based on priority
-    const rate = callout.priority === 'critical' ? 1.1 : 0.95;
-    const pitch = callout.priority === 'critical' ? 1.2 : 1.0;
-    
+    const rate = callout.priority === "critical" ? 1.1 : 0.95;
+    const pitch = callout.priority === "critical" ? 1.2 : 1.0;
+
     Speech.speak(cleanMessage, {
-      language: 'en-US',
+      language: "en-US",
       pitch: pitch,
       rate: rate,
       volume: 1.0,
     });
-    
-    console.log('[Rally Navigator Audio] Speaking:', cleanMessage);
+
+    console.log("[Rally Navigator Audio] Speaking:", cleanMessage);
   }
 
   /**
@@ -194,19 +224,23 @@ class RallyNavigatorService {
   /**
    * Check speed and provide advisories
    */
-  private checkSpeed(currentSpeed: number, now: number): NavigationCallout | null {
+  private checkSpeed(
+    currentSpeed: number,
+    now: number,
+  ): NavigationCallout | null {
     // Speed warnings for different conditions
-    if (currentSpeed > 35 && this.currentTrail?.difficulty === 'Hard') {
-      if (now - this.lastSpeedWarning > 10000) { // Every 10 seconds max
+    if (currentSpeed > 35 && this.currentTrail?.difficulty === "Hard") {
+      if (now - this.lastSpeedWarning > 10000) {
+        // Every 10 seconds max
         this.lastSpeedWarning = now;
         return {
           id: `speed-${now}`,
-          type: 'speed',
+          type: "speed",
           message: `⚠️ Speed ${Math.round(currentSpeed)} mph - Caution on difficult terrain!`,
-          priority: 'high',
+          priority: "high",
           timestamp: now,
           speed: currentSpeed,
-          icon: 'alert-triangle',
+          icon: "alert-triangle",
         };
       }
     }
@@ -216,28 +250,33 @@ class RallyNavigatorService {
         this.lastSpeedWarning = now;
         return {
           id: `speed-${now}`,
-          type: 'speed',
+          type: "speed",
           message: `🚨 Speed ${Math.round(currentSpeed)} mph - SLOW DOWN!`,
-          priority: 'critical',
+          priority: "critical",
           timestamp: now,
           speed: currentSpeed,
-          icon: 'alert-octagon',
+          icon: "alert-octagon",
         };
       }
     }
 
     // Optimal speed callouts
-    if (currentSpeed >= 15 && currentSpeed <= 25 && this.currentTrail?.difficulty === 'Moderate') {
-      if (now - this.lastSpeedWarning > 5000) { // Every 5 seconds for testing
+    if (
+      currentSpeed >= 15 &&
+      currentSpeed <= 25 &&
+      this.currentTrail?.difficulty === "Moderate"
+    ) {
+      if (now - this.lastSpeedWarning > 5000) {
+        // Every 5 seconds for testing
         this.lastSpeedWarning = now;
         return {
           id: `speed-${now}`,
-          type: 'speed',
+          type: "speed",
           message: `✓ Good pace at ${Math.round(currentSpeed)} mph`,
-          priority: 'low',
+          priority: "low",
           timestamp: now,
           speed: currentSpeed,
-          icon: 'check-circle',
+          icon: "check-circle",
         };
       }
     }
@@ -245,15 +284,15 @@ class RallyNavigatorService {
     // Fallback: Generate general speed callouts if moving
     if (currentSpeed > 5 && now - this.lastSpeedWarning > 5000) {
       this.lastSpeedWarning = now;
-      const difficulty = this.currentTrail?.difficulty || 'Unknown';
+      const difficulty = this.currentTrail?.difficulty || "Unknown";
       return {
         id: `speed-${now}`,
-        type: 'info',
+        type: "info",
         message: `📍 Traveling at ${Math.round(currentSpeed)} mph on ${difficulty} terrain`,
-        priority: 'low',
+        priority: "low",
         timestamp: now,
         speed: currentSpeed,
-        icon: 'navigation',
+        icon: "navigation",
       };
     }
 
@@ -263,7 +302,10 @@ class RallyNavigatorService {
   /**
    * Check for upcoming hazards
    */
-  private checkUpcomingHazards(location: Location.LocationObject, now: number): NavigationCallout[] {
+  private checkUpcomingHazards(
+    location: Location.LocationObject,
+    now: number,
+  ): NavigationCallout[] {
     const callouts: NavigationCallout[] = [];
     const currentPos = {
       latitude: location.coords.latitude,
@@ -277,15 +319,18 @@ class RallyNavigatorService {
       // Warn about hazards within 200 meters
       if (distanceMeters <= 200 && distanceMeters > 0) {
         const alreadyWarned = this.calloutHistory.some(
-          c => c.type === 'obstacle' && c.message.includes(hazard.type)
+          (c) => c.type === "obstacle" && c.message.includes(hazard.type),
         );
 
         if (!alreadyWarned || distanceMeters < 50) {
           callouts.push({
             id: `hazard-${hazard.id}-${now}`,
-            type: 'obstacle',
-            message: this.getHazardCallout(hazard.type, Math.round(distanceMeters)),
-            priority: distanceMeters < 50 ? 'critical' : 'high',
+            type: "obstacle",
+            message: this.getHazardCallout(
+              hazard.type,
+              Math.round(distanceMeters),
+            ),
+            priority: distanceMeters < 50 ? "critical" : "high",
             timestamp: now,
             distance: distanceMeters,
             icon: this.getHazardIcon(hazard.type),
@@ -301,8 +346,11 @@ class RallyNavigatorService {
    * Get rally-style hazard callout
    */
   private getHazardCallout(hazardType: string, distanceMeters: number): string {
-    const distance = distanceMeters < 100 ? `${distanceMeters}m` : `${Math.round(distanceMeters / 10) * 10}m`;
-    
+    const distance =
+      distanceMeters < 100
+        ? `${distanceMeters}m`
+        : `${Math.round(distanceMeters / 10) * 10}m`;
+
     const callouts: Record<string, string> = {
       washout: `⚠️ WASHOUT ahead ${distance}!`,
       rockslide: `🪨 ROCKS on trail ${distance}!`,
@@ -321,15 +369,15 @@ class RallyNavigatorService {
    */
   private getHazardIcon(hazardType: string): string {
     const icons: Record<string, string> = {
-      washout: 'alert-triangle',
-      rockslide: 'alert-octagon',
-      steep_grade: 'trending-up',
-      narrow_trail: 'minimize-2',
-      water_crossing: 'droplet',
-      fallen_tree: 'x-circle',
-      soft_ground: 'circle',
+      washout: "alert-triangle",
+      rockslide: "alert-octagon",
+      steep_grade: "trending-up",
+      narrow_trail: "minimize-2",
+      water_crossing: "droplet",
+      fallen_tree: "x-circle",
+      soft_ground: "circle",
     };
-    return icons[hazardType] || 'alert-circle';
+    return icons[hazardType] || "alert-circle";
   }
 
   /**
@@ -338,13 +386,14 @@ class RallyNavigatorService {
   private checkTerrainChange(
     location: Location.LocationObject,
     currentAltitude: number,
-    now: number
+    now: number,
   ): NavigationCallout | null {
     // Check altitude change rate
     if (this.lastLocation && this.lastLocation.coords.altitude) {
-      const altitudeChange = currentAltitude - this.lastLocation.coords.altitude;
+      const altitudeChange =
+        currentAltitude - this.lastLocation.coords.altitude;
       const timeDiff = (now - (this.lastLocation.timestamp || now)) / 1000; // seconds
-      
+
       if (timeDiff > 0) {
         const altitudeRate = altitudeChange / timeDiff; // meters per second
 
@@ -352,11 +401,11 @@ class RallyNavigatorService {
         if (altitudeRate > 2) {
           return {
             id: `terrain-${now}`,
-            type: 'terrain',
+            type: "terrain",
             message: `📈 CLIMBING - ${Math.round(altitudeRate * 3.28)} ft/s`,
-            priority: 'medium',
+            priority: "medium",
             timestamp: now,
-            icon: 'trending-up',
+            icon: "trending-up",
           };
         }
 
@@ -364,11 +413,11 @@ class RallyNavigatorService {
         if (altitudeRate < -2) {
           return {
             id: `terrain-${now}`,
-            type: 'terrain',
+            type: "terrain",
             message: `📉 DESCENDING - Use engine braking!`,
-            priority: 'medium',
+            priority: "medium",
             timestamp: now,
-            icon: 'trending-down',
+            icon: "trending-down",
           };
         }
       }
@@ -383,28 +432,30 @@ class RallyNavigatorService {
   private checkDirectionChange(
     location: Location.LocationObject,
     currentHeading: number,
-    now: number
+    now: number,
   ): NavigationCallout | null {
     if (!this.lastLocation || !this.lastLocation.coords.heading) {
       return null;
     }
 
-    const headingChange = Math.abs(currentHeading - this.lastLocation.coords.heading);
-    
+    const headingChange = Math.abs(
+      currentHeading - this.lastLocation.coords.heading,
+    );
+
     // Significant turn detected
     if (headingChange > 45 && headingChange < 315) {
       const direction = this.getDirectionFromHeadingChange(
         this.lastLocation.coords.heading,
-        currentHeading
+        currentHeading,
       );
-      
+
       return {
         id: `turn-${now}`,
-        type: 'turn',
+        type: "turn",
         message: `↪️ ${direction.toUpperCase()} turn ahead`,
-        priority: 'medium',
+        priority: "medium",
         timestamp: now,
-        icon: direction === 'left' ? 'arrow-left' : 'arrow-right',
+        icon: direction === "left" ? "arrow-left" : "arrow-right",
       };
     }
 
@@ -414,18 +465,23 @@ class RallyNavigatorService {
   /**
    * Determine turn direction from heading change
    */
-  private getDirectionFromHeadingChange(oldHeading: number, newHeading: number): 'left' | 'right' {
+  private getDirectionFromHeadingChange(
+    oldHeading: number,
+    newHeading: number,
+  ): "left" | "right" {
     let diff = newHeading - oldHeading;
     if (diff < -180) diff += 360;
     if (diff > 180) diff -= 360;
-    return diff > 0 ? 'right' : 'left';
+    return diff > 0 ? "right" : "left";
   }
 
   /**
    * Get current navigator state
    */
   getNavigatorState(location: Location.LocationObject): NavigatorState {
-    const currentSpeed = location.coords.speed ? location.coords.speed * 2.237 : 0;
+    const currentSpeed = location.coords.speed
+      ? location.coords.speed * 2.237
+      : 0;
     const currentAltitude = location.coords.altitude || 0;
     const currentHeading = location.coords.heading || 0;
 
@@ -441,18 +497,20 @@ class RallyNavigatorService {
   /**
    * Get hazards ahead of current position
    */
-  private getHazardsAhead(location: Location.LocationObject): AdventureHazard[] {
+  private getHazardsAhead(
+    location: Location.LocationObject,
+  ): AdventureHazard[] {
     const currentPos = {
       latitude: location.coords.latitude,
       longitude: location.coords.longitude,
     };
 
     return this.hazards
-      .map(hazard => ({
+      .map((hazard) => ({
         ...hazard,
         distance: calculateDistance(currentPos, hazard.location) * 1609.34, // meters
       }))
-      .filter(hazard => hazard.distance && hazard.distance <= 500)
+      .filter((hazard) => hazard.distance && hazard.distance <= 500)
       .sort((a, b) => (a.distance || 0) - (b.distance || 0));
   }
 
@@ -479,4 +537,4 @@ class RallyNavigatorService {
 }
 
 export const rallyNavigatorService = new RallyNavigatorService();
-export { GuideMessage, GuideSuggestion } from './aiGuideService';
+export { GuideMessage, GuideSuggestion } from "./aiGuideService";

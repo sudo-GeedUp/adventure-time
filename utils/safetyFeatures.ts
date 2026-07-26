@@ -19,34 +19,37 @@ export interface GeofenceAlert {
   id: string;
   geofenceId: string;
   timestamp: number;
-  type: 'entered' | 'exited';
+  type: "entered" | "exited";
   location: { latitude: number; longitude: number };
 }
 
 class GeofenceManager {
   private geofences: Geofence[] = [];
   private monitoringInterval: NodeJS.Timeout | null = null;
-  private lastKnownPosition: { latitude: number; longitude: number } | null = null;
+  private lastKnownPosition: { latitude: number; longitude: number } | null =
+    null;
 
-  async addGeofence(geofence: Omit<Geofence, 'id'>): Promise<Geofence> {
+  async addGeofence(geofence: Omit<Geofence, "id">): Promise<Geofence> {
     const newGeofence: Geofence = {
       ...geofence,
       id: `geofence_${Date.now()}`,
     };
-    
+
     this.geofences.push(newGeofence);
     await this.saveGeofences();
-    
+
     return newGeofence;
   }
 
-  async createTrailBoundary(trailCoordinates: { latitude: number; longitude: number }[]): Promise<Geofence> {
+  async createTrailBoundary(
+    trailCoordinates: { latitude: number; longitude: number }[],
+  ): Promise<Geofence> {
     // Calculate center point and radius from trail coordinates
     const center = this.calculateCenterPoint(trailCoordinates);
     const radius = this.calculateMaxRadius(center, trailCoordinates);
-    
+
     return this.addGeofence({
-      name: 'Trail Boundary',
+      name: "Trail Boundary",
       center,
       radiusMeters: radius + 100, // Add 100m buffer
       isActive: true,
@@ -55,7 +58,7 @@ class GeofenceManager {
 
   startMonitoring(): void {
     if (this.monitoringInterval) return;
-    
+
     this.monitoringInterval = setInterval(async () => {
       await this.checkGeofences();
     }, 10000); // Check every 10 seconds
@@ -79,12 +82,12 @@ class GeofenceManager {
         longitude: location.coords.longitude,
       };
 
-      for (const geofence of this.geofences.filter(g => g.isActive)) {
+      for (const geofence of this.geofences.filter((g) => g.isActive)) {
         const distance = this.calculateDistance(
           currentPos.latitude,
           currentPos.longitude,
           geofence.center.latitude,
-          geofence.center.longitude
+          geofence.center.longitude,
         );
 
         const isInside = distance <= geofence.radiusMeters;
@@ -93,27 +96,27 @@ class GeofenceManager {
               this.lastKnownPosition.latitude,
               this.lastKnownPosition.longitude,
               geofence.center.latitude,
-              geofence.center.longitude
+              geofence.center.longitude,
             ) <= geofence.radiusMeters
           : false;
 
         if (isInside && !wasInside) {
-          await this.triggerAlert(geofence, 'entered', currentPos);
+          await this.triggerAlert(geofence, "entered", currentPos);
         } else if (!isInside && wasInside) {
-          await this.triggerAlert(geofence, 'exited', currentPos);
+          await this.triggerAlert(geofence, "exited", currentPos);
         }
       }
 
       this.lastKnownPosition = currentPos;
     } catch (error) {
-      console.error('Error checking geofences:', error);
+      console.error("Error checking geofences:", error);
     }
   }
 
   private async triggerAlert(
     geofence: Geofence,
-    type: 'entered' | 'exited',
-    location: { latitude: number; longitude: number }
+    type: "entered" | "exited",
+    location: { latitude: number; longitude: number },
   ): Promise<void> {
     const alert: GeofenceAlert = {
       id: `alert_${Date.now()}`,
@@ -126,10 +129,14 @@ class GeofenceManager {
     // Send notification
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: type === 'exited' ? '⚠️ Trail Boundary Alert' : '✅ Entered Trail Area',
-        body: type === 'exited' 
-          ? `You've left the ${geofence.name}. Stay safe!`
-          : `You've entered ${geofence.name}`,
+        title:
+          type === "exited"
+            ? "⚠️ Trail Boundary Alert"
+            : "✅ Entered Trail Area",
+        body:
+          type === "exited"
+            ? `You've left the ${geofence.name}. Stay safe!`
+            : `You've entered ${geofence.name}`,
         sound: true,
       },
       trigger: null,
@@ -138,7 +145,12 @@ class GeofenceManager {
     await this.saveAlert(alert);
   }
 
-  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  private calculateDistance(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ): number {
     const R = 6371e3;
     const φ1 = (lat1 * Math.PI) / 180;
     const φ2 = (lat2 * Math.PI) / 180;
@@ -153,13 +165,15 @@ class GeofenceManager {
     return R * c;
   }
 
-  private calculateCenterPoint(coords: { latitude: number; longitude: number }[]): { latitude: number; longitude: number } {
+  private calculateCenterPoint(
+    coords: { latitude: number; longitude: number }[],
+  ): { latitude: number; longitude: number } {
     const sum = coords.reduce(
       (acc, coord) => ({
         latitude: acc.latitude + coord.latitude,
         longitude: acc.longitude + coord.longitude,
       }),
-      { latitude: 0, longitude: 0 }
+      { latitude: 0, longitude: 0 },
     );
 
     return {
@@ -168,26 +182,34 @@ class GeofenceManager {
     };
   }
 
-  private calculateMaxRadius(center: { latitude: number; longitude: number }, coords: { latitude: number; longitude: number }[]): number {
+  private calculateMaxRadius(
+    center: { latitude: number; longitude: number },
+    coords: { latitude: number; longitude: number }[],
+  ): number {
     return Math.max(
-      ...coords.map(coord =>
-        this.calculateDistance(center.latitude, center.longitude, coord.latitude, coord.longitude)
-      )
+      ...coords.map((coord) =>
+        this.calculateDistance(
+          center.latitude,
+          center.longitude,
+          coord.latitude,
+          coord.longitude,
+        ),
+      ),
     );
   }
 
   private async saveGeofences(): Promise<void> {
-    await AsyncStorage.setItem('@geofences', JSON.stringify(this.geofences));
+    await AsyncStorage.setItem("@geofences", JSON.stringify(this.geofences));
   }
 
   private async saveAlert(alert: GeofenceAlert): Promise<void> {
     const alerts = await this.getAlerts();
     alerts.push(alert);
-    await AsyncStorage.setItem('@geofence_alerts', JSON.stringify(alerts));
+    await AsyncStorage.setItem("@geofence_alerts", JSON.stringify(alerts));
   }
 
   async getAlerts(): Promise<GeofenceAlert[]> {
-    const data = await AsyncStorage.getItem('@geofence_alerts');
+    const data = await AsyncStorage.getItem("@geofence_alerts");
     return data ? JSON.parse(data) : [];
   }
 }
@@ -209,10 +231,12 @@ class SunsetTimerManager {
 
   async startMonitoring(
     location: { latitude: number; longitude: number },
-    hoursBeforeSunset: number = 2
+    hoursBeforeSunset: number = 2,
   ): Promise<void> {
     const sunsetTime = await this.calculateSunset(location);
-    const alertTime = new Date(sunsetTime.getTime() - hoursBeforeSunset * 60 * 60 * 1000);
+    const alertTime = new Date(
+      sunsetTime.getTime() - hoursBeforeSunset * 60 * 60 * 1000,
+    );
 
     this.alertInterval = setInterval(async () => {
       const now = new Date();
@@ -231,20 +255,26 @@ class SunsetTimerManager {
     }
   }
 
-  private async calculateSunset(location: { latitude: number; longitude: number }): Promise<Date> {
+  private async calculateSunset(location: {
+    latitude: number;
+    longitude: number;
+  }): Promise<Date> {
     // Simplified sunset calculation (use a proper library in production)
     const now = new Date();
     const sunsetHour = 18; // Approximate sunset at 6 PM
     const sunset = new Date(now);
     sunset.setHours(sunsetHour, 0, 0, 0);
-    
+
     return sunset;
   }
 
-  private async sendSunsetAlert(sunsetTime: Date, hoursBeforeSunset: number): Promise<void> {
+  private async sendSunsetAlert(
+    sunsetTime: Date,
+    hoursBeforeSunset: number,
+  ): Promise<void> {
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: '🌅 Sunset Alert',
+        title: "🌅 Sunset Alert",
         body: `Sunset in ${hoursBeforeSunset} hours at ${sunsetTime.toLocaleTimeString()}. Consider heading back soon!`,
         sound: true,
         priority: Notifications.AndroidNotificationPriority.HIGH,
@@ -253,7 +283,10 @@ class SunsetTimerManager {
     });
   }
 
-  async getTimeUntilSunset(location: { latitude: number; longitude: number }): Promise<number> {
+  async getTimeUntilSunset(location: {
+    latitude: number;
+    longitude: number;
+  }): Promise<number> {
     const sunsetTime = await this.calculateSunset(location);
     const now = new Date();
     return sunsetTime.getTime() - now.getTime();
@@ -267,7 +300,7 @@ class SunsetTimerManager {
 export interface WeatherAlert {
   id: string;
   timestamp: number;
-  severity: 'low' | 'medium' | 'high' | 'extreme';
+  severity: "low" | "medium" | "high" | "extreme";
   type: string;
   message: string;
   location: { latitude: number; longitude: number };
@@ -278,7 +311,10 @@ class WeatherAlertManager {
   private lastWeatherCheck: number = 0;
   private readonly CHECK_INTERVAL = 30 * 60 * 1000; // 30 minutes
 
-  async startMonitoring(location: { latitude: number; longitude: number }): Promise<void> {
+  async startMonitoring(location: {
+    latitude: number;
+    longitude: number;
+  }): Promise<void> {
     this.monitoringInterval = setInterval(async () => {
       await this.checkWeather(location);
     }, this.CHECK_INTERVAL);
@@ -294,10 +330,13 @@ class WeatherAlertManager {
     }
   }
 
-  private async checkWeather(location: { latitude: number; longitude: number }): Promise<void> {
+  private async checkWeather(location: {
+    latitude: number;
+    longitude: number;
+  }): Promise<void> {
     try {
       const weather = await getWeather(location.latitude, location.longitude);
-      
+
       if (!weather) return;
 
       const alerts: WeatherAlert[] = [];
@@ -307,9 +346,9 @@ class WeatherAlertManager {
         alerts.push({
           id: `alert_${Date.now()}_freeze`,
           timestamp: Date.now(),
-          severity: 'medium',
-          type: 'Freezing Temperature',
-          message: 'Temperature below freezing. Watch for ice on trails.',
+          severity: "medium",
+          type: "Freezing Temperature",
+          message: "Temperature below freezing. Watch for ice on trails.",
           location,
         });
       }
@@ -318,32 +357,36 @@ class WeatherAlertManager {
         alerts.push({
           id: `alert_${Date.now()}_wind`,
           timestamp: Date.now(),
-          severity: 'high',
-          type: 'High Winds',
+          severity: "high",
+          type: "High Winds",
           message: `Wind speed ${weather.windSpeed} mph. Use caution on exposed trails.`,
           location,
         });
       }
 
-      if (weather.condition.toLowerCase().includes('storm') || 
-          weather.condition.toLowerCase().includes('thunder')) {
+      if (
+        weather.condition.toLowerCase().includes("storm") ||
+        weather.condition.toLowerCase().includes("thunder")
+      ) {
         alerts.push({
           id: `alert_${Date.now()}_storm`,
           timestamp: Date.now(),
-          severity: 'extreme',
-          type: 'Storm Warning',
-          message: 'Severe weather detected. Seek shelter immediately.',
+          severity: "extreme",
+          type: "Storm Warning",
+          message: "Severe weather detected. Seek shelter immediately.",
           location,
         });
       }
 
-      if (weather.condition.toLowerCase().includes('rain') || 
-          weather.condition.toLowerCase().includes('snow')) {
+      if (
+        weather.condition.toLowerCase().includes("rain") ||
+        weather.condition.toLowerCase().includes("snow")
+      ) {
         alerts.push({
           id: `alert_${Date.now()}_precip`,
           timestamp: Date.now(),
-          severity: 'medium',
-          type: 'Precipitation',
+          severity: "medium",
+          type: "Precipitation",
           message: `${weather.condition} detected. Trails may be slippery.`,
           location,
         });
@@ -351,7 +394,7 @@ class WeatherAlertManager {
 
       // Send notifications for high/extreme severity
       for (const alert of alerts) {
-        if (alert.severity === 'high' || alert.severity === 'extreme') {
+        if (alert.severity === "high" || alert.severity === "extreme") {
           await this.sendWeatherNotification(alert);
         }
         await this.saveAlert(alert);
@@ -359,21 +402,22 @@ class WeatherAlertManager {
 
       this.lastWeatherCheck = Date.now();
     } catch (error) {
-      console.error('Error checking weather:', error);
+      console.error("Error checking weather:", error);
     }
   }
 
   private async sendWeatherNotification(alert: WeatherAlert): Promise<void> {
-    const emoji = alert.severity === 'extreme' ? '🚨' : '⚠️';
-    
+    const emoji = alert.severity === "extreme" ? "🚨" : "⚠️";
+
     await Notifications.scheduleNotificationAsync({
       content: {
         title: `${emoji} Weather Alert: ${alert.type}`,
         body: alert.message,
         sound: true,
-        priority: alert.severity === 'extreme' 
-          ? Notifications.AndroidNotificationPriority.MAX
-          : Notifications.AndroidNotificationPriority.HIGH,
+        priority:
+          alert.severity === "extreme"
+            ? Notifications.AndroidNotificationPriority.MAX
+            : Notifications.AndroidNotificationPriority.HIGH,
       },
       trigger: null,
     });
@@ -384,11 +428,11 @@ class WeatherAlertManager {
     alerts.push(alert);
     // Keep only last 50 alerts
     const trimmed = alerts.slice(-50);
-    await AsyncStorage.setItem('@weather_alerts', JSON.stringify(trimmed));
+    await AsyncStorage.setItem("@weather_alerts", JSON.stringify(trimmed));
   }
 
   async getAlerts(): Promise<WeatherAlert[]> {
-    const data = await AsyncStorage.getItem('@weather_alerts');
+    const data = await AsyncStorage.getItem("@weather_alerts");
     return data ? JSON.parse(data) : [];
   }
 }
@@ -417,20 +461,21 @@ class FuelCalculator {
   calculateEstimate(
     fuelData: FuelData,
     trailDistanceMiles: number,
-    isOffroad: boolean = true
+    isOffroad: boolean = true,
   ): FuelEstimate {
     const mpg = isOffroad ? fuelData.avgMpgOffroad : fuelData.avgMpgOnroad;
-    const currentGallons = (fuelData.currentFuelLevel / 100) * fuelData.tankCapacityGallons;
+    const currentGallons =
+      (fuelData.currentFuelLevel / 100) * fuelData.tankCapacityGallons;
     const estimatedMilesRemaining = currentGallons * mpg;
-    
+
     // Calculate fuel needed for trail (round trip)
     const fuelNeededGallons = (trailDistanceMiles * 2) / mpg;
-    const fuelNeededForReturn = (trailDistanceMiles / mpg);
-    
+    const fuelNeededForReturn = trailDistanceMiles / mpg;
+
     // 20% safety margin
     const safetyMargin = fuelNeededGallons * 0.2;
     const totalFuelNeeded = fuelNeededGallons + safetyMargin;
-    
+
     return {
       estimatedMilesRemaining,
       estimatedGallonsRemaining: currentGallons,
@@ -441,11 +486,11 @@ class FuelCalculator {
   }
 
   async saveFuelData(data: FuelData): Promise<void> {
-    await AsyncStorage.setItem('@fuel_data', JSON.stringify(data));
+    await AsyncStorage.setItem("@fuel_data", JSON.stringify(data));
   }
 
   async getFuelData(): Promise<FuelData | null> {
-    const data = await AsyncStorage.getItem('@fuel_data');
+    const data = await AsyncStorage.getItem("@fuel_data");
     return data ? JSON.parse(data) : null;
   }
 }

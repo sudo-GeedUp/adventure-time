@@ -1,9 +1,4 @@
-import {
-  signInAnonymously,
-  signOut,
-  User,
-  Auth,
-} from "firebase/auth";
+import { signInAnonymously, signOut, User, Auth } from "firebase/auth";
 import {
   Database,
   ref,
@@ -33,7 +28,7 @@ export const getCurrentUser = () => currentUser;
 export const saveFriendToFirebase = async (
   db: Database,
   userId: string,
-  friend: Friend
+  friend: Friend,
 ) => {
   try {
     const friendRef = ref(db, `users/${userId}/friends/${friend.id}`);
@@ -45,7 +40,7 @@ export const saveFriendToFirebase = async (
 
 export const getFriendsFromFirebase = async (
   db: Database,
-  userId: string
+  userId: string,
 ): Promise<Friend[]> => {
   try {
     const friendsRef = ref(db, `users/${userId}/friends`);
@@ -63,7 +58,7 @@ export const getFriendsFromFirebase = async (
 export const subscribeToFriends = (
   db: Database,
   userId: string,
-  callback: (friends: Friend[]) => void
+  callback: (friends: Friend[]) => void,
 ): Unsubscribe => {
   const friendsRef = ref(db, `users/${userId}/friends`);
   return onValue(friendsRef, (snapshot) => {
@@ -80,7 +75,7 @@ export const updateFriendLocation = async (
   db: Database,
   userId: string,
   friendId: string,
-  location: { latitude: number; longitude: number }
+  location: { latitude: number; longitude: number },
 ) => {
   try {
     const locationRef = ref(db, `users/${userId}/friends/${friendId}/location`);
@@ -97,12 +92,12 @@ export const addAdventureToFirebase = async (
   db: Database,
   userId: string,
   friendId: string,
-  adventure: Adventure
+  adventure: Adventure,
 ) => {
   try {
     const adventureRef = ref(
       db,
-      `users/${userId}/friends/${friendId}/adventures/${adventure.id}`
+      `users/${userId}/friends/${friendId}/adventures/${adventure.id}`,
     );
     await set(adventureRef, adventure);
   } catch (error) {

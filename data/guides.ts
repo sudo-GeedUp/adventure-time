@@ -46,22 +46,26 @@ export const guides: Guide[] = [
       {
         number: 1,
         title: "Assess the situation",
-        description: "Stop immediately when you feel the vehicle losing traction. Continuing to accelerate will only dig you deeper.",
+        description:
+          "Stop immediately when you feel the vehicle losing traction. Continuing to accelerate will only dig you deeper.",
       },
       {
         number: 2,
         title: "Clear mud from wheels",
-        description: "Use a shovel to remove mud from around all four wheels, creating a path forward and backward.",
+        description:
+          "Use a shovel to remove mud from around all four wheels, creating a path forward and backward.",
       },
       {
         number: 3,
         title: "Place traction aids",
-        description: "Position traction boards or mats directly in front of the drive wheels in the direction you want to travel.",
+        description:
+          "Position traction boards or mats directly in front of the drive wheels in the direction you want to travel.",
       },
       {
         number: 4,
         title: "Attempt recovery",
-        description: "Gently apply throttle while maintaining a straight wheel angle. Use low range if available.",
+        description:
+          "Gently apply throttle while maintaining a straight wheel angle. Use low range if available.",
       },
     ],
   },
@@ -79,22 +83,26 @@ export const guides: Guide[] = [
       {
         number: 1,
         title: "Lower tire pressure",
-        description: "Reduce tire pressure to 15-18 PSI to increase tire footprint and improve traction.",
+        description:
+          "Reduce tire pressure to 15-18 PSI to increase tire footprint and improve traction.",
       },
       {
         number: 2,
         title: "Clear sand from under vehicle",
-        description: "Dig out sand from under the chassis and around all four wheels to prevent high-centering.",
+        description:
+          "Dig out sand from under the chassis and around all four wheels to prevent high-centering.",
       },
       {
         number: 3,
         title: "Create a path",
-        description: "Use traction boards to create a solid surface for the tires to grip.",
+        description:
+          "Use traction boards to create a solid surface for the tires to grip.",
       },
       {
         number: 4,
         title: "Maintain momentum",
-        description: "Apply steady, gentle throttle to rock the vehicle free. Shift between forward and reverse if needed.",
+        description:
+          "Apply steady, gentle throttle to rock the vehicle free. Shift between forward and reverse if needed.",
       },
     ],
   },
@@ -112,22 +120,26 @@ export const guides: Guide[] = [
       {
         number: 1,
         title: "Stop and assess",
-        description: "If hung up on rocks, stop immediately and exit the vehicle to inspect the situation.",
+        description:
+          "If hung up on rocks, stop immediately and exit the vehicle to inspect the situation.",
       },
       {
         number: 2,
         title: "Identify contact points",
-        description: "Determine which parts of the vehicle are in contact with rocks and where clearance issues exist.",
+        description:
+          "Determine which parts of the vehicle are in contact with rocks and where clearance issues exist.",
       },
       {
         number: 3,
         title: "Lower tire pressure",
-        description: "Reduce tire pressure to 12-15 PSI to allow tires to conform to rock surfaces.",
+        description:
+          "Reduce tire pressure to 12-15 PSI to allow tires to conform to rock surfaces.",
       },
       {
         number: 4,
         title: "Use spotter guidance",
-        description: "Have a spotter guide you through the obstacle with precise steering and throttle input.",
+        description:
+          "Have a spotter guide you through the obstacle with precise steering and throttle input.",
       },
     ],
   },
@@ -145,22 +157,26 @@ export const guides: Guide[] = [
       {
         number: 1,
         title: "Stop safely",
-        description: "Pull over to a safe location and turn off the engine immediately.",
+        description:
+          "Pull over to a safe location and turn off the engine immediately.",
       },
       {
         number: 2,
         title: "Let engine cool",
-        description: "Wait at least 30 minutes before opening the hood. Do not attempt to open the radiator cap while hot.",
+        description:
+          "Wait at least 30 minutes before opening the hood. Do not attempt to open the radiator cap while hot.",
       },
       {
         number: 3,
         title: "Check coolant level",
-        description: "Once cool, carefully check coolant reservoir level. Add coolant or water if low.",
+        description:
+          "Once cool, carefully check coolant reservoir level. Add coolant or water if low.",
       },
       {
         number: 4,
         title: "Identify the cause",
-        description: "Look for visible leaks, damaged hoses, or low coolant levels before continuing.",
+        description:
+          "Look for visible leaks, damaged hoses, or low coolant levels before continuing.",
       },
     ],
   },
@@ -169,7 +185,13 @@ export const guides: Guide[] = [
     title: "Safe Winching Procedure",
     category: "winching",
     difficulty: "Moderate",
-    equipment: ["Winch", "Tree saver strap", "Snatch block", "Gloves", "Winch blanket"],
+    equipment: [
+      "Winch",
+      "Tree saver strap",
+      "Snatch block",
+      "Gloves",
+      "Winch blanket",
+    ],
     safetyWarnings: [
       "Always use a winch blanket or heavy jacket over the cable during winching",
       "Keep all personnel at least 1.5x the cable length away from the winch line",
@@ -179,22 +201,26 @@ export const guides: Guide[] = [
       {
         number: 1,
         title: "Select anchor point",
-        description: "Choose a solid anchor point like a large tree or rock. Ensure it can handle the load.",
+        description:
+          "Choose a solid anchor point like a large tree or rock. Ensure it can handle the load.",
       },
       {
         number: 2,
         title: "Attach tree saver",
-        description: "Wrap tree saver strap around anchor point and attach winch hook to the strap, not the cable.",
+        description:
+          "Wrap tree saver strap around anchor point and attach winch hook to the strap, not the cable.",
       },
       {
         number: 3,
         title: "Position winch blanket",
-        description: "Drape a heavy blanket or winch dampener over the cable midpoint to prevent whiplash if cable breaks.",
+        description:
+          "Drape a heavy blanket or winch dampener over the cable midpoint to prevent whiplash if cable breaks.",
       },
       {
         number: 4,
         title: "Winch slowly",
-        description: "Operate winch slowly and steadily. Keep vehicle in neutral with parking brake off.",
+        description:
+          "Operate winch slowly and steadily. Keep vehicle in neutral with parking brake off.",
       },
     ],
   },
@@ -213,22 +239,26 @@ export const guides: Guide[] = [
       {
         number: 1,
         title: "Clear around the tires",
-        description: "Shovel out snow from around all four wheels, especially under the chassis. Remove snow that's built up under the vehicle.",
+        description:
+          "Shovel out snow from around all four wheels, especially under the chassis. Remove snow that's built up under the vehicle.",
       },
       {
         number: 2,
         title: "Create a path",
-        description: "Shovel or remove snow in front and behind the vehicle to create a clear escape route.",
+        description:
+          "Shovel or remove snow in front and behind the vehicle to create a clear escape route.",
       },
       {
         number: 3,
         title: "Add traction material",
-        description: "Place traction boards, sand, gravel, or kitty litter under the drive wheels for improved grip.",
+        description:
+          "Place traction boards, sand, gravel, or kitty litter under the drive wheels for improved grip.",
       },
       {
         number: 4,
         title: "Attempt gentle recovery",
-        description: "Gently apply throttle without spinning tires. Rock the vehicle slowly forward and backward using low gear.",
+        description:
+          "Gently apply throttle without spinning tires. Rock the vehicle slowly forward and backward using low gear.",
       },
     ],
   },
@@ -237,7 +267,13 @@ export const guides: Guide[] = [
     title: "Snow and Ice Recovery",
     category: "snow",
     difficulty: "Moderate",
-    equipment: ["Shovel", "Ice scraper", "Traction pads", "Tire chains", "Air compressor"],
+    equipment: [
+      "Shovel",
+      "Ice scraper",
+      "Traction pads",
+      "Tire chains",
+      "Air compressor",
+    ],
     safetyWarnings: [
       "Tire chains require practice to install - don't wait until you're stuck to learn",
       "Check local laws regarding tire chain usage on winter roads",
@@ -247,27 +283,32 @@ export const guides: Guide[] = [
       {
         number: 1,
         title: "Break ice pack",
-        description: "Use an ice scraper or shovel to break up ice formed under and around the vehicle, especially under the chassis.",
+        description:
+          "Use an ice scraper or shovel to break up ice formed under and around the vehicle, especially under the chassis.",
       },
       {
         number: 2,
         title: "Install tire chains",
-        description: "If available, install tire chains on drive wheels before attempting recovery. Chains dramatically improve traction.",
+        description:
+          "If available, install tire chains on drive wheels before attempting recovery. Chains dramatically improve traction.",
       },
       {
         number: 3,
         title: "Lower tire pressure slightly",
-        description: "Reduce tire pressure by 2-3 PSI to increase tire surface contact with ice, but not so much that you damage the tires.",
+        description:
+          "Reduce tire pressure by 2-3 PSI to increase tire surface contact with ice, but not so much that you damage the tires.",
       },
       {
         number: 4,
         title: "Use controlled throttle",
-        description: "Apply very gentle, steady throttle. Excessive wheel spin will polish the ice underneath and make it worse.",
+        description:
+          "Apply very gentle, steady throttle. Excessive wheel spin will polish the ice underneath and make it worse.",
       },
       {
         number: 5,
         title: "Rock if necessary",
-        description: "If stuck after chains, slowly rock between forward and reverse to build momentum for escape.",
+        description:
+          "If stuck after chains, slowly rock between forward and reverse to build momentum for escape.",
       },
     ],
   },
@@ -276,7 +317,13 @@ export const guides: Guide[] = [
     title: "Deep Snow Recovery",
     category: "snow",
     difficulty: "Advanced",
-    equipment: ["Shovel", "High-lift jack", "Traction boards", "Full-size spare", "Winch (recommended)"],
+    equipment: [
+      "Shovel",
+      "High-lift jack",
+      "Traction boards",
+      "Full-size spare",
+      "Winch (recommended)",
+    ],
     safetyWarnings: [
       "Deep snow recovery is dangerous - never attempt alone",
       "High-lift jacks can cause vehicle rollover - use extreme caution",
@@ -287,27 +334,32 @@ export const guides: Guide[] = [
       {
         number: 1,
         title: "Clear a large area",
-        description: "Shovel a wide path around the entire vehicle to locate hidden obstacles and create working space.",
+        description:
+          "Shovel a wide path around the entire vehicle to locate hidden obstacles and create working space.",
       },
       {
         number: 2,
         title: "Dig out all wheels",
-        description: "Completely expose all four wheels by digging out the snow. Remove snow from the bottom of the vehicle.",
+        description:
+          "Completely expose all four wheels by digging out the snow. Remove snow from the bottom of the vehicle.",
       },
       {
         number: 3,
         title: "Use high-lift jack carefully",
-        description: "If the vehicle is high-centered, use a high-lift jack to lift one wheel at a time and place traction boards underneath.",
+        description:
+          "If the vehicle is high-centered, use a high-lift jack to lift one wheel at a time and place traction boards underneath.",
       },
       {
         number: 4,
         title: "Build a packed road",
-        description: "Compress snow into a packed surface using traction boards, spare tires, or by repeatedly driving over the same path.",
+        description:
+          "Compress snow into a packed surface using traction boards, spare tires, or by repeatedly driving over the same path.",
       },
       {
         number: 5,
         title: "Attempt escape with full momentum",
-        description: "Once traction materials are in place, attempt recovery with steady throttle. Consider using a winch as backup.",
+        description:
+          "Once traction materials are in place, attempt recovery with steady throttle. Consider using a winch as backup.",
       },
     ],
   },
@@ -316,7 +368,13 @@ export const guides: Guide[] = [
     title: "Winter Preparation and Prevention",
     category: "snow",
     difficulty: "Easy",
-    equipment: ["Winter tires", "Tire chains", "Emergency kit", "Shovel", "Blankets"],
+    equipment: [
+      "Winter tires",
+      "Tire chains",
+      "Emergency kit",
+      "Shovel",
+      "Blankets",
+    ],
     safetyWarnings: [
       "Winter driving requires significant skill and preparation - avoid if possible",
       "All-terrain tires perform poorly in snow compared to proper winter tires",
@@ -326,27 +384,32 @@ export const guides: Guide[] = [
       {
         number: 1,
         title: "Switch to winter tires",
-        description: "Winter tires provide significantly better traction than all-season or all-terrain tires. This is the single best prevention step.",
+        description:
+          "Winter tires provide significantly better traction than all-season or all-terrain tires. This is the single best prevention step.",
       },
       {
         number: 2,
         title: "Carry tire chains",
-        description: "Keep chains in your vehicle during winter. Practice installing them at home before you need them on the trail.",
+        description:
+          "Keep chains in your vehicle during winter. Practice installing them at home before you need them on the trail.",
       },
       {
         number: 3,
         title: "Pack emergency supplies",
-        description: "Bring blankets, food, water, first aid kit, and jumper cables. A stranded vehicle in winter can be life-threatening.",
+        description:
+          "Bring blankets, food, water, first aid kit, and jumper cables. A stranded vehicle in winter can be life-threatening.",
       },
       {
         number: 4,
         title: "Reduce tire pressure",
-        description: "In snow, reduce tire pressure to 20-25 PSI for better flotation, but be prepared to air back up on hard roads.",
+        description:
+          "In snow, reduce tire pressure to 20-25 PSI for better flotation, but be prepared to air back up on hard roads.",
       },
       {
         number: 5,
         title: "Drive slowly and carefully",
-        description: "Use low gear, avoid sudden acceleration or braking, and maintain a slow, steady pace. Prevention is better than recovery.",
+        description:
+          "Use low gear, avoid sudden acceleration or braking, and maintain a slow, steady pace. Prevention is better than recovery.",
       },
     ],
   },
@@ -364,27 +427,32 @@ export const guides: Guide[] = [
       {
         number: 1,
         title: "Secure the vehicle",
-        description: "Park on level ground, engage parking brake, and place wheel chocks behind opposite wheels.",
+        description:
+          "Park on level ground, engage parking brake, and place wheel chocks behind opposite wheels.",
       },
       {
         number: 2,
         title: "Loosen lug nuts",
-        description: "Before jacking, loosen lug nuts while tire is still on the ground.",
+        description:
+          "Before jacking, loosen lug nuts while tire is still on the ground.",
       },
       {
         number: 3,
         title: "Jack up vehicle",
-        description: "Position jack on solid frame point and raise vehicle until tire is off the ground.",
+        description:
+          "Position jack on solid frame point and raise vehicle until tire is off the ground.",
       },
       {
         number: 4,
         title: "Replace tire",
-        description: "Remove lug nuts, take off flat tire, mount spare, and hand-tighten lug nuts in star pattern.",
+        description:
+          "Remove lug nuts, take off flat tire, mount spare, and hand-tighten lug nuts in star pattern.",
       },
       {
         number: 5,
         title: "Lower and tighten",
-        description: "Lower vehicle to ground and fully tighten lug nuts in star pattern.",
+        description:
+          "Lower vehicle to ground and fully tighten lug nuts in star pattern.",
       },
     ],
   },

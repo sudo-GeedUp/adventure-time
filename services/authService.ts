@@ -1,5 +1,5 @@
-import { 
-  getAuth, 
+import {
+  getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
@@ -14,11 +14,11 @@ import {
   OAuthProvider,
   User,
   onAuthStateChanged,
-  deleteUser
-} from 'firebase/auth';
-import { isFirebaseAvailable } from '@/utils/firebase';
-import { storage } from '@/utils/storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+  deleteUser,
+} from "firebase/auth";
+import { isFirebaseAvailable } from "@/utils/firebase";
+import { storage } from "@/utils/storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface UserProfile {
   uid: string;
@@ -50,9 +50,9 @@ class AuthService {
   private initialize() {
     if (isFirebaseAvailable()) {
       this.auth = getAuth();
-      
+
       onAuthStateChanged(this.auth, (user) => {
-        this.authStateListeners.forEach(listener => listener(user));
+        this.authStateListeners.forEach((listener) => listener(user));
         if (user) {
           this.updateLastLogin(user.uid);
         }
@@ -62,16 +62,18 @@ class AuthService {
 
   onAuthStateChanged(callback: (user: User | null) => void): () => void {
     this.authStateListeners.push(callback);
-    
+
     if (this.auth?.currentUser) {
       callback(this.auth.currentUser);
     } else if (!this.auth) {
       // Firebase is not configured; still emit an initial null state so UI can load
       callback(null);
     }
-    
+
     return () => {
-      this.authStateListeners = this.authStateListeners.filter(cb => cb !== callback);
+      this.authStateListeners = this.authStateListeners.filter(
+        (cb) => cb !== callback,
+      );
     };
   }
 
@@ -80,14 +82,18 @@ class AuthService {
   }
 
   async signUpWithEmail(
-    email: string, 
-    password: string, 
-    displayName: string
+    email: string,
+    password: string,
+    displayName: string,
   ): Promise<UserProfile> {
-    if (!this.auth) throw new Error('Firebase not initialized');
+    if (!this.auth) throw new Error("Firebase not initialized");
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        this.auth,
+        email,
+        password,
+      );
       const user = userCredential.user;
 
       await updateProfile(user, { displayName });
@@ -109,19 +115,23 @@ class AuthService {
   }
 
   async signInWithEmail(email: string, password: string): Promise<UserProfile> {
-    if (!this.auth) throw new Error('Firebase not initialized');
+    if (!this.auth) throw new Error("Firebase not initialized");
 
     try {
-      const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        this.auth,
+        email,
+        password,
+      );
       const user = userCredential.user;
 
       let profile = await this.getUserProfile(user.uid);
-      
+
       if (!profile) {
         profile = {
           uid: user.uid,
           email: user.email!,
-          displayName: user.displayName || 'User',
+          displayName: user.displayName || "User",
           createdAt: Date.now(),
           lastLogin: Date.now(),
           isPremium: false,
@@ -136,26 +146,26 @@ class AuthService {
   }
 
   async signInWithGoogle(): Promise<UserProfile> {
-    throw new Error('Google Sign-In not yet implemented. Coming soon!');
+    throw new Error("Google Sign-In not yet implemented. Coming soon!");
   }
 
   async signInWithApple(): Promise<UserProfile> {
-    throw new Error('Apple Sign-In not yet implemented. Coming soon!');
+    throw new Error("Apple Sign-In not yet implemented. Coming soon!");
   }
 
   async signOut(): Promise<void> {
-    if (!this.auth) throw new Error('Firebase not initialized');
+    if (!this.auth) throw new Error("Firebase not initialized");
 
     try {
       await signOut(this.auth);
-      await AsyncStorage.removeItem('userProfile');
+      await AsyncStorage.removeItem("userProfile");
     } catch (error: any) {
       throw this.handleAuthError(error);
     }
   }
 
   async sendPasswordReset(email: string): Promise<void> {
-    if (!this.auth) throw new Error('Firebase not initialized');
+    if (!this.auth) throw new Error("Firebase not initialized");
 
     try {
       await sendPasswordResetEmail(this.auth, email);
@@ -166,7 +176,7 @@ class AuthService {
 
   async updateUserProfile(updates: Partial<UserProfile>): Promise<void> {
     const user = this.getCurrentUser();
-    if (!user) throw new Error('No user logged in');
+    if (!user) throw new Error("No user logged in");
 
     try {
       if (updates.displayName || updates.photoURL) {
@@ -188,7 +198,7 @@ class AuthService {
 
   async updateUserEmail(newEmail: string, password: string): Promise<void> {
     const user = this.getCurrentUser();
-    if (!user || !user.email) throw new Error('No user logged in');
+    if (!user || !user.email) throw new Error("No user logged in");
 
     try {
       const credential = EmailAuthProvider.credential(user.email, password);
@@ -205,12 +215,18 @@ class AuthService {
     }
   }
 
-  async updateUserPassword(currentPassword: string, newPassword: string): Promise<void> {
+  async updateUserPassword(
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
     const user = this.getCurrentUser();
-    if (!user || !user.email) throw new Error('No user logged in');
+    if (!user || !user.email) throw new Error("No user logged in");
 
     try {
-      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      const credential = EmailAuthProvider.credential(
+        user.email,
+        currentPassword,
+      );
       await reauthenticateWithCredential(user, credential);
       await updatePassword(user, newPassword);
     } catch (error: any) {
@@ -220,7 +236,7 @@ class AuthService {
 
   async deleteAccount(password?: string): Promise<void> {
     const user = this.getCurrentUser();
-    if (!user) throw new Error('No user logged in');
+    if (!user) throw new Error("No user logged in");
 
     try {
       if (password && user.email) {
@@ -229,7 +245,7 @@ class AuthService {
       }
 
       await deleteUser(user);
-      await AsyncStorage.removeItem('userProfile');
+      await AsyncStorage.removeItem("userProfile");
     } catch (error: any) {
       throw this.handleAuthError(error);
     }
@@ -240,29 +256,34 @@ class AuthService {
       const stored = await AsyncStorage.getItem(`userProfile_${uid}`);
       return stored ? JSON.parse(stored) : null;
     } catch (error) {
-      console.error('Error getting user profile:', error);
+      console.error("Error getting user profile:", error);
       return null;
     }
   }
 
   async saveUserProfile(profile: UserProfile): Promise<void> {
     try {
-      await AsyncStorage.setItem(`userProfile_${profile.uid}`, JSON.stringify(profile));
-      
+      await AsyncStorage.setItem(
+        `userProfile_${profile.uid}`,
+        JSON.stringify(profile),
+      );
+
       const legacyProfile = {
         id: profile.uid,
         name: profile.displayName,
         email: profile.email,
-        vehicleType: profile.vehicleType || '',
-        vehicleSpecs: profile.vehicleSpecs ? {
-          ...profile.vehicleSpecs,
-          modifications: ''
-        } : undefined,
+        vehicleType: profile.vehicleType || "",
+        vehicleSpecs: profile.vehicleSpecs
+          ? {
+              ...profile.vehicleSpecs,
+              modifications: "",
+            }
+          : undefined,
         avatarIndex: 0,
       };
       await storage.saveUserProfile(legacyProfile);
     } catch (error) {
-      console.error('Error saving user profile:', error);
+      console.error("Error saving user profile:", error);
       throw error;
     }
   }
@@ -275,44 +296,44 @@ class AuthService {
         await this.saveUserProfile(profile);
       }
     } catch (error) {
-      console.error('Error updating last login:', error);
+      console.error("Error updating last login:", error);
     }
   }
 
   private handleAuthError(error: any): Error {
     const errorCode = error.code;
-    let message = 'An error occurred. Please try again.';
+    let message = "An error occurred. Please try again.";
 
     switch (errorCode) {
-      case 'auth/email-already-in-use':
-        message = 'This email is already registered. Please sign in instead.';
+      case "auth/email-already-in-use":
+        message = "This email is already registered. Please sign in instead.";
         break;
-      case 'auth/invalid-email':
-        message = 'Invalid email address.';
+      case "auth/invalid-email":
+        message = "Invalid email address.";
         break;
-      case 'auth/operation-not-allowed':
-        message = 'This sign-in method is not enabled.';
+      case "auth/operation-not-allowed":
+        message = "This sign-in method is not enabled.";
         break;
-      case 'auth/weak-password':
-        message = 'Password is too weak. Please use at least 6 characters.';
+      case "auth/weak-password":
+        message = "Password is too weak. Please use at least 6 characters.";
         break;
-      case 'auth/user-disabled':
-        message = 'This account has been disabled.';
+      case "auth/user-disabled":
+        message = "This account has been disabled.";
         break;
-      case 'auth/user-not-found':
-        message = 'No account found with this email.';
+      case "auth/user-not-found":
+        message = "No account found with this email.";
         break;
-      case 'auth/wrong-password':
-        message = 'Incorrect password.';
+      case "auth/wrong-password":
+        message = "Incorrect password.";
         break;
-      case 'auth/too-many-requests':
-        message = 'Too many failed attempts. Please try again later.';
+      case "auth/too-many-requests":
+        message = "Too many failed attempts. Please try again later.";
         break;
-      case 'auth/network-request-failed':
-        message = 'Network error. Please check your connection.';
+      case "auth/network-request-failed":
+        message = "Network error. Please check your connection.";
         break;
-      case 'auth/requires-recent-login':
-        message = 'Please sign in again to complete this action.';
+      case "auth/requires-recent-login":
+        message = "Please sign in again to complete this action.";
         break;
       default:
         message = error.message || message;
@@ -339,9 +360,12 @@ class AuthService {
     return profile.isPremium;
   }
 
-  async setPremiumStatus(isPremium: boolean, expiresAt?: number): Promise<void> {
+  async setPremiumStatus(
+    isPremium: boolean,
+    expiresAt?: number,
+  ): Promise<void> {
     const user = this.getCurrentUser();
-    if (!user) throw new Error('No user logged in');
+    if (!user) throw new Error("No user logged in");
 
     const profile = await this.getUserProfile(user.uid);
     if (profile) {

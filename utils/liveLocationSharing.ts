@@ -12,7 +12,7 @@ export interface SharedLocation {
   timestamp: number;
   accuracy?: number;
   batteryLevel?: number;
-  status: 'active' | 'paused' | 'stopped';
+  status: "active" | "paused" | "stopped";
   adventureId?: string;
 }
 
@@ -30,8 +30,8 @@ export interface LocationSharingSession {
   lastLocation?: SharedLocation;
 }
 
-const STORAGE_KEY = '@location_sharing_sessions';
-const SHARED_LOCATIONS_KEY = '@shared_locations';
+const STORAGE_KEY = "@location_sharing_sessions";
+const SHARED_LOCATIONS_KEY = "@shared_locations";
 
 class LiveLocationSharingManager {
   private activeSession: LocationSharingSession | null = null;
@@ -81,7 +81,7 @@ class LiveLocationSharingManager {
 
   async pauseSharing(): Promise<void> {
     if (this.activeSession && this.activeSession.lastLocation) {
-      this.activeSession.lastLocation.status = 'paused';
+      this.activeSession.lastLocation.status = "paused";
       await this.broadcastLocation(this.activeSession.lastLocation);
     }
     this.stopLocationUpdates();
@@ -97,8 +97,8 @@ class LiveLocationSharingManager {
     try {
       // Request location permissions
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        throw new Error('Location permission not granted');
+      if (status !== "granted") {
+        throw new Error("Location permission not granted");
       }
 
       // Start watching location
@@ -110,10 +110,10 @@ class LiveLocationSharingManager {
         },
         async (location) => {
           await this.handleLocationUpdate(location, adventureId);
-        }
+        },
       );
     } catch (error) {
-      console.error('Error starting location updates:', error);
+      console.error("Error starting location updates:", error);
       throw error;
     }
   }
@@ -132,7 +132,7 @@ class LiveLocationSharingManager {
 
   private async handleLocationUpdate(
     location: Location.LocationObject,
-    adventureId?: string
+    adventureId?: string,
   ): Promise<void> {
     if (!this.activeSession) return;
 
@@ -146,7 +146,7 @@ class LiveLocationSharingManager {
       heading: location.coords.heading || undefined,
       timestamp: location.timestamp,
       accuracy: location.coords.accuracy || undefined,
-      status: 'active',
+      status: "active",
       adventureId,
     };
 
@@ -158,14 +158,14 @@ class LiveLocationSharingManager {
   private async broadcastLocation(location: SharedLocation): Promise<void> {
     // Save to local storage for retrieval by other users
     const locations = await this.getSharedLocations();
-    
+
     // Remove old location for this user
-    const filtered = locations.filter(l => l.userId !== location.userId);
+    const filtered = locations.filter((l) => l.userId !== location.userId);
     filtered.push(location);
-    
+
     // Keep only last 100 locations
     const trimmed = filtered.slice(-100);
-    
+
     await AsyncStorage.setItem(SHARED_LOCATIONS_KEY, JSON.stringify(trimmed));
 
     // In production, this would send to a backend server
@@ -176,50 +176,52 @@ class LiveLocationSharingManager {
     try {
       const data = await AsyncStorage.getItem(SHARED_LOCATIONS_KEY);
       if (!data) return [];
-      
+
       const locations: SharedLocation[] = JSON.parse(data);
-      
+
       // Filter out stale locations (older than 5 minutes)
       const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-      return locations.filter(l => l.timestamp > fiveMinutesAgo);
+      return locations.filter((l) => l.timestamp > fiveMinutesAgo);
     } catch (error) {
-      console.error('Error getting shared locations:', error);
+      console.error("Error getting shared locations:", error);
       return [];
     }
   }
 
   async getLocationForUser(userId: string): Promise<SharedLocation | null> {
     const locations = await this.getSharedLocations();
-    return locations.find(l => l.userId === userId) || null;
+    return locations.find((l) => l.userId === userId) || null;
   }
 
   async getLocationsNearby(
     currentLocation: { latitude: number; longitude: number },
-    radiusMiles: number = 10
+    radiusMiles: number = 10,
   ): Promise<SharedLocation[]> {
     const locations = await this.getSharedLocations();
-    
-    return locations.filter(location => {
+
+    return locations.filter((location) => {
       const distance = this.calculateDistance(
         currentLocation.latitude,
         currentLocation.longitude,
         location.latitude,
-        location.longitude
+        location.longitude,
       );
       return distance <= radiusMiles * 1609.34; // Convert miles to meters
     });
   }
 
-  async getFriendsLocations(friendUserIds: string[]): Promise<SharedLocation[]> {
+  async getFriendsLocations(
+    friendUserIds: string[],
+  ): Promise<SharedLocation[]> {
     const locations = await this.getSharedLocations();
-    return locations.filter(l => friendUserIds.includes(l.userId));
+    return locations.filter((l) => friendUserIds.includes(l.userId));
   }
 
   private calculateDistance(
     lat1: number,
     lon1: number,
     lat2: number,
-    lon2: number
+    lon2: number,
   ): number {
     const R = 6371e3; // Earth's radius in meters
     const φ1 = (lat1 * Math.PI) / 180;
@@ -244,7 +246,7 @@ class LiveLocationSharingManager {
       const data = await AsyncStorage.getItem(STORAGE_KEY);
       return data ? JSON.parse(data) : [];
     } catch (error) {
-      console.error('Error loading sessions:', error);
+      console.error("Error loading sessions:", error);
       return [];
     }
   }
@@ -252,23 +254,23 @@ class LiveLocationSharingManager {
   private async saveSession(session: LocationSharingSession): Promise<void> {
     try {
       const sessions = await this.getAllSessions();
-      const index = sessions.findIndex(s => s.id === session.id);
-      
+      const index = sessions.findIndex((s) => s.id === session.id);
+
       if (index >= 0) {
         sessions[index] = session;
       } else {
         sessions.push(session);
       }
-      
+
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
     } catch (error) {
-      console.error('Error saving session:', error);
+      console.error("Error saving session:", error);
     }
   }
 
   async shareLocationWithFriend(friendUserId: string): Promise<void> {
     if (!this.activeSession) {
-      throw new Error('No active sharing session');
+      throw new Error("No active sharing session");
     }
 
     if (!this.activeSession.shareWithUserIds.includes(friendUserId)) {
@@ -280,15 +282,14 @@ class LiveLocationSharingManager {
   async stopSharingWithFriend(friendUserId: string): Promise<void> {
     if (!this.activeSession) return;
 
-    this.activeSession.shareWithUserIds = this.activeSession.shareWithUserIds.filter(
-      id => id !== friendUserId
-    );
+    this.activeSession.shareWithUserIds =
+      this.activeSession.shareWithUserIds.filter((id) => id !== friendUserId);
     await this.saveSession(this.activeSession);
   }
 
   async getEstimatedArrivalTime(
     destination: { latitude: number; longitude: number },
-    averageSpeedMph: number = 15
+    averageSpeedMph: number = 15,
   ): Promise<Date | null> {
     if (!this.activeSession?.lastLocation) return null;
 
@@ -296,7 +297,7 @@ class LiveLocationSharingManager {
       this.activeSession.lastLocation.latitude,
       this.activeSession.lastLocation.longitude,
       destination.latitude,
-      destination.longitude
+      destination.longitude,
     );
 
     const distanceMiles = distance / 1609.34;

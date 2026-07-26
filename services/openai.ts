@@ -13,13 +13,13 @@ export interface RecoveryAnalysis {
 }
 
 export async function analyzeRecoverySituation(
-  imageUri: string
+  imageUri: string,
 ): Promise<RecoveryAnalysis> {
   if (!OPENAI_API_KEY) {
     Alert.alert(
       "AI Scan Unavailable",
       "OpenAI API key not configured. This feature requires a valid API key.",
-      [{ text: "OK" }]
+      [{ text: "OK" }],
     );
     throw new Error("OpenAI API key not configured");
   }
@@ -82,7 +82,7 @@ Focus on:
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(
-        errorData.error?.message || `OpenAI API error: ${response.status}`
+        errorData.error?.message || `OpenAI API error: ${response.status}`,
       );
     }
 
@@ -95,14 +95,16 @@ Focus on:
 
     // Parse JSON response - handle potential markdown code blocks
     let jsonContent = content.trim();
-    
+
     // Remove markdown code blocks if present
     if (jsonContent.startsWith("```json")) {
-      jsonContent = jsonContent.replace(/```json\n?/g, "").replace(/```\n?$/g, "");
+      jsonContent = jsonContent
+        .replace(/```json\n?/g, "")
+        .replace(/```\n?$/g, "");
     } else if (jsonContent.startsWith("```")) {
       jsonContent = jsonContent.replace(/```\n?/g, "").replace(/```\n?$/g, "");
     }
-    
+
     const analysis: RecoveryAnalysis = JSON.parse(jsonContent.trim());
 
     // Validate response structure
@@ -119,7 +121,7 @@ Focus on:
   } catch (error: any) {
     console.error("OpenAI API Error:", error);
     throw new Error(
-      error.message || "Failed to analyze image. Please try again."
+      error.message || "Failed to analyze image. Please try again.",
     );
   }
 }

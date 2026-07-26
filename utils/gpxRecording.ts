@@ -38,7 +38,7 @@ export interface GPXTrack {
   averageSpeed: number;
 }
 
-const STORAGE_KEY = '@gpx_tracks';
+const STORAGE_KEY = "@gpx_tracks";
 
 class GPXRecorder {
   private activeTrack: GPXTrack | null = null;
@@ -63,7 +63,7 @@ class GPXRecorder {
 
     this.activeTrack = track;
     await this.startLocationTracking();
-    
+
     return track;
   }
 
@@ -71,12 +71,17 @@ class GPXRecorder {
     if (!this.activeTrack) return null;
 
     this.activeTrack.endTime = Date.now();
-    this.activeTrack.totalDuration = this.activeTrack.endTime - this.activeTrack.startTime;
-    
+    this.activeTrack.totalDuration =
+      this.activeTrack.endTime - this.activeTrack.startTime;
+
     // Calculate average speed
     if (this.activeTrack.trackPoints.length > 0) {
-      const totalSpeed = this.activeTrack.trackPoints.reduce((sum, pt) => sum + (pt.speed || 0), 0);
-      this.activeTrack.averageSpeed = totalSpeed / this.activeTrack.trackPoints.length;
+      const totalSpeed = this.activeTrack.trackPoints.reduce(
+        (sum, pt) => sum + (pt.speed || 0),
+        0,
+      );
+      this.activeTrack.averageSpeed =
+        totalSpeed / this.activeTrack.trackPoints.length;
     }
 
     await this.saveTrack(this.activeTrack);
@@ -84,7 +89,7 @@ class GPXRecorder {
 
     const completedTrack = this.activeTrack;
     this.activeTrack = null;
-    
+
     return completedTrack;
   }
 
@@ -101,8 +106,8 @@ class GPXRecorder {
   private async startLocationTracking(): Promise<void> {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        throw new Error('Location permission not granted');
+      if (status !== "granted") {
+        throw new Error("Location permission not granted");
       }
 
       this.locationSubscription = await Location.watchPositionAsync(
@@ -113,10 +118,10 @@ class GPXRecorder {
         },
         (location) => {
           this.handleLocationUpdate(location);
-        }
+        },
       );
     } catch (error) {
-      console.error('Error starting location tracking:', error);
+      console.error("Error starting location tracking:", error);
       throw error;
     }
   }
@@ -161,12 +166,13 @@ class GPXRecorder {
 
     // Calculate distance from last point
     if (this.activeTrack.trackPoints.length > 0) {
-      const lastPoint = this.activeTrack.trackPoints[this.activeTrack.trackPoints.length - 1];
+      const lastPoint =
+        this.activeTrack.trackPoints[this.activeTrack.trackPoints.length - 1];
       const distance = this.calculateDistance(
         lastPoint.latitude,
         lastPoint.longitude,
         trackPoint.latitude,
-        trackPoint.longitude
+        trackPoint.longitude,
       );
       this.activeTrack.totalDistance += distance;
     }
@@ -177,7 +183,7 @@ class GPXRecorder {
   async addWaypoint(
     name: string,
     description?: string,
-    symbol?: string
+    symbol?: string,
   ): Promise<GPXWaypoint | null> {
     if (!this.activeTrack) return null;
 
@@ -199,7 +205,7 @@ class GPXRecorder {
       this.activeTrack.waypoints.push(waypoint);
       return waypoint;
     } catch (error) {
-      console.error('Error adding waypoint:', error);
+      console.error("Error adding waypoint:", error);
       return null;
     }
   }
@@ -207,7 +213,7 @@ class GPXRecorder {
   async exportToGPX(trackId: string): Promise<string> {
     const track = await this.getTrackById(trackId);
     if (!track) {
-      throw new Error('Track not found');
+      throw new Error("Track not found");
     }
 
     return this.generateGPXString(track);
@@ -221,7 +227,7 @@ class GPXRecorder {
      xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
   <metadata>
     <name>${this.escapeXml(track.name)}</name>
-    ${track.description ? `<desc>${this.escapeXml(track.description)}</desc>` : ''}
+    ${track.description ? `<desc>${this.escapeXml(track.description)}</desc>` : ""}
     <time>${new Date(track.startTime).toISOString()}</time>
   </metadata>`;
 
@@ -230,32 +236,32 @@ class GPXRecorder {
       .map(
         (wp) => `
   <wpt lat="${wp.latitude}" lon="${wp.longitude}">
-    ${wp.elevation ? `<ele>${wp.elevation}</ele>` : ''}
+    ${wp.elevation ? `<ele>${wp.elevation}</ele>` : ""}
     <time>${new Date(wp.timestamp).toISOString()}</time>
     <name>${this.escapeXml(wp.name)}</name>
-    ${wp.description ? `<desc>${this.escapeXml(wp.description)}</desc>` : ''}
-    ${wp.symbol ? `<sym>${this.escapeXml(wp.symbol)}</sym>` : ''}
-  </wpt>`
+    ${wp.description ? `<desc>${this.escapeXml(wp.description)}</desc>` : ""}
+    ${wp.symbol ? `<sym>${this.escapeXml(wp.symbol)}</sym>` : ""}
+  </wpt>`,
       )
-      .join('');
+      .join("");
 
     // Add track
     const trackPoints = track.trackPoints
       .map(
         (pt) => `
       <trkpt lat="${pt.latitude}" lon="${pt.longitude}">
-        ${pt.elevation ? `<ele>${pt.elevation}</ele>` : ''}
+        ${pt.elevation ? `<ele>${pt.elevation}</ele>` : ""}
         <time>${new Date(pt.timestamp).toISOString()}</time>
-        ${pt.speed ? `<speed>${pt.speed}</speed>` : ''}
-        ${pt.heading ? `<course>${pt.heading}</course>` : ''}
-      </trkpt>`
+        ${pt.speed ? `<speed>${pt.speed}</speed>` : ""}
+        ${pt.heading ? `<course>${pt.heading}</course>` : ""}
+      </trkpt>`,
       )
-      .join('');
+      .join("");
 
     const trackSection = `
   <trk>
     <name>${this.escapeXml(track.name)}</name>
-    ${track.description ? `<desc>${this.escapeXml(track.description)}</desc>` : ''}
+    ${track.description ? `<desc>${this.escapeXml(track.description)}</desc>` : ""}
     <trkseg>${trackPoints}
     </trkseg>
   </trk>`;
@@ -269,32 +275,32 @@ class GPXRecorder {
   async saveGPXFile(trackId: string): Promise<string> {
     const gpxString = await this.exportToGPX(trackId);
     const track = await this.getTrackById(trackId);
-    
+
     if (!track) {
-      throw new Error('Track not found');
+      throw new Error("Track not found");
     }
 
-    const fileName = `${track.name.replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.gpx`;
+    const fileName = `${track.name.replace(/[^a-z0-9]/gi, "_")}_${Date.now()}.gpx`;
     // Use a temporary directory path for GPX files
     const filePath = `${fileName}`;
 
     // For now, just return the GPX string as we can't write to filesystem in Expo Go
     // In production, this would write to FileSystem.documentDirectory
-    console.log('GPX file would be saved as:', fileName);
+    console.log("GPX file would be saved as:", fileName);
     return filePath;
   }
 
   async shareGPX(trackId: string): Promise<void> {
     const filePath = await this.saveGPXFile(trackId);
-    
+
     const isAvailable = await Sharing.isAvailableAsync();
     if (!isAvailable) {
-      throw new Error('Sharing is not available on this device');
+      throw new Error("Sharing is not available on this device");
     }
 
     await Sharing.shareAsync(filePath, {
-      mimeType: 'application/gpx+xml',
-      dialogTitle: 'Share GPX Track',
+      mimeType: "application/gpx+xml",
+      dialogTitle: "Share GPX Track",
     });
   }
 
@@ -302,7 +308,7 @@ class GPXRecorder {
     // Basic GPX parsing (in production, use a proper XML parser)
     const track: GPXTrack = {
       id: `imported_${Date.now()}`,
-      name: 'Imported Track',
+      name: "Imported Track",
       startTime: Date.now(),
       trackPoints: [],
       waypoints: [],
@@ -322,18 +328,18 @@ class GPXRecorder {
 
   private escapeXml(unsafe: string): string {
     return unsafe
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&apos;');
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
   }
 
   private calculateDistance(
     lat1: number,
     lon1: number,
     lat2: number,
-    lon2: number
+    lon2: number,
   ): number {
     const R = 6371e3;
     const φ1 = (lat1 * Math.PI) / 180;
@@ -358,40 +364,40 @@ class GPXRecorder {
       const data = await AsyncStorage.getItem(STORAGE_KEY);
       return data ? JSON.parse(data) : [];
     } catch (error) {
-      console.error('Error loading tracks:', error);
+      console.error("Error loading tracks:", error);
       return [];
     }
   }
 
   async getTrackById(trackId: string): Promise<GPXTrack | null> {
     const tracks = await this.getAllTracks();
-    return tracks.find(t => t.id === trackId) || null;
+    return tracks.find((t) => t.id === trackId) || null;
   }
 
   private async saveTrack(track: GPXTrack): Promise<void> {
     try {
       const tracks = await this.getAllTracks();
-      const index = tracks.findIndex(t => t.id === track.id);
-      
+      const index = tracks.findIndex((t) => t.id === track.id);
+
       if (index >= 0) {
         tracks[index] = track;
       } else {
         tracks.push(track);
       }
-      
+
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(tracks));
     } catch (error) {
-      console.error('Error saving track:', error);
+      console.error("Error saving track:", error);
     }
   }
 
   async deleteTrack(trackId: string): Promise<void> {
     try {
       const tracks = await this.getAllTracks();
-      const filtered = tracks.filter(t => t.id !== trackId);
+      const filtered = tracks.filter((t) => t.id !== trackId);
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
     } catch (error) {
-      console.error('Error deleting track:', error);
+      console.error("Error deleting track:", error);
     }
   }
 }
