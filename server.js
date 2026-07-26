@@ -22,16 +22,6 @@ const mimeTypes = {
   ".eot": "application/vnd.ms-fontobject",
 };
 
-function isContainedPath(rootPath, candidatePath) {
-  const relativePath = path.relative(rootPath, candidatePath);
-  return (
-    relativePath === "" ||
-    (relativePath !== ".." &&
-      !relativePath.startsWith(`..${path.sep}`) &&
-      !path.isAbsolute(relativePath))
-  );
-}
-
 const server = http.createServer((req, res) => {
   const rawPath = (req.url || "/").split(/[?#]/, 1)[0] || "/";
   let decodedPath;
@@ -47,7 +37,12 @@ const server = http.createServer((req, res) => {
   const relativeRequestPath = decodedPath.replace(/^[/\\]+/, "");
   let filePath = path.resolve(DIST_ROOT, relativeRequestPath || "index.html");
 
-  if (!isContainedPath(DIST_ROOT, filePath)) {
+  const relativeFilePath = path.relative(DIST_ROOT, filePath);
+  if (
+    relativeFilePath === ".." ||
+    relativeFilePath.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relativeFilePath)
+  ) {
     res.writeHead(403);
     res.end("Forbidden");
     return;
@@ -85,7 +80,12 @@ const server = http.createServer((req, res) => {
           return;
         }
 
-        if (!isContainedPath(realRootPath, realPath)) {
+        const relativeRealPath = path.relative(realRootPath, realPath);
+        if (
+          relativeRealPath === ".." ||
+          relativeRealPath.startsWith(`..${path.sep}`) ||
+          path.isAbsolute(relativeRealPath)
+        ) {
           res.writeHead(403);
           res.end("Forbidden");
           return;
