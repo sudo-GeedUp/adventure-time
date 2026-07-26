@@ -4,6 +4,7 @@ const path = require("path");
 
 const PORT = 8082;
 const DIST_DIR = path.join(__dirname, "dist");
+const DIST_ROOT = path.resolve(DIST_DIR);
 
 const mimeTypes = {
   ".html": "text/html",
@@ -21,36 +22,89 @@ const mimeTypes = {
   ".eot": "application/vnd.ms-fontobject",
 };
 
-const server = http.createServer((req, res) => {
-  let filePath = path.join(DIST_DIR, req.url === "/" ? "index.html" : req.url);
+function isContainedPath(rootPath, candidatePath) {
+  const relativePath = path.relative(rootPath, candidatePath);
+  return (
+    relativePath === "" ||
+    (relativePath !== ".." &&
+      !relativePath.startsWith(`..${path.sep}`) &&
+      !path.isAbsolute(relativePath))
+  );
+}
 
-  if (!filePath.includes(".")) {
-    filePath = path.join(DIST_DIR, "index.html");
+const server = http.createServer((req, res) => {
+  const rawPath = (req.url || "/").split(/[?#]/, 1)[0] || "/";
+  let decodedPath;
+
+  try {
+    decodedPath = decodeURIComponent(rawPath);
+  } catch {
+    res.writeHead(400);
+    res.end("Bad Request");
+    return;
+  }
+
+  const relativeRequestPath = decodedPath.replace(/^[/\\]+/, "");
+  let filePath = path.resolve(DIST_ROOT, relativeRequestPath || "index.html");
+
+  if (!isContainedPath(DIST_ROOT, filePath)) {
+    res.writeHead(403);
+    res.end("Forbidden");
+    return;
   }
 
   const extname = path.extname(filePath).toLowerCase();
   const contentType = mimeTypes[extname] || "application/octet-stream";
 
-  fs.readFile(filePath, (err, content) => {
-    if (err) {
-      if (err.code === "ENOENT") {
-        fs.readFile(path.join(DIST_DIR, "index.html"), (err2, content2) => {
-          if (err2) {
-            res.writeHead(404);
-            res.end("Not Found");
-          } else {
-            res.writeHead(200, { "Content-Type": "text/html" });
-            res.end(content2);
-          }
-        });
-      } else {
-        res.writeHead(500);
-        res.end("Server Error");
-      }
-    } else {
-      res.writeHead(200, { "Content-Type": contentType });
-      res.end(content);
+  fs.realpath(DIST_ROOT, (rootError, realRootPath) => {
+    if (rootError) {
+      res.writeHead(404);
+      res.end("Not Found");
+      return;
     }
+
+    const readContainedFile = (
+      candidatePath,
+      candidateContentType,
+      fallback,
+    ) => {
+      fs.realpath(candidatePath, (realPathError, realPath) => {
+        if (realPathError) {
+          if (realPathError.code === "ENOENT" && fallback) {
+            readContainedFile(
+              path.join(DIST_ROOT, "index.html"),
+              "text/html",
+              false,
+            );
+          } else {
+            res.writeHead(realPathError.code === "ENOENT" ? 404 : 500);
+            res.end(
+              realPathError.code === "ENOENT" ? "Not Found" : "Server Error",
+            );
+          }
+          return;
+        }
+
+        if (!isContainedPath(realRootPath, realPath)) {
+          res.writeHead(403);
+          res.end("Forbidden");
+          return;
+        }
+
+        fs.readFile(realPath, (readError, content) => {
+          if (readError) {
+            res.writeHead(readError.code === "ENOENT" ? 404 : 500);
+            res.end(readError.code === "ENOENT" ? "Not Found" : "Server Error");
+            return;
+          }
+
+          res.writeHead(200, { "Content-Type": candidateContentType });
+          res.end(content);
+        });
+      });
+    };
+
+    readContainedFile(filePath, contentType, true);
   });
 });
 
