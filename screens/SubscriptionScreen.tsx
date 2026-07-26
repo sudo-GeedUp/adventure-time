@@ -38,7 +38,7 @@ export default function SubscriptionScreen() {
       const offerings = await getOfferings();
       if (offerings) {
         const monthly = offerings.availablePackages.find(
-          (pkg) => pkg.packageType === PACKAGE_TYPE.MONTHLY
+          (pkg) => pkg.packageType === PACKAGE_TYPE.MONTHLY,
         );
         setMonthlyPackage(monthly || null);
       } else if (__DEV__) {
@@ -52,7 +52,7 @@ export default function SubscriptionScreen() {
             priceString: "$4.99/month",
             price: 4.99,
             currencyCode: "USD",
-          }
+          },
         } as any);
       }
     } catch (error) {
@@ -67,7 +67,7 @@ export default function SubscriptionScreen() {
             priceString: "$4.99/month",
             price: 4.99,
             currencyCode: "USD",
-          }
+          },
         } as any);
       }
     } finally {
@@ -81,19 +81,19 @@ export default function SubscriptionScreen() {
 
     processingRef.current = true;
     setIsProcessing(true);
-    
+
     try {
       // Check if using mock data
       if (__DEV__ && monthlyPackage?.identifier.startsWith("mock-")) {
         // Mock purchase for development
         console.log("Processing mock subscription...");
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate delay
-        
+        await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate delay
+
         Alert.alert(
           "Welcome to Premium!",
           "You now have access to all premium features including AI Scan, trail updates, and more!\n\n(Note: This is a mock subscription for development)",
         );
-        
+
         // Update subscription status
         refreshStatus();
       } else {
@@ -125,7 +125,7 @@ export default function SubscriptionScreen() {
 
     processingRef.current = true;
     setIsProcessing(true);
-    
+
     try {
       const success = await restore();
       if (success) {

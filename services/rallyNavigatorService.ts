@@ -184,10 +184,12 @@ class RallyNavigatorService {
     if (callouts.length > 0) {
       this.lastCalloutTime = now;
       this.calloutHistory.push(...callouts);
-      
+
       // Cleanup old callouts to prevent memory leaks
       if (this.calloutHistory.length > this.maxCalloutHistory) {
-        this.calloutHistory = this.calloutHistory.slice(-this.maxCalloutHistory);
+        this.calloutHistory = this.calloutHistory.slice(
+          -this.maxCalloutHistory,
+        );
       }
 
       // Speak the callouts over device speakers

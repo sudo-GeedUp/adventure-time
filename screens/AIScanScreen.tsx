@@ -53,9 +53,13 @@ export default function AIScanScreen() {
   const { theme } = useTheme();
   const { isPremium } = useSubscription();
   const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([]);
-  const [stuckOfTheWeek, setStuckOfTheWeek] = useState<StuckOfTheWeek | null>(null);
+  const [stuckOfTheWeek, setStuckOfTheWeek] = useState<StuckOfTheWeek | null>(
+    null,
+  );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
+    null,
+  );
 
   useEffect(() => {
     loadScanHistory();
@@ -214,9 +218,9 @@ export default function AIScanScreen() {
           requiredEquipment: ["Traction boards", "Winch", "Tow straps"],
         };
       }
-      navigation.navigate("AIResults", { 
+      navigation.navigate("AIResults", {
         imageUri: result.assets[0].uri,
-        analysisResult: analysis
+        analysisResult: analysis,
       });
     }
   };
@@ -402,7 +406,10 @@ export default function AIScanScreen() {
               styles.viewDetailsButton,
               { backgroundColor: theme.warning },
             ]}
-            onPress={() => stuckOfTheWeek.imageUri && handleScanPress(stuckOfTheWeek.imageUri)}
+            onPress={() =>
+              stuckOfTheWeek.imageUri &&
+              handleScanPress(stuckOfTheWeek.imageUri)
+            }
             android_ripple={{ color: "rgba(255,255,255,0.2)" }}
           >
             <ThemedText style={styles.viewDetailsText}>
