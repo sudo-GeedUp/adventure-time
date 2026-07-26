@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   View,
   StyleSheet,
@@ -89,6 +95,15 @@ interface AdventureSession {
   maxAltitude: number;
   totalSpeed: number;
   speedReadings: number;
+}
+
+const METERS_PER_SECOND_TO_MPH = 2.237;
+const MAX_REASONABLE_SPEED_MPS = 55;
+
+function isValidCoordinate(point: any): point is NavPoint {
+  return (
+    point && Number.isFinite(point.latitude) && Number.isFinite(point.longitude)
+  );
 }
 
 const styles = StyleSheet.create({
@@ -507,12 +522,14 @@ export default function ActiveAdventureScreen() {
     const completed = params?.completedAdventure as
       | CompletedAdventure
       | undefined;
-    if (completed?.route && completed.route.length > 1) {
-      return completed.route;
+    const completedRoute = completed?.route?.filter(isValidCoordinate) || [];
+    if (completedRoute.length > 1) {
+      return completedRoute;
     }
     const routeData = params?.targetRoute as any[] | undefined;
-    if (routeData && routeData.length > 1) {
-      return routeData;
+    const targetRoute = routeData?.filter(isValidCoordinate) || [];
+    if (targetRoute.length > 1) {
+      return targetRoute;
     }
     return null;
   }, [route]);
@@ -534,13 +551,17 @@ export default function ActiveAdventureScreen() {
 
   const targetRoutePolyline = useMemo(() => {
     if (!selectedRoute || selectedRoute.length < 2) return null;
-    return selectedRoute.map((point: any) => ({
+    return selectedRoute.filter(isValidCoordinate).map((point) => ({
       latitude: point.latitude,
       longitude: point.longitude,
     }));
   }, [selectedRoute]);
 
+  const screenActiveRef = useRef(true);
+  const routeLoadRequestRef = useRef(0);
+
   const loadRoutesForSelection = useCallback(async () => {
+    const requestId = ++routeLoadRequestRef.current;
     setIsLoadingRoutes(true);
     try {
       const [adventures, gpxTracks] = await Promise.all([
@@ -549,7 +570,11 @@ export default function ActiveAdventureScreen() {
       ]);
 
       const communityRoutes = adventures
-        .filter((adv) => adv.route && adv.route.length > 1)
+        .map((adv) => ({
+          ...adv,
+          route: adv.route?.filter(isValidCoordinate) || [],
+        }))
+        .filter((adv) => adv.route.length > 1)
         .map((adv) => ({
           id: `community-${adv.id}`,
           title: adv.title || adv.trailName || "Recorded Adventure",
@@ -559,7 +584,11 @@ export default function ActiveAdventureScreen() {
         }));
 
       const gpxRoutes = gpxTracks
-        .filter((track) => track.trackPoints && track.trackPoints.length > 1)
+        .map((track) => ({
+          ...track,
+          trackPoints: track.trackPoints?.filter(isValidCoordinate) || [],
+        }))
+        .filter((track) => track.trackPoints.length > 1)
         .map((track) => ({
           id: `gpx-${track.id}`,
           title: track.name || "Imported GPX Track",
@@ -572,12 +601,28 @@ export default function ActiveAdventureScreen() {
         (a, b) => b.timestamp - a.timestamp,
       );
 
+      if (
+        !screenActiveRef.current ||
+        requestId !== routeLoadRequestRef.current
+      ) {
+        return;
+      }
       setRoutesForSelection(allRoutes);
     } catch (error) {
       console.error("Error loading routes for selection:", error);
-      Alert.alert("Error", "Could not load routes.");
+      if (
+        screenActiveRef.current &&
+        requestId === routeLoadRequestRef.current
+      ) {
+        Alert.alert("Error", "Could not load routes.");
+      }
     } finally {
-      setIsLoadingRoutes(false);
+      if (
+        screenActiveRef.current &&
+        requestId === routeLoadRequestRef.current
+      ) {
+        setIsLoadingRoutes(false);
+      }
     }
   }, []);
 
@@ -587,12 +632,17 @@ export default function ActiveAdventureScreen() {
   };
 
   const handleSelectRoute = (routeItem: (typeof routesForSelection)[0]) => {
-    setSelectedRoute(routeItem.route);
+    const validRoute = routeItem.route.filter(isValidCoordinate);
+    if (validRoute.length < 2) {
+      return;
+    }
+
+    setSelectedRoute(validRoute);
     setShowRouteSelector(false);
 
     // Cache the selected route for offline navigation
     OfflineMapsManager.cacheSelectedRoute(
-      routeItem.route,
+      validRoute,
       routeItem.title,
       routeItem.source,
       routeItem.id,
@@ -615,7 +665,6 @@ export default function ActiveAdventureScreen() {
   const [isTracking, setIsTracking] = useState(true);
   const [speed, setSpeed] = useState(0);
   const [altitude, setAltitude] = useState(0);
-  const [speedHistory, setSpeedHistory] = useState<number[]>([]);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [newBadges, setNewBadges] = useState<string[]>([]);
   const [showHazardModal, setShowHazardModal] = useState(false);
@@ -633,13 +682,37 @@ export default function ActiveAdventureScreen() {
   const [showNavigator, setShowNavigator] = useState(true);
   const [communityTrails, setCommunityTrails] = useState<any[]>([]);
 
+  const sessionRef = useRef<AdventureSession | null>(null);
+  const selectedRouteRef = useRef(selectedRoute);
+  const speedHistoryRef = useRef<number[]>([]);
+  const locationSubscriptionRef = useRef<Location.LocationSubscription | null>(
+    null,
+  );
+  const adventureStartedRef = useRef(false);
   const tileSource = useMemo(
     () => getTileSource(mapLayer, isPremium),
     [mapLayer, isPremium],
   );
   const mapRef = React.useRef<any>(null);
-  const endAdventureRef = React.useRef<(() => Promise<void>) | null>(null);
-  const isTrackingRef = React.useRef(isTracking);
+  const sosStartPromiseRef = useRef<Promise<void> | null>(null);
+  const broadcastStartPromiseRef = useRef<Promise<void> | null>(null);
+  const servicesStopPromiseRef = useRef<Promise<void> | null>(null);
+
+  useEffect(() => {
+    screenActiveRef.current = true;
+    return () => {
+      screenActiveRef.current = false;
+      routeLoadRequestRef.current += 1;
+    };
+  }, []);
+
+  useEffect(() => {
+    selectedRouteRef.current = selectedRoute;
+  }, [selectedRoute]);
+
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   const HAZARD_TYPES = [
     { id: "washout", label: "Washout", icon: "alert-triangle" },
@@ -652,14 +725,55 @@ export default function ActiveAdventureScreen() {
     { id: "other", label: "Other Hazard", icon: "alert-circle" },
   ];
 
+  const stopTrackingServices = useCallback(() => {
+    if (servicesStopPromiseRef.current) {
+      return servicesStopPromiseRef.current;
+    }
+
+    servicesStopPromiseRef.current = (async () => {
+      if (broadcastStartPromiseRef.current) {
+        await broadcastStartPromiseRef.current.catch((error) => {
+          console.error("Error starting location broadcast:", error);
+        });
+      }
+      FirebaseLocationService.stopLocationBroadcast();
+
+      if (sosStartPromiseRef.current) {
+        await sosStartPromiseRef.current.catch((error) => {
+          console.error("Error starting SOS route tracking:", error);
+        });
+      }
+      await EmergencySOS.stopRouteTracking();
+    })();
+
+    return servicesStopPromiseRef.current;
+  }, []);
+
   const startAdventure = useCallback(async () => {
+    if (adventureStartedRef.current) return;
+    adventureStartedRef.current = true;
+
     try {
       const location = await Location.getCurrentPositionAsync({});
       hapticFeedback.medium();
+      if (
+        !Number.isFinite(location.coords.latitude) ||
+        !Number.isFinite(location.coords.longitude)
+      ) {
+        throw new Error("Invalid initial location");
+      }
       const initialAltitude = location.coords.altitude || 0;
-      setAltitude(initialAltitude);
       const userProfile = await storage.getUserProfile();
-      setSession({
+      if (!screenActiveRef.current) return;
+
+      const initialGpsSpeed = location.coords.speed;
+      const initialSpeedMps =
+        typeof initialGpsSpeed === "number" &&
+        Number.isFinite(initialGpsSpeed) &&
+        initialGpsSpeed >= 0
+          ? initialGpsSpeed
+          : 0;
+      const initialSession: AdventureSession = {
         startLocation: {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
@@ -679,7 +793,7 @@ export default function ActiveAdventureScreen() {
             longitude: location.coords.longitude,
             altitude: initialAltitude,
             timestamp: Date.now(),
-            speed: location.coords.speed || 0,
+            speed: initialSpeedMps * METERS_PER_SECOND_TO_MPH,
           },
         ],
         hazards: [],
@@ -688,12 +802,20 @@ export default function ActiveAdventureScreen() {
         maxAltitude: initialAltitude,
         totalSpeed: 0,
         speedReadings: 0,
-      });
+      };
+
+      setAltitude(initialAltitude);
+      sessionRef.current = initialSession;
+      setSession(initialSession);
 
       // Start broadcasting location so other users can see this offroader
-      FirebaseLocationService.startLocationBroadcast(
+      const broadcastStart = FirebaseLocationService.startLocationBroadcast(
         userProfile?.id || "anonymous",
       );
+      broadcastStartPromiseRef.current = broadcastStart;
+      broadcastStart.catch((error) => {
+        console.error("Error starting location broadcast:", error);
+      });
 
       analyticsService.logAdventureStart(
         trail.id || trail.name || "unknown",
@@ -702,10 +824,12 @@ export default function ActiveAdventureScreen() {
       );
     } catch {
       hapticFeedback.error();
-      Alert.alert(
-        "Error",
-        "Could not get your location. Please enable location services.",
-      );
+      if (screenActiveRef.current) {
+        Alert.alert(
+          "Error",
+          "Could not get your location. Please enable location services.",
+        );
+      }
     }
   }, [trail.id, trail.name, trail.difficulty]);
 
@@ -715,8 +839,13 @@ export default function ActiveAdventureScreen() {
       const adventures = await storage.getCommunityAdventures();
       // Get recent adventures with routes near current location
       const recentTrails = adventures
-        .filter((adv: any) => adv.route && adv.route.length > 0)
+        .map((adv: any) => ({
+          ...adv,
+          route: adv.route?.filter(isValidCoordinate) || [],
+        }))
+        .filter((adv: any) => adv.route.length > 0)
         .slice(0, 20); // Show last 20 community trails
+      if (!screenActiveRef.current) return;
       setCommunityTrails(recentTrails);
       console.log(
         "[Community Data] Loaded",
@@ -735,11 +864,14 @@ export default function ActiveAdventureScreen() {
     const restoreCachedRoute = async () => {
       try {
         const cached = await OfflineMapsManager.getCachedSelectedRoute();
-        if (cached?.route && cached.route.length > 1) {
-          setSelectedRoute(cached.route);
+        const cachedRoute = cached?.route?.filter(isValidCoordinate) || [];
+        if (screenActiveRef.current && cachedRoute.length > 1) {
+          setSelectedRoute(cachedRoute);
         }
       } catch (error) {
-        console.error("Error restoring cached route:", error);
+        if (screenActiveRef.current) {
+          console.error("Error restoring cached route:", error);
+        }
       }
     };
 
@@ -802,15 +934,19 @@ export default function ActiveAdventureScreen() {
     setNavigationCallouts([welcomeCallout]);
 
     // Start route tracking for emergency contact feature
-    EmergencySOS.startRouteTracking();
+    if (!sosStartPromiseRef.current) {
+      const sosStart = EmergencySOS.startRouteTracking();
+      sosStartPromiseRef.current = sosStart;
+      sosStart.catch((error) => {
+        console.error("Error starting SOS route tracking:", error);
+      });
+    }
     console.log("[Emergency SOS] Route tracking started");
 
     return () => {
-      if (isTrackingRef.current) {
-        endAdventureRef.current?.();
-      }
+      void stopTrackingServices();
     };
-  }, [trail, startAdventure, loadCommunityTrails]);
+  }, [loadCommunityTrails, startAdventure, stopTrackingServices, trail]);
 
   // Update elapsed time every second
   useEffect(() => {
@@ -821,41 +957,49 @@ export default function ActiveAdventureScreen() {
     return () => clearInterval(interval);
   }, [isTracking, session]);
 
-  // Track location every 5 seconds
+  // Track location for the duration of the adventure
   useEffect(() => {
     if (!isTracking) return;
-    let locationSubscription: Location.LocationSubscription;
+    let cancelled = false;
 
     const startLocationTracking = async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Permission Required",
-          "Location permission is needed to track your adventure",
-        );
-        setIsTracking(false);
-        return;
-      }
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (cancelled || !screenActiveRef.current) return;
 
-      locationSubscription = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.BestForNavigation,
-          timeInterval: 1000,
-          distanceInterval: 1,
-        },
-        (location) => {
-          setSession((prev) => {
-            if (!prev) return null;
+        if (status !== "granted") {
+          Alert.alert(
+            "Permission Required",
+            "Location permission is needed to track your adventure",
+          );
+          setIsTracking(false);
+          return;
+        }
+
+        const subscription = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.BestForNavigation,
+            timeInterval: 1000,
+            distanceInterval: 1,
+          },
+          (location) => {
+            if (cancelled || !screenActiveRef.current) return;
 
             const newLocation = {
               latitude: location.coords.latitude,
               longitude: location.coords.longitude,
               timestamp: Date.now(),
             };
+            if (!isValidCoordinate(newLocation)) return;
 
-            // Snap to target route if one is selected
-            if (selectedRoute && selectedRoute.length > 1) {
-              const snap = snapToRoute(newLocation, selectedRoute);
+            const previousSession = sessionRef.current;
+            if (!previousSession) return;
+
+            const route = (selectedRouteRef.current || []).filter(
+              isValidCoordinate,
+            );
+            if (route.length > 1) {
+              const snap = snapToRoute(newLocation, route);
               if (snap) {
                 setSnappedLocation(snap.snappedPoint);
                 setNavigationProgress({
@@ -865,7 +1009,7 @@ export default function ActiveAdventureScreen() {
                 });
                 setOffRouteAlert(isOffRoute(snap));
                 const turn = getNextTurn(
-                  selectedRoute,
+                  route,
                   snap.segmentIndex,
                   snap.segmentProgress,
                 );
@@ -883,56 +1027,57 @@ export default function ActiveAdventureScreen() {
             }
 
             // Calculate distance from last location
-            const lastLocation = prev.locations[prev.locations.length - 1];
-            let addedDistance = 0;
-            let calculatedSpeed = 0;
+            const lastLocation =
+              previousSession.locations[previousSession.locations.length - 1];
+            const addedDistance = lastLocation
+              ? calculateDistance(lastLocation, newLocation)
+              : 0;
+            const timeDiff = lastLocation
+              ? (newLocation.timestamp - lastLocation.timestamp) / 1000
+              : 0;
 
-            if (lastLocation) {
-              addedDistance = calculateDistance(lastLocation, newLocation);
-              // Calculate speed from distance if GPS speed is invalid
-              const timeDiff = (Date.now() - lastLocation.timestamp) / 1000; // seconds
-              if (timeDiff > 0 && addedDistance > 0) {
-                // Speed in mph: (miles / seconds) * 3600
-                calculatedSpeed = (addedDistance / timeDiff) * 3600;
-              }
-            }
+            // GPS and fallback speeds are kept in meters per second.
+            const gpsSpeed = location.coords.speed;
+            const calculatedSpeedMps =
+              timeDiff > 0 && addedDistance > 0
+                ? (addedDistance * 1609.344) / timeDiff
+                : 0;
+            const candidateSpeedMps =
+              typeof gpsSpeed === "number" &&
+              Number.isFinite(gpsSpeed) &&
+              gpsSpeed >= 0
+                ? gpsSpeed
+                : calculatedSpeedMps;
+            const hasValidSpeed =
+              Number.isFinite(candidateSpeedMps) &&
+              candidateSpeedMps >= 0 &&
+              candidateSpeedMps <= MAX_REASONABLE_SPEED_MPS;
 
-            const newDistance = prev.currentDistance + addedDistance;
-            const newLocations = [...prev.locations, newLocation];
+            // Discard invalid or implausible readings instead of poisoning the
+            // smoothing window.
+            const newSpeedHistory = hasValidSpeed
+              ? [...speedHistoryRef.current, candidateSpeedMps].slice(-5)
+              : speedHistoryRef.current;
+            speedHistoryRef.current = newSpeedHistory;
 
-            // Use GPS speed if valid, otherwise use calculated speed
-            let rawSpeed = 0;
-            if (location.coords.speed && location.coords.speed >= 0) {
-              rawSpeed = location.coords.speed * 2.237; // m/s to mph
-            } else if (calculatedSpeed > 0) {
-              rawSpeed = calculatedSpeed;
-            }
-            // No mock speed - use 0 if GPS data is invalid
-            // Note: In iOS Simulator, GPS speed is often null/0 - this is normal
-            // Real device will show actual GPS speed when moving
-
-            // Apply speed smoothing
-            const newSpeedHistory = [...speedHistory, rawSpeed].slice(-5); // Keep last 5 readings
-            setSpeedHistory(newSpeedHistory);
-
-            // Calculate average speed for smooth display
-            const smoothedSpeed =
-              newSpeedHistory.reduce((a, b) => a + b, 0) /
-              newSpeedHistory.length;
-
+            const smoothedSpeedMps =
+              newSpeedHistory.length > 0
+                ? newSpeedHistory.reduce((a, b) => a + b, 0) /
+                  newSpeedHistory.length
+                : 0;
+            const smoothedSpeedMph =
+              smoothedSpeedMps * METERS_PER_SECOND_TO_MPH;
             const currentAltitude = location.coords.altitude || 0;
 
-            // Create enhanced location object with smoothed speed in MPH for rally navigator
+            // Rally navigation and persisted adventure statistics use MPH.
             const enhancedLocation = {
               ...location,
               coords: {
                 ...location.coords,
                 altitude: currentAltitude,
               },
-              enhancedSpeed: smoothedSpeed, // Pass speed in MPH directly
+              enhancedSpeed: smoothedSpeedMph,
             };
-
-            // Process GPS for navigation callouts
             const callouts =
               rallyNavigatorService.processGPSUpdate(enhancedLocation);
             if (callouts.length > 0) {
@@ -949,50 +1094,71 @@ export default function ActiveAdventureScreen() {
               latitude: location.coords.latitude,
               longitude: location.coords.longitude,
               altitude: currentAltitude,
-              timestamp: Date.now(),
-              speed: smoothedSpeed,
+              timestamp: newLocation.timestamp,
+              speed: smoothedSpeedMph,
             };
 
-            // Add route point to emergency SOS tracking
-            EmergencySOS.addRoutePoint(location);
+            // EmergencySOS stores the raw GPS speed in meters per second.
+            void EmergencySOS.addRoutePoint(location);
 
-            setSpeed(smoothedSpeed);
+            setSpeed(smoothedSpeedMps);
             setAltitude(currentAltitude);
 
-            return {
-              ...prev,
-              currentDistance: newDistance,
-              locations: newLocations,
-              route: [...prev.route, newRoutePoint],
-              maxSpeed: Math.max(prev.maxSpeed, smoothedSpeed),
-              maxAltitude: Math.max(prev.maxAltitude, currentAltitude),
-              totalSpeed: prev.totalSpeed + smoothedSpeed,
-              speedReadings: prev.speedReadings + 1,
+            const nextSession: AdventureSession = {
+              ...previousSession,
+              currentDistance: previousSession.currentDistance + addedDistance,
+              locations: [...previousSession.locations, newLocation],
+              route: [...previousSession.route, newRoutePoint],
+              maxSpeed: Math.max(previousSession.maxSpeed, smoothedSpeedMph),
+              maxAltitude: Math.max(
+                previousSession.maxAltitude,
+                currentAltitude,
+              ),
+              totalSpeed: previousSession.totalSpeed + smoothedSpeedMph,
+              speedReadings: previousSession.speedReadings + 1,
             };
-          });
-        },
-      );
+            sessionRef.current = nextSession;
+            setSession((currentSession) => {
+              if (!currentSession) return currentSession;
+              return nextSession;
+            });
+          },
+        );
+
+        if (cancelled || !screenActiveRef.current) {
+          subscription.remove();
+          return;
+        }
+        locationSubscriptionRef.current = subscription;
+      } catch (error) {
+        if (!cancelled && screenActiveRef.current) {
+          console.error("Error starting location tracking:", error);
+          setIsTracking(false);
+        }
+      }
     };
 
     if (Platform.OS !== "web") {
-      startLocationTracking();
+      void startLocationTracking();
     }
 
     return () => {
-      if (locationSubscription) {
-        locationSubscription.remove();
-      }
+      cancelled = true;
+      const subscription = locationSubscriptionRef.current;
+      locationSubscriptionRef.current = null;
+      subscription?.remove();
     };
-  }, [isTracking, session, speedHistory, selectedRoute]);
+  }, [isTracking]);
 
   const endAdventure = useCallback(async () => {
     if (!session) return;
 
     setIsTracking(false);
-    FirebaseLocationService.stopLocationBroadcast();
+    await stopTrackingServices();
 
     // Get user profile for community adventure
     const userProfile = await storage.getUserProfile();
+    if (!screenActiveRef.current) return;
 
     // Save completed adventure to community database
     const completedAdventure: CompletedAdventure = {
@@ -1014,6 +1180,7 @@ export default function ActiveAdventureScreen() {
     } as CompletedAdventure;
 
     await storage.saveCompletedAdventure(completedAdventure);
+    if (!screenActiveRef.current) return;
 
     analyticsService.logAdventureComplete(
       completedAdventure.id,
@@ -1027,10 +1194,13 @@ export default function ActiveAdventureScreen() {
       const { newBadges: earnedBadges } = await storage.addTrailMiles(
         session.currentDistance,
       );
-      setNewBadges(earnedBadges.map((b) => b.id));
+      if (screenActiveRef.current) {
+        setNewBadges(earnedBadges.map((b) => b.id));
+      }
     }
 
     const showSummary = (isPublic: boolean = false) => {
+      if (!screenActiveRef.current) return;
       const publicText = isPublic ? "\n\n🌎 Shared with the community!" : "";
       const message = isPremium
         ? `You traveled ${session.currentDistance.toFixed(1)} miles on ${trail.name}${
@@ -1077,14 +1247,18 @@ export default function ActiveAdventureScreen() {
                 await CommunityAdventuresService.publishAdventure(
                   completedAdventure,
                 );
-                showSummary(true);
+                if (screenActiveRef.current) {
+                  showSummary(true);
+                }
               } catch (error) {
                 console.error("Error publishing adventure:", error);
-                Alert.alert(
-                  "Error",
-                  "Could not share trail. It was still saved locally.",
-                );
-                showSummary(false);
+                if (screenActiveRef.current) {
+                  Alert.alert(
+                    "Error",
+                    "Could not share trail. It was still saved locally.",
+                  );
+                  showSummary(false);
+                }
               }
             },
           },
@@ -1093,12 +1267,7 @@ export default function ActiveAdventureScreen() {
     } else {
       showSummary(false);
     }
-  }, [session, isPremium, newBadges, navigation, trail]);
-
-  useEffect(() => {
-    endAdventureRef.current = endAdventure;
-    isTrackingRef.current = isTracking;
-  }, [endAdventure, isTracking]);
+  }, [isPremium, navigation, newBadges, session, stopTrackingServices, trail]);
 
   const handleMarkHazard = async () => {
     if (!selectedHazardType || !session) {
@@ -1196,8 +1365,8 @@ export default function ActiveAdventureScreen() {
       .padStart(2, "0")}`;
   };
 
-  const formatSpeed = (mps: number) => {
-    const mph = mps * 2.237; // Convert m/s to mph
+  const formatSpeed = (metersPerSecond: number) => {
+    const mph = metersPerSecond * METERS_PER_SECOND_TO_MPH;
     return mph.toFixed(1);
   };
 
@@ -1609,7 +1778,7 @@ export default function ActiveAdventureScreen() {
             <ThemedText
               style={[styles.currentSpeedValue, { color: theme.primary }]}
             >
-              {speed.toFixed(1)}
+              {formatSpeed(speed)}
             </ThemedText>
             <ThemedText
               style={[styles.currentSpeedUnit, { color: theme.tabIconDefault }]}
