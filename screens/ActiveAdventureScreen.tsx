@@ -114,6 +114,30 @@ function isValidCoordinate(point: any): point is NavPoint {
   );
 }
 
+function toPolylineCoordinates(points: any[], maxPoints = 500) {
+  const validPoints = points.filter(isValidCoordinate);
+  if (validPoints.length <= maxPoints) {
+    return validPoints.map((point) => ({
+      latitude: point.latitude,
+      longitude: point.longitude,
+    }));
+  }
+
+  const step = Math.ceil((validPoints.length - 1) / (maxPoints - 1));
+  const sampledPoints = validPoints.filter(
+    (_, index) =>
+      index === 0 || index === validPoints.length - 1 || index % step === 0,
+  );
+  return sampledPoints.map((point) => ({
+    latitude: point.latitude,
+    longitude: point.longitude,
+  }));
+}
+
+function sanitizeDescription(value: string, maxLength = 500) {
+  return value.replace(/[<>]/g, "").trim().slice(0, maxLength);
+}
+
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: Spacing.lg,
@@ -512,6 +536,123 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "white",
   },
+  wazeContainer: {
+    flex: 1,
+  },
+  wazeMap: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
+  wazeHeader: {
+    position: "absolute",
+    left: Spacing.md,
+    right: Spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  wazeHeaderButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  wazeHeaderTitle: {
+    flex: 1,
+    textAlign: "center",
+    color: "#fff",
+    fontWeight: "700",
+  },
+  wazeSpeedBadge: {
+    position: "absolute",
+    right: Spacing.md,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  wazeSpeedValue: {
+    color: "#fff",
+    fontSize: 28,
+    fontWeight: "800",
+    lineHeight: 30,
+  },
+  wazeSpeedUnit: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "600",
+  },
+  wazeBottomCard: {
+    position: "absolute",
+    left: Spacing.md,
+    right: Spacing.md,
+    bottom: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
+    backgroundColor: "rgba(0,0,0,0.75)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  wazeTurnRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.sm,
+  },
+  wazeTurnDistance: {
+    color: "#fff",
+    fontSize: 26,
+    fontWeight: "800",
+    marginLeft: Spacing.md,
+  },
+  wazeTurnLabel: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    marginLeft: Spacing.md,
+    flex: 1,
+  },
+  wazeRouteInfo: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: Spacing.md,
+  },
+  wazeRouteInfoText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  wazeActionRow: {
+    flexDirection: "row",
+    gap: Spacing.md,
+  },
+  wazeActionButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.xs,
+  },
+  wazeActionText: {
+    fontWeight: "700",
+    fontSize: 13,
+  },
 });
 
 export default function ActiveAdventureScreen() {
@@ -559,10 +700,7 @@ export default function ActiveAdventureScreen() {
 
   const targetRoutePolyline = useMemo(() => {
     if (!selectedRoute || selectedRoute.length < 2) return null;
-    return selectedRoute.filter(isValidCoordinate).map((point) => ({
-      latitude: point.latitude,
-      longitude: point.longitude,
-    }));
+    return toPolylineCoordinates(selectedRoute);
   }, [selectedRoute]);
 
   const screenActiveRef = useRef(true);
@@ -700,8 +838,41 @@ export default function ActiveAdventureScreen() {
     () => getTileSource(mapLayer, isPremium),
     [mapLayer, isPremium],
   );
+  const communityTrailPolylines = useMemo(
+    () =>
+      communityTrails
+        .map((communityTrail) => ({
+          id: communityTrail.id,
+          coordinates: toPolylineCoordinates(communityTrail.route || []),
+        }))
+        .filter((communityTrail) => communityTrail.coordinates.length > 1),
+    [communityTrails],
+  );
+  const currentRoutePolyline = useMemo(
+    () => toPolylineCoordinates(session?.route || []),
+    [session?.route],
+  );
   const mapRef = React.useRef<any>(null);
   const trailRef = useRef(trail);
+
+  const recenterMap = useCallback(() => {
+    const currentLocation = session?.locations[session.locations.length - 1];
+    if (!currentLocation || !mapRef.current) return;
+
+    mapRef.current.animateCamera(
+      {
+        center: snappedLocation || {
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude,
+        },
+        heading: currentLocation.heading || 0,
+        pitch: 45,
+        zoom: 18,
+        altitude: 100,
+      },
+      { duration: 500 },
+    );
+  }, [session, snappedLocation]);
 
   useEffect(() => {
     screenActiveRef.current = true;
@@ -1319,7 +1490,8 @@ export default function ActiveAdventureScreen() {
       const newHazard: AdventureHazard = {
         id: `hazard_${Date.now()}`,
         type: hazardType?.label || "Unknown",
-        description: hazardDescription.trim() || "No description provided",
+        description:
+          sanitizeDescription(hazardDescription) || "No description provided",
         location: {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
@@ -1362,7 +1534,7 @@ export default function ActiveAdventureScreen() {
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
         },
-        description: assistanceDescription.trim(),
+        description: sanitizeDescription(assistanceDescription),
         timestamp: Date.now(),
         status: "active",
       };
@@ -1374,7 +1546,7 @@ export default function ActiveAdventureScreen() {
 
       // Send location and route to emergency contacts
       await EmergencySOS.shareLocationWithRoute(
-        `🆘 ASSISTANCE NEEDED: ${assistanceDescription.trim()}`,
+        `🆘 ASSISTANCE NEEDED: ${sanitizeDescription(assistanceDescription)}`,
         trail.name,
       );
 
@@ -1417,72 +1589,172 @@ export default function ActiveAdventureScreen() {
     );
   }
 
-  return (
-    <ThemedView style={{ flex: 1 }}>
-      <ScrollView
-        style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
-        contentContainerStyle={{
-          paddingTop: insets.top + Spacing.lg,
-          paddingBottom: Spacing.xl,
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <Pressable onPress={() => navigation.goBack()}>
-            <Feather name="chevron-left" size={28} color={theme.primary} />
+  const renderWazeContent = () => {
+    const currentLocation = session.locations[session.locations.length - 1];
+    const turnIcon = nextTurn
+      ? nextTurn.direction === "left"
+        ? "corner-up-left"
+        : "corner-up-right"
+      : "navigation";
+
+    return (
+      <View style={styles.wazeContainer}>
+        <MapView
+          ref={mapRef}
+          style={styles.wazeMap}
+          initialRegion={{
+            latitude: currentLocation.latitude,
+            longitude: currentLocation.longitude,
+            latitudeDelta: 0.002,
+            longitudeDelta: 0.002,
+          }}
+          showsUserLocation={!selectedRoute}
+          followsUserLocation={!selectedRoute}
+          showsMyLocationButton={false}
+          showsCompass={false}
+          showsTraffic
+          showsBuildings
+          mapType={mapLayer === "default" ? "hybrid" : "standard"}
+        >
+          {tileSource && UrlTile && (
+            <UrlTile
+              urlTemplate={tileSource.url}
+              maximumZ={tileSource.maxZoom ?? 18}
+              flipY={tileSource.flipY ?? false}
+              zIndex={1}
+            />
+          )}
+
+          {targetRoutePolyline && targetRoutePolyline.length > 1 && (
+            <Polyline
+              coordinates={targetRoutePolyline}
+              strokeColor={theme.accent}
+              strokeWidth={5}
+            />
+          )}
+
+          {selectedRoute && snappedLocation && (
+            <Marker coordinate={snappedLocation}>
+              <View
+                style={[
+                  styles.snappedLocationMarker,
+                  { backgroundColor: theme.primary },
+                ]}
+              />
+            </Marker>
+          )}
+
+          {communityTrailPolylines.map((communityTrail) => (
+            <Polyline
+              key={communityTrail.id}
+              coordinates={communityTrail.coordinates}
+              strokeColor="#888888"
+              strokeWidth={2}
+              lineDashPattern={[5, 5]}
+              opacity={0.4}
+            />
+          ))}
+
+          {currentRoutePolyline.length > 1 && (
+            <Polyline
+              coordinates={currentRoutePolyline}
+              strokeColor={theme.primary}
+              strokeWidth={4}
+            />
+          )}
+
+          {session.hazards.map((hazard) => (
+            <Marker
+              key={hazard.id}
+              coordinate={hazard.location}
+              title={hazard.type}
+              description={hazard.description}
+            >
+              <View
+                style={[
+                  styles.hazardMapMarker,
+                  { backgroundColor: theme.warning },
+                ]}
+              >
+                <Feather name="alert-triangle" size={16} color="white" />
+              </View>
+            </Marker>
+          ))}
+
+          {session.assistanceWaypoints.map((waypoint) => (
+            <Marker
+              key={waypoint.id}
+              coordinate={waypoint.location}
+              title="Assistance Request"
+              description={waypoint.description}
+            >
+              <View
+                style={[
+                  styles.assistanceMapMarker,
+                  { backgroundColor: theme.error },
+                ]}
+              >
+                <Feather name="alert-circle" size={16} color="white" />
+              </View>
+            </Marker>
+          ))}
+        </MapView>
+
+        <View style={[styles.wazeHeader, { top: insets.top + Spacing.md }]}>
+          <Pressable
+            style={styles.wazeHeaderButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Feather name="chevron-left" size={24} color="#fff" />
           </Pressable>
-          <ThemedText style={[Typography.h4, styles.headerTitle]}>
+          <ThemedText style={[Typography.h4, styles.wazeHeaderTitle]}>
             {trail.name}
           </ThemedText>
-          <Pressable onPress={() => setShowNavigator(!showNavigator)}>
-            <Feather
-              name={showNavigator ? "volume-2" : "volume-x"}
-              size={24}
-              color={theme.primary}
-            />
-          </Pressable>
+          <View style={{ flexDirection: "row", gap: Spacing.xs }}>
+            <Pressable
+              style={styles.wazeHeaderButton}
+              onPress={recenterMap}
+              accessibilityLabel="Recenter map"
+            >
+              <Feather name="crosshair" size={20} color="#fff" />
+            </Pressable>
+            <Pressable
+              style={styles.wazeHeaderButton}
+              onPress={() => setShowNavigator(!showNavigator)}
+              accessibilityLabel="Toggle navigator"
+            >
+              <Feather
+                name={showNavigator ? "volume-2" : "volume-x"}
+                size={20}
+                color="#fff"
+              />
+            </Pressable>
+          </View>
         </View>
 
-        {/* Rally Navigator Callouts */}
+        <View
+          style={[styles.wazeSpeedBadge, { top: insets.top + Spacing.md + 60 }]}
+        >
+          <ThemedText style={styles.wazeSpeedValue}>
+            {formatSpeed(speed)}
+          </ThemedText>
+          <ThemedText style={styles.wazeSpeedUnit}>mph</ThemedText>
+        </View>
+
         {showNavigator && navigationCallouts.length > 0 && (
           <View
             style={[
-              styles.navigatorPanel,
-              { backgroundColor: theme.backgroundDefault },
+              styles.wazeHeader,
+              {
+                top: insets.top + Spacing.md + 140,
+                backgroundColor: theme.backgroundDefault + "E0",
+              },
             ]}
           >
-            <View style={styles.navigatorHeader}>
-              <Feather name="radio" size={20} color={theme.primary} />
-              <ThemedText
-                style={[
-                  Typography.label,
-                  { color: theme.primary, marginLeft: Spacing.xs },
-                ]}
-              >
-                CO-DRIVER
-              </ThemedText>
-            </View>
-            {navigationCallouts.slice(0, 3).map((callout) => (
+            {navigationCallouts.slice(0, 1).map((callout) => (
               <View
                 key={callout.id}
-                style={[
-                  styles.calloutItem,
-                  {
-                    backgroundColor:
-                      callout.priority === "critical"
-                        ? theme.error + "20"
-                        : callout.priority === "high"
-                          ? theme.warning + "20"
-                          : theme.backgroundSecondary,
-                    borderLeftColor:
-                      callout.priority === "critical"
-                        ? theme.error
-                        : callout.priority === "high"
-                          ? theme.warning
-                          : theme.primary,
-                  },
-                ]}
+                style={{ flexDirection: "row", alignItems: "center" }}
               >
                 <Feather
                   name={(callout.icon as any) || "navigation"}
@@ -1496,19 +1768,13 @@ export default function ActiveAdventureScreen() {
                   }
                 />
                 <ThemedText
-                  style={[
-                    styles.calloutText,
-                    {
-                      color:
-                        callout.priority === "critical"
-                          ? theme.error
-                          : callout.priority === "high"
-                            ? theme.warning
-                            : theme.text,
-                      fontWeight:
-                        callout.priority === "critical" ? "800" : "600",
-                    },
-                  ]}
+                  style={{
+                    marginLeft: Spacing.xs,
+                    color: theme.text,
+                    fontWeight: "700",
+                    flex: 1,
+                    fontSize: 14,
+                  }}
                 >
                   {callout.message}
                 </ThemedText>
@@ -1517,566 +1783,866 @@ export default function ActiveAdventureScreen() {
           </View>
         )}
 
-        {/* Live Map View */}
-        {showMap && MapView && session.locations.length > 0 && (
-          <View style={styles.mapContainer}>
-            <MapView
-              ref={mapRef}
-              style={styles.liveMap}
-              initialRegion={{
-                latitude:
-                  session.locations[session.locations.length - 1].latitude,
-                longitude:
-                  session.locations[session.locations.length - 1].longitude,
-                latitudeDelta: 0.002, // Zoomed in for better road visibility
-                longitudeDelta: 0.002,
-              }}
-              showsUserLocation={!selectedRoute}
-              followsUserLocation={!selectedRoute}
-              showsMyLocationButton={false}
-              showsCompass
-              mapType={mapLayer === "default" ? "hybrid" : "standard"}
-              camera={{
-                center: snappedLocation || {
-                  latitude:
-                    session.locations[session.locations.length - 1].latitude,
-                  longitude:
-                    session.locations[session.locations.length - 1].longitude,
-                },
-                heading:
-                  session.locations[session.locations.length - 1].heading || 0,
-                pitch: 45, // Tilt view for better 3D perspective of road
-                zoom: 18,
-                altitude: 100,
-              }}
-            >
-              {tileSource && UrlTile && (
-                <UrlTile
-                  urlTemplate={tileSource.url}
-                  maximumZ={tileSource.maxZoom ?? 18}
-                  flipY={tileSource.flipY ?? false}
-                  zIndex={1}
-                />
-              )}
-
-              {/* Target Route Polyline */}
-              {targetRoutePolyline && targetRoutePolyline.length > 1 && (
-                <Polyline
-                  coordinates={targetRoutePolyline}
-                  strokeColor={theme.accent}
-                  strokeWidth={5}
-                />
-              )}
-
-              {/* Snapped Location Marker */}
-              {selectedRoute && snappedLocation && (
-                <Marker coordinate={snappedLocation}>
-                  <View
-                    style={[
-                      styles.snappedLocationMarker,
-                      { backgroundColor: theme.primary },
-                    ]}
-                  />
-                </Marker>
-              )}
-
-              {/* Community Trail Routes - Past User Logs */}
-              {communityTrails.map(
-                (trail) =>
-                  trail.route &&
-                  trail.route.length > 1 && (
-                    <Polyline
-                      key={trail.id}
-                      coordinates={trail.route.map((point: any) => ({
-                        latitude: point.latitude,
-                        longitude: point.longitude,
-                      }))}
-                      strokeColor="#888888"
-                      strokeWidth={2}
-                      lineDashPattern={[5, 5]}
-                      opacity={0.4}
-                    />
-                  ),
-              )}
-
-              {/* Current Route Polyline */}
-              {session.route.length > 1 && (
-                <Polyline
-                  coordinates={session.route.map((point) => ({
-                    latitude: point.latitude,
-                    longitude: point.longitude,
-                  }))}
-                  strokeColor={theme.primary}
-                  strokeWidth={4}
-                />
-              )}
-
-              {/* Hazard Markers */}
-              {session.hazards.map((hazard) => (
-                <Marker
-                  key={hazard.id}
-                  coordinate={hazard.location}
-                  title={hazard.type}
-                  description={hazard.description}
+        <View
+          style={[
+            styles.wazeBottomCard,
+            { backgroundColor: theme.backgroundDefault + "E0" },
+          ]}
+        >
+          <View style={styles.mapLayerRow}>
+            {(["default", "satellite", "topo"] as MapLayerType[]).map(
+              (layer) => (
+                <Pressable
+                  key={layer}
+                  style={[
+                    styles.mapLayerButton,
+                    mapLayer === layer && {
+                      backgroundColor: theme.primary,
+                    },
+                  ]}
+                  onPress={() => setMapLayer(layer)}
                 >
-                  <View
+                  <ThemedText
                     style={[
-                      styles.hazardMapMarker,
-                      { backgroundColor: theme.warning },
+                      styles.mapLayerButtonText,
+                      { color: mapLayer === layer ? "white" : theme.text },
                     ]}
                   >
-                    <Feather name="alert-triangle" size={16} color="white" />
-                  </View>
-                </Marker>
-              ))}
+                    {layer === "default"
+                      ? "Default"
+                      : layer === "satellite"
+                        ? "Sat"
+                        : "Topo"}
+                  </ThemedText>
+                </Pressable>
+              ),
+            )}
+          </View>
 
-              {/* Assistance Waypoint Markers */}
-              {session.assistanceWaypoints.map((waypoint) => (
-                <Marker
-                  key={waypoint.id}
-                  coordinate={waypoint.location}
-                  title="Assistance Request"
-                  description={waypoint.description}
-                >
-                  <View
-                    style={[
-                      styles.assistanceMapMarker,
-                      { backgroundColor: theme.error },
-                    ]}
-                  >
-                    <Feather name="alert-circle" size={16} color="white" />
-                  </View>
-                </Marker>
-              ))}
-            </MapView>
+          <Pressable
+            style={styles.selectRouteButton}
+            onPress={openRouteSelector}
+          >
+            <Feather name="map" size={16} color={theme.primary} />
+            <ThemedText style={[styles.selectRouteText, { color: theme.text }]}>
+              {selectedRoute ? "Change Target Route" : "Select Target Route"}
+            </ThemedText>
+          </Pressable>
 
-            {/* Waze-style Trail Info Overlay */}
+          {offRouteAlert && (
             <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginBottom: Spacing.sm,
+                padding: Spacing.sm,
+                borderRadius: BorderRadius.sm,
+                backgroundColor: theme.error + "20",
+              }}
+            >
+              <Feather name="alert-circle" size={14} color={theme.error} />
+              <ThemedText
+                style={{
+                  color: theme.error,
+                  marginLeft: Spacing.xs,
+                  fontWeight: "700",
+                }}
+              >
+                Off route — return to target route
+              </ThemedText>
+            </View>
+          )}
+
+          {nextTurn ? (
+            <View style={styles.wazeTurnRow}>
+              <Feather name={turnIcon as any} size={36} color="#fff" />
+              <ThemedText style={styles.wazeTurnDistance}>
+                {nextTurn.distance.toFixed(1)}
+              </ThemedText>
+              <ThemedText style={styles.wazeTurnLabel}>
+                mi{"\n"}Turn {nextTurn.direction}
+              </ThemedText>
+            </View>
+          ) : (
+            <View style={styles.wazeTurnRow}>
+              <Feather name="navigation" size={36} color="#fff" />
+              <ThemedText style={styles.wazeTurnLabel}>
+                Follow the route
+              </ThemedText>
+            </View>
+          )}
+
+          <View style={styles.wazeRouteInfo}>
+            <ThemedText style={styles.wazeRouteInfoText}>
+              {navigationProgress
+                ? `${navigationProgress.remaining.toFixed(1)} / ${navigationProgress.total.toFixed(1)} mi remaining`
+                : `${session.currentDistance.toFixed(1)} mi traveled`}
+            </ThemedText>
+            <ThemedText style={styles.wazeRouteInfoText}>
+              {formatTime(elapsedTime)} elapsed
+            </ThemedText>
+          </View>
+
+          <View style={styles.wazeActionRow}>
+            <Pressable
               style={[
-                styles.trailInfoOverlay,
-                { backgroundColor: theme.backgroundDefault + "F0" },
+                styles.wazeActionButton,
+                {
+                  backgroundColor: theme.warning + "20",
+                  borderWidth: 1,
+                  borderColor: theme.warning,
+                },
               ]}
+              onPress={() => setShowHazardModal(true)}
             >
-              <View style={styles.mapLayerRow}>
-                {(["default", "satellite", "topo"] as MapLayerType[]).map(
-                  (layer) => (
-                    <Pressable
-                      key={layer}
-                      style={[
-                        styles.mapLayerButton,
-                        mapLayer === layer && {
-                          backgroundColor: theme.primary,
-                        },
-                      ]}
-                      onPress={() => setMapLayer(layer)}
-                    >
-                      <ThemedText
-                        style={[
-                          styles.mapLayerButtonText,
-                          {
-                            color: mapLayer === layer ? "white" : theme.text,
-                          },
-                        ]}
-                      >
-                        {layer === "default"
-                          ? "Default"
-                          : layer === "satellite"
-                            ? "Sat"
-                            : "Topo"}
-                      </ThemedText>
-                    </Pressable>
-                  ),
-                )}
-              </View>
-
-              <Pressable
-                style={styles.selectRouteButton}
-                onPress={openRouteSelector}
-              >
-                <Feather name="map" size={16} color={theme.primary} />
-                <ThemedText
-                  style={[styles.selectRouteText, { color: theme.text }]}
-                >
-                  {selectedRoute
-                    ? "Change Target Route"
-                    : "Select Target Route"}
-                </ThemedText>
-              </Pressable>
-
-              {navigationProgress && (
-                <View style={styles.trailInfoRow}>
-                  <Feather name="activity" size={16} color={theme.primary} />
-                  <ThemedText
-                    style={[styles.trailInfoText, { color: theme.text }]}
-                  >
-                    {navigationProgress.traveled.toFixed(1)} /{" "}
-                    {navigationProgress.total.toFixed(1)} mi
-                  </ThemedText>
-                </View>
-              )}
-
-              {nextTurn && (
-                <View style={styles.trailInfoRow}>
-                  <Feather
-                    name="corner-up-left"
-                    size={16}
-                    color={theme.primary}
-                  />
-                  <ThemedText
-                    style={[styles.trailInfoText, { color: theme.text }]}
-                  >
-                    Turn {nextTurn.direction} in {nextTurn.distance.toFixed(1)}{" "}
-                    mi
-                  </ThemedText>
-                </View>
-              )}
-
-              {offRouteAlert && (
-                <View
-                  style={[
-                    styles.trailAlertRow,
-                    { backgroundColor: theme.error + "20" },
-                  ]}
-                >
-                  <Feather name="alert-circle" size={14} color={theme.error} />
-                  <ThemedText
-                    style={[styles.trailAlertText, { color: theme.error }]}
-                  >
-                    Off route — return to target route
-                  </ThemedText>
-                </View>
-              )}
-
-              <View style={styles.trailInfoRow}>
-                <Feather name="navigation" size={16} color={theme.primary} />
-                <ThemedText
-                  style={[styles.trailInfoText, { color: theme.text }]}
-                >
-                  {session.currentDistance.toFixed(1)} mi • {formatSpeed(speed)}{" "}
-                  mph
-                </ThemedText>
-              </View>
-              {session.hazards.length > 0 && (
-                <View
-                  style={[
-                    styles.trailAlertRow,
-                    { backgroundColor: theme.warning + "20" },
-                  ]}
-                >
-                  <Feather
-                    name="alert-triangle"
-                    size={14}
-                    color={theme.warning}
-                  />
-                  <ThemedText
-                    style={[styles.trailAlertText, { color: theme.warning }]}
-                  >
-                    {session.hazards.length} hazard
-                    {session.hazards.length > 1 ? "s" : ""} ahead
-                  </ThemedText>
-                </View>
-              )}
-              {session.assistanceWaypoints.length > 0 && (
-                <View
-                  style={[
-                    styles.trailAlertRow,
-                    { backgroundColor: theme.error + "20" },
-                  ]}
-                >
-                  <Feather name="alert-circle" size={14} color={theme.error} />
-                  <ThemedText
-                    style={[styles.trailAlertText, { color: theme.error }]}
-                  >
-                    {session.assistanceWaypoints.length} assistance request
-                    {session.assistanceWaypoints.length > 1 ? "s" : ""}
-                  </ThemedText>
-                </View>
-              )}
-            </View>
-          </View>
-        )}
-
-        {/* Speedometer Card */}
-        <View
-          style={[
-            styles.speedometerCard,
-            { backgroundColor: theme.backgroundDefault },
-          ]}
-        >
-          <View style={styles.speedometerHeader}>
-            <Feather name="activity" size={24} color={theme.primary} />
-            <ThemedText style={[Typography.h4, { marginLeft: Spacing.sm }]}>
-              Speedometer
-            </ThemedText>
-          </View>
-
-          {/* Current Speed - Large Display */}
-          <View style={styles.currentSpeedDisplay}>
-            <ThemedText
-              style={[styles.currentSpeedValue, { color: theme.primary }]}
-            >
-              {formatSpeed(speed)}
-            </ThemedText>
-            <ThemedText
-              style={[styles.currentSpeedUnit, { color: theme.tabIconDefault }]}
-            >
-              mph
-            </ThemedText>
-          </View>
-
-          {/* Speed Stats Row */}
-          <View style={styles.speedStatsRow}>
-            <View style={styles.speedStat}>
+              <Feather name="alert-triangle" size={18} color={theme.warning} />
               <ThemedText
-                style={[styles.speedStatLabel, { color: theme.tabIconDefault }]}
+                style={[styles.wazeActionText, { color: theme.warning }]}
               >
-                Max
+                Hazard
               </ThemedText>
-              <ThemedText
-                style={[styles.speedStatValue, { color: theme.warning }]}
-              >
-                {session.maxSpeed.toFixed(1)}
-              </ThemedText>
-              <ThemedText
-                style={[styles.speedStatUnit, { color: theme.tabIconDefault }]}
-              >
-                mph
-              </ThemedText>
-            </View>
+            </Pressable>
 
-            <View style={styles.speedStatDivider} />
-
-            <View style={styles.speedStat}>
-              <ThemedText
-                style={[styles.speedStatLabel, { color: theme.tabIconDefault }]}
-              >
-                Avg
-              </ThemedText>
-              <ThemedText
-                style={[styles.speedStatValue, { color: theme.accent }]}
-              >
-                {session.speedReadings > 0
-                  ? (session.totalSpeed / session.speedReadings).toFixed(1)
-                  : "0.0"}
-              </ThemedText>
-              <ThemedText
-                style={[styles.speedStatUnit, { color: theme.tabIconDefault }]}
-              >
-                mph
-              </ThemedText>
-            </View>
-          </View>
-        </View>
-
-        {/* Live Stats */}
-        <View
-          style={[
-            styles.statsCard,
-            { backgroundColor: theme.backgroundDefault },
-          ]}
-        >
-          {/* Distance */}
-          <View style={styles.statBlock}>
-            <Feather name="navigation" size={28} color={theme.primary} />
-            <ThemedText style={[Typography.h3, styles.statValue]}>
-              {session.currentDistance.toFixed(1)}
-            </ThemedText>
-            <ThemedText
-              style={[styles.statLabel, { color: theme.tabIconDefault }]}
-            >
-              miles
-            </ThemedText>
-          </View>
-
-          {/* Time */}
-          <View style={styles.statBlock}>
-            <Feather name="clock" size={28} color={theme.accent} />
-            <ThemedText style={[Typography.h3, styles.statValue]}>
-              {formatTime(elapsedTime)}
-            </ThemedText>
-            <ThemedText
-              style={[styles.statLabel, { color: theme.tabIconDefault }]}
-            >
-              elapsed
-            </ThemedText>
-          </View>
-
-          {/* Altitude */}
-          <View style={styles.statBlock}>
-            <Feather name="trending-up" size={28} color={theme.success} />
-            <ThemedText style={[Typography.h3, styles.statValue]}>
-              {altitude > 0 ? Math.round(altitude) : "--"}
-            </ThemedText>
-            <ThemedText
-              style={[styles.statLabel, { color: theme.tabIconDefault }]}
-            >
-              ft
-            </ThemedText>
-          </View>
-        </View>
-
-        {/* Trail Info */}
-        <View
-          style={[
-            styles.infoCard,
-            { backgroundColor: theme.backgroundDefault },
-          ]}
-        >
-          <View style={styles.infoRow}>
-            <Feather name="map-pin" size={20} color={theme.primary} />
-            <View style={styles.infoContent}>
-              <ThemedText style={[Typography.label, { fontWeight: "600" }]}>
-                Expected Distance
-              </ThemedText>
-              <ThemedText
-                style={[styles.infoValue, { color: theme.tabIconDefault }]}
-              >
-                {trail.distance.toFixed(1)} miles
-              </ThemedText>
-            </View>
-          </View>
-          <View style={styles.infoRow}>
-            <Feather name="trending-up" size={20} color={theme.primary} />
-            <View style={styles.infoContent}>
-              <ThemedText style={[Typography.label, { fontWeight: "600" }]}>
-                Difficulty
-              </ThemedText>
-              <ThemedText
-                style={[styles.infoValue, { color: theme.tabIconDefault }]}
-              >
-                {trail.difficulty}
-              </ThemedText>
-            </View>
-          </View>
-        </View>
-
-        {/* Quick Action Buttons */}
-        <View style={styles.quickActionsContainer}>
-          <Pressable
-            style={[
-              styles.quickActionButton,
-              {
-                backgroundColor: theme.warning + "20",
-                borderColor: theme.warning,
-              },
-            ]}
-            onPress={() => setShowHazardModal(true)}
-          >
-            <Feather name="alert-triangle" size={24} color={theme.warning} />
-            <ThemedText
-              style={[styles.quickActionText, { color: theme.warning }]}
-            >
-              Mark Hazard
-            </ThemedText>
-          </Pressable>
-
-          <Pressable
-            style={[
-              styles.quickActionButton,
-              { backgroundColor: theme.error + "20", borderColor: theme.error },
-            ]}
-            onPress={() => setShowAssistanceModal(true)}
-          >
-            <Feather name="alert-circle" size={24} color={theme.error} />
-            <ThemedText
-              style={[styles.quickActionText, { color: theme.error }]}
-            >
-              Need Help
-            </ThemedText>
-          </Pressable>
-        </View>
-
-        {/* Spacer */}
-        <View style={{ flex: 1 }} />
-
-        {/* Action Buttons */}
-        <View style={styles.buttonContainer}>
-          {isTracking ? (
-            <>
+            {isTracking ? (
               <Pressable
                 style={[
-                  styles.button,
-                  styles.pauseButton,
+                  styles.wazeActionButton,
                   { backgroundColor: theme.backgroundSecondary },
                 ]}
                 onPress={() => setIsTracking(false)}
               >
-                <Feather name="pause" size={24} color={theme.tabIconDefault} />
+                <Feather name="pause" size={18} color={theme.text} />
                 <ThemedText
-                  style={[styles.buttonText, { color: theme.tabIconDefault }]}
+                  style={[styles.wazeActionText, { color: theme.text }]}
                 >
                   Pause
                 </ThemedText>
               </Pressable>
+            ) : (
               <Pressable
                 style={[
-                  styles.button,
-                  styles.endButton,
-                  { backgroundColor: theme.warning },
-                ]}
-                onPress={endAdventure}
-              >
-                <Feather
-                  name="flag"
-                  size={24}
-                  color={theme.backgroundDefault}
-                />
-                <ThemedText
-                  style={[
-                    styles.buttonText,
-                    { color: theme.backgroundDefault },
-                  ]}
-                >
-                  End Adventure
-                </ThemedText>
-              </Pressable>
-            </>
-          ) : (
-            <>
-              <Pressable
-                style={[
-                  styles.button,
-                  styles.resumeButton,
+                  styles.wazeActionButton,
                   { backgroundColor: theme.success },
                 ]}
                 onPress={() => setIsTracking(true)}
               >
-                <Feather
-                  name="play"
-                  size={24}
-                  color={theme.backgroundDefault}
-                />
-                <ThemedText
-                  style={[
-                    styles.buttonText,
-                    { color: theme.backgroundDefault },
-                  ]}
-                >
+                <Feather name="play" size={18} color="#fff" />
+                <ThemedText style={[styles.wazeActionText, { color: "#fff" }]}>
                   Resume
                 </ThemedText>
               </Pressable>
-              <Pressable
-                style={[
-                  styles.button,
-                  styles.endButton,
-                  { backgroundColor: theme.error },
-                ]}
-                onPress={endAdventure}
+            )}
+          </View>
+
+          <View style={[styles.wazeActionRow, { marginTop: Spacing.md }]}>
+            <Pressable
+              style={[
+                styles.wazeActionButton,
+                {
+                  backgroundColor: theme.error + "20",
+                  borderWidth: 1,
+                  borderColor: theme.error,
+                },
+              ]}
+              onPress={() => setShowAssistanceModal(true)}
+            >
+              <Feather name="alert-circle" size={18} color={theme.error} />
+              <ThemedText
+                style={[styles.wazeActionText, { color: theme.error }]}
               >
-                <Feather name="x" size={24} color={theme.backgroundDefault} />
+                Help
+              </ThemedText>
+            </Pressable>
+
+            <Pressable
+              style={[
+                styles.wazeActionButton,
+                { backgroundColor: theme.warning },
+              ]}
+              onPress={endAdventure}
+            >
+              <Feather name="flag" size={18} color="#fff" />
+              <ThemedText style={[styles.wazeActionText, { color: "#fff" }]}>
+                End
+              </ThemedText>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <ThemedView style={{ flex: 1 }}>
+      {session.locations.length > 0 && MapView && Marker && Polyline ? (
+        renderWazeContent()
+      ) : (
+        <ScrollView
+          style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
+          contentContainerStyle={{
+            paddingTop: insets.top + Spacing.lg,
+            paddingBottom: Spacing.xl,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <Pressable onPress={() => navigation.goBack()}>
+              <Feather name="chevron-left" size={28} color={theme.primary} />
+            </Pressable>
+            <ThemedText style={[Typography.h4, styles.headerTitle]}>
+              {trail.name}
+            </ThemedText>
+            <Pressable onPress={() => setShowNavigator(!showNavigator)}>
+              <Feather
+                name={showNavigator ? "volume-2" : "volume-x"}
+                size={24}
+                color={theme.primary}
+              />
+            </Pressable>
+          </View>
+
+          {/* Rally Navigator Callouts */}
+          {showNavigator && navigationCallouts.length > 0 && (
+            <View
+              style={[
+                styles.navigatorPanel,
+                { backgroundColor: theme.backgroundDefault },
+              ]}
+            >
+              <View style={styles.navigatorHeader}>
+                <Feather name="radio" size={20} color={theme.primary} />
                 <ThemedText
                   style={[
-                    styles.buttonText,
-                    { color: theme.backgroundDefault },
+                    Typography.label,
+                    { color: theme.primary, marginLeft: Spacing.xs },
                   ]}
                 >
-                  Finish
+                  CO-DRIVER
                 </ThemedText>
-              </Pressable>
-            </>
+              </View>
+              {navigationCallouts.slice(0, 3).map((callout) => (
+                <View
+                  key={callout.id}
+                  style={[
+                    styles.calloutItem,
+                    {
+                      backgroundColor:
+                        callout.priority === "critical"
+                          ? theme.error + "20"
+                          : callout.priority === "high"
+                            ? theme.warning + "20"
+                            : theme.backgroundSecondary,
+                      borderLeftColor:
+                        callout.priority === "critical"
+                          ? theme.error
+                          : callout.priority === "high"
+                            ? theme.warning
+                            : theme.primary,
+                    },
+                  ]}
+                >
+                  <Feather
+                    name={(callout.icon as any) || "navigation"}
+                    size={18}
+                    color={
+                      callout.priority === "critical"
+                        ? theme.error
+                        : callout.priority === "high"
+                          ? theme.warning
+                          : theme.primary
+                    }
+                  />
+                  <ThemedText
+                    style={[
+                      styles.calloutText,
+                      {
+                        color:
+                          callout.priority === "critical"
+                            ? theme.error
+                            : callout.priority === "high"
+                              ? theme.warning
+                              : theme.text,
+                        fontWeight:
+                          callout.priority === "critical" ? "800" : "600",
+                      },
+                    ]}
+                  >
+                    {callout.message}
+                  </ThemedText>
+                </View>
+              ))}
+            </View>
           )}
-        </View>
-      </ScrollView>
+
+          {/* Live Map View */}
+          {showMap && MapView && session.locations.length > 0 && (
+            <View style={styles.mapContainer}>
+              <MapView
+                ref={mapRef}
+                style={styles.liveMap}
+                initialRegion={{
+                  latitude:
+                    session.locations[session.locations.length - 1].latitude,
+                  longitude:
+                    session.locations[session.locations.length - 1].longitude,
+                  latitudeDelta: 0.002, // Zoomed in for better road visibility
+                  longitudeDelta: 0.002,
+                }}
+                showsUserLocation={!selectedRoute}
+                followsUserLocation={!selectedRoute}
+                showsMyLocationButton={false}
+                showsCompass
+                mapType={mapLayer === "default" ? "hybrid" : "standard"}
+              >
+                {tileSource && UrlTile && (
+                  <UrlTile
+                    urlTemplate={tileSource.url}
+                    maximumZ={tileSource.maxZoom ?? 18}
+                    flipY={tileSource.flipY ?? false}
+                    zIndex={1}
+                  />
+                )}
+
+                {/* Target Route Polyline */}
+                {targetRoutePolyline && targetRoutePolyline.length > 1 && (
+                  <Polyline
+                    coordinates={targetRoutePolyline}
+                    strokeColor={theme.accent}
+                    strokeWidth={5}
+                  />
+                )}
+
+                {/* Snapped Location Marker */}
+                {selectedRoute && snappedLocation && (
+                  <Marker coordinate={snappedLocation}>
+                    <View
+                      style={[
+                        styles.snappedLocationMarker,
+                        { backgroundColor: theme.primary },
+                      ]}
+                    />
+                  </Marker>
+                )}
+
+                {/* Community Trail Routes - Past User Logs */}
+                {communityTrailPolylines.map((communityTrail) => (
+                  <Polyline
+                    key={communityTrail.id}
+                    coordinates={communityTrail.coordinates}
+                    strokeColor="#888888"
+                    strokeWidth={2}
+                    lineDashPattern={[5, 5]}
+                    opacity={0.4}
+                  />
+                ))}
+
+                {/* Current Route Polyline */}
+                {currentRoutePolyline.length > 1 && (
+                  <Polyline
+                    coordinates={currentRoutePolyline}
+                    strokeColor={theme.primary}
+                    strokeWidth={4}
+                  />
+                )}
+
+                {/* Hazard Markers */}
+                {session.hazards.map((hazard) => (
+                  <Marker
+                    key={hazard.id}
+                    coordinate={hazard.location}
+                    title={hazard.type}
+                    description={hazard.description}
+                  >
+                    <View
+                      style={[
+                        styles.hazardMapMarker,
+                        { backgroundColor: theme.warning },
+                      ]}
+                    >
+                      <Feather name="alert-triangle" size={16} color="white" />
+                    </View>
+                  </Marker>
+                ))}
+
+                {/* Assistance Waypoint Markers */}
+                {session.assistanceWaypoints.map((waypoint) => (
+                  <Marker
+                    key={waypoint.id}
+                    coordinate={waypoint.location}
+                    title="Assistance Request"
+                    description={waypoint.description}
+                  >
+                    <View
+                      style={[
+                        styles.assistanceMapMarker,
+                        { backgroundColor: theme.error },
+                      ]}
+                    >
+                      <Feather name="alert-circle" size={16} color="white" />
+                    </View>
+                  </Marker>
+                ))}
+              </MapView>
+
+              {/* Waze-style Trail Info Overlay */}
+              <View
+                style={[
+                  styles.trailInfoOverlay,
+                  { backgroundColor: theme.backgroundDefault + "F0" },
+                ]}
+              >
+                <View style={styles.mapLayerRow}>
+                  {(["default", "satellite", "topo"] as MapLayerType[]).map(
+                    (layer) => (
+                      <Pressable
+                        key={layer}
+                        style={[
+                          styles.mapLayerButton,
+                          mapLayer === layer && {
+                            backgroundColor: theme.primary,
+                          },
+                        ]}
+                        onPress={() => setMapLayer(layer)}
+                      >
+                        <ThemedText
+                          style={[
+                            styles.mapLayerButtonText,
+                            {
+                              color: mapLayer === layer ? "white" : theme.text,
+                            },
+                          ]}
+                        >
+                          {layer === "default"
+                            ? "Default"
+                            : layer === "satellite"
+                              ? "Sat"
+                              : "Topo"}
+                        </ThemedText>
+                      </Pressable>
+                    ),
+                  )}
+                </View>
+
+                <Pressable
+                  style={styles.selectRouteButton}
+                  onPress={openRouteSelector}
+                >
+                  <Feather name="map" size={16} color={theme.primary} />
+                  <ThemedText
+                    style={[styles.selectRouteText, { color: theme.text }]}
+                  >
+                    {selectedRoute
+                      ? "Change Target Route"
+                      : "Select Target Route"}
+                  </ThemedText>
+                </Pressable>
+
+                {navigationProgress && (
+                  <View style={styles.trailInfoRow}>
+                    <Feather name="activity" size={16} color={theme.primary} />
+                    <ThemedText
+                      style={[styles.trailInfoText, { color: theme.text }]}
+                    >
+                      {navigationProgress.traveled.toFixed(1)} /{" "}
+                      {navigationProgress.total.toFixed(1)} mi
+                    </ThemedText>
+                  </View>
+                )}
+
+                {nextTurn && (
+                  <View style={styles.trailInfoRow}>
+                    <Feather
+                      name="corner-up-left"
+                      size={16}
+                      color={theme.primary}
+                    />
+                    <ThemedText
+                      style={[styles.trailInfoText, { color: theme.text }]}
+                    >
+                      Turn {nextTurn.direction} in{" "}
+                      {nextTurn.distance.toFixed(1)} mi
+                    </ThemedText>
+                  </View>
+                )}
+
+                {offRouteAlert && (
+                  <View
+                    style={[
+                      styles.trailAlertRow,
+                      { backgroundColor: theme.error + "20" },
+                    ]}
+                  >
+                    <Feather
+                      name="alert-circle"
+                      size={14}
+                      color={theme.error}
+                    />
+                    <ThemedText
+                      style={[styles.trailAlertText, { color: theme.error }]}
+                    >
+                      Off route — return to target route
+                    </ThemedText>
+                  </View>
+                )}
+
+                <View style={styles.trailInfoRow}>
+                  <Feather name="navigation" size={16} color={theme.primary} />
+                  <ThemedText
+                    style={[styles.trailInfoText, { color: theme.text }]}
+                  >
+                    {session.currentDistance.toFixed(1)} mi •{" "}
+                    {formatSpeed(speed)} mph
+                  </ThemedText>
+                </View>
+                {session.hazards.length > 0 && (
+                  <View
+                    style={[
+                      styles.trailAlertRow,
+                      { backgroundColor: theme.warning + "20" },
+                    ]}
+                  >
+                    <Feather
+                      name="alert-triangle"
+                      size={14}
+                      color={theme.warning}
+                    />
+                    <ThemedText
+                      style={[styles.trailAlertText, { color: theme.warning }]}
+                    >
+                      {session.hazards.length} hazard
+                      {session.hazards.length > 1 ? "s" : ""} ahead
+                    </ThemedText>
+                  </View>
+                )}
+                {session.assistanceWaypoints.length > 0 && (
+                  <View
+                    style={[
+                      styles.trailAlertRow,
+                      { backgroundColor: theme.error + "20" },
+                    ]}
+                  >
+                    <Feather
+                      name="alert-circle"
+                      size={14}
+                      color={theme.error}
+                    />
+                    <ThemedText
+                      style={[styles.trailAlertText, { color: theme.error }]}
+                    >
+                      {session.assistanceWaypoints.length} assistance request
+                      {session.assistanceWaypoints.length > 1 ? "s" : ""}
+                    </ThemedText>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* Speedometer Card */}
+          <View
+            style={[
+              styles.speedometerCard,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
+            <View style={styles.speedometerHeader}>
+              <Feather name="activity" size={24} color={theme.primary} />
+              <ThemedText style={[Typography.h4, { marginLeft: Spacing.sm }]}>
+                Speedometer
+              </ThemedText>
+            </View>
+
+            {/* Current Speed - Large Display */}
+            <View style={styles.currentSpeedDisplay}>
+              <ThemedText
+                style={[styles.currentSpeedValue, { color: theme.primary }]}
+              >
+                {formatSpeed(speed)}
+              </ThemedText>
+              <ThemedText
+                style={[
+                  styles.currentSpeedUnit,
+                  { color: theme.tabIconDefault },
+                ]}
+              >
+                mph
+              </ThemedText>
+            </View>
+
+            {/* Speed Stats Row */}
+            <View style={styles.speedStatsRow}>
+              <View style={styles.speedStat}>
+                <ThemedText
+                  style={[
+                    styles.speedStatLabel,
+                    { color: theme.tabIconDefault },
+                  ]}
+                >
+                  Max
+                </ThemedText>
+                <ThemedText
+                  style={[styles.speedStatValue, { color: theme.warning }]}
+                >
+                  {session.maxSpeed.toFixed(1)}
+                </ThemedText>
+                <ThemedText
+                  style={[
+                    styles.speedStatUnit,
+                    { color: theme.tabIconDefault },
+                  ]}
+                >
+                  mph
+                </ThemedText>
+              </View>
+
+              <View style={styles.speedStatDivider} />
+
+              <View style={styles.speedStat}>
+                <ThemedText
+                  style={[
+                    styles.speedStatLabel,
+                    { color: theme.tabIconDefault },
+                  ]}
+                >
+                  Avg
+                </ThemedText>
+                <ThemedText
+                  style={[styles.speedStatValue, { color: theme.accent }]}
+                >
+                  {session.speedReadings > 0
+                    ? (session.totalSpeed / session.speedReadings).toFixed(1)
+                    : "0.0"}
+                </ThemedText>
+                <ThemedText
+                  style={[
+                    styles.speedStatUnit,
+                    { color: theme.tabIconDefault },
+                  ]}
+                >
+                  mph
+                </ThemedText>
+              </View>
+            </View>
+          </View>
+
+          {/* Live Stats */}
+          <View
+            style={[
+              styles.statsCard,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
+            {/* Distance */}
+            <View style={styles.statBlock}>
+              <Feather name="navigation" size={28} color={theme.primary} />
+              <ThemedText style={[Typography.h3, styles.statValue]}>
+                {session.currentDistance.toFixed(1)}
+              </ThemedText>
+              <ThemedText
+                style={[styles.statLabel, { color: theme.tabIconDefault }]}
+              >
+                miles
+              </ThemedText>
+            </View>
+
+            {/* Time */}
+            <View style={styles.statBlock}>
+              <Feather name="clock" size={28} color={theme.accent} />
+              <ThemedText style={[Typography.h3, styles.statValue]}>
+                {formatTime(elapsedTime)}
+              </ThemedText>
+              <ThemedText
+                style={[styles.statLabel, { color: theme.tabIconDefault }]}
+              >
+                elapsed
+              </ThemedText>
+            </View>
+
+            {/* Altitude */}
+            <View style={styles.statBlock}>
+              <Feather name="trending-up" size={28} color={theme.success} />
+              <ThemedText style={[Typography.h3, styles.statValue]}>
+                {altitude > 0 ? Math.round(altitude) : "--"}
+              </ThemedText>
+              <ThemedText
+                style={[styles.statLabel, { color: theme.tabIconDefault }]}
+              >
+                ft
+              </ThemedText>
+            </View>
+          </View>
+
+          {/* Trail Info */}
+          <View
+            style={[
+              styles.infoCard,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
+          >
+            <View style={styles.infoRow}>
+              <Feather name="map-pin" size={20} color={theme.primary} />
+              <View style={styles.infoContent}>
+                <ThemedText style={[Typography.label, { fontWeight: "600" }]}>
+                  Expected Distance
+                </ThemedText>
+                <ThemedText
+                  style={[styles.infoValue, { color: theme.tabIconDefault }]}
+                >
+                  {trail.distance.toFixed(1)} miles
+                </ThemedText>
+              </View>
+            </View>
+            <View style={styles.infoRow}>
+              <Feather name="trending-up" size={20} color={theme.primary} />
+              <View style={styles.infoContent}>
+                <ThemedText style={[Typography.label, { fontWeight: "600" }]}>
+                  Difficulty
+                </ThemedText>
+                <ThemedText
+                  style={[styles.infoValue, { color: theme.tabIconDefault }]}
+                >
+                  {trail.difficulty}
+                </ThemedText>
+              </View>
+            </View>
+          </View>
+
+          {/* Quick Action Buttons */}
+          <View style={styles.quickActionsContainer}>
+            <Pressable
+              style={[
+                styles.quickActionButton,
+                {
+                  backgroundColor: theme.warning + "20",
+                  borderColor: theme.warning,
+                },
+              ]}
+              onPress={() => setShowHazardModal(true)}
+            >
+              <Feather name="alert-triangle" size={24} color={theme.warning} />
+              <ThemedText
+                style={[styles.quickActionText, { color: theme.warning }]}
+              >
+                Mark Hazard
+              </ThemedText>
+            </Pressable>
+
+            <Pressable
+              style={[
+                styles.quickActionButton,
+                {
+                  backgroundColor: theme.error + "20",
+                  borderColor: theme.error,
+                },
+              ]}
+              onPress={() => setShowAssistanceModal(true)}
+            >
+              <Feather name="alert-circle" size={24} color={theme.error} />
+              <ThemedText
+                style={[styles.quickActionText, { color: theme.error }]}
+              >
+                Need Help
+              </ThemedText>
+            </Pressable>
+          </View>
+
+          {/* Spacer */}
+          <View style={{ flex: 1 }} />
+
+          {/* Action Buttons */}
+          <View style={styles.buttonContainer}>
+            {isTracking ? (
+              <>
+                <Pressable
+                  style={[
+                    styles.button,
+                    styles.pauseButton,
+                    { backgroundColor: theme.backgroundSecondary },
+                  ]}
+                  onPress={() => setIsTracking(false)}
+                >
+                  <Feather
+                    name="pause"
+                    size={24}
+                    color={theme.tabIconDefault}
+                  />
+                  <ThemedText
+                    style={[styles.buttonText, { color: theme.tabIconDefault }]}
+                  >
+                    Pause
+                  </ThemedText>
+                </Pressable>
+                <Pressable
+                  style={[
+                    styles.button,
+                    styles.endButton,
+                    { backgroundColor: theme.warning },
+                  ]}
+                  onPress={endAdventure}
+                >
+                  <Feather
+                    name="flag"
+                    size={24}
+                    color={theme.backgroundDefault}
+                  />
+                  <ThemedText
+                    style={[
+                      styles.buttonText,
+                      { color: theme.backgroundDefault },
+                    ]}
+                  >
+                    End Adventure
+                  </ThemedText>
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <Pressable
+                  style={[
+                    styles.button,
+                    styles.resumeButton,
+                    { backgroundColor: theme.success },
+                  ]}
+                  onPress={() => setIsTracking(true)}
+                >
+                  <Feather
+                    name="play"
+                    size={24}
+                    color={theme.backgroundDefault}
+                  />
+                  <ThemedText
+                    style={[
+                      styles.buttonText,
+                      { color: theme.backgroundDefault },
+                    ]}
+                  >
+                    Resume
+                  </ThemedText>
+                </Pressable>
+                <Pressable
+                  style={[
+                    styles.button,
+                    styles.endButton,
+                    { backgroundColor: theme.error },
+                  ]}
+                  onPress={endAdventure}
+                >
+                  <Feather name="x" size={24} color={theme.backgroundDefault} />
+                  <ThemedText
+                    style={[
+                      styles.buttonText,
+                      { color: theme.backgroundDefault },
+                    ]}
+                  >
+                    Finish
+                  </ThemedText>
+                </Pressable>
+              </>
+            )}
+          </View>
+        </ScrollView>
+      )}
 
       {/* Hazard Marking Modal */}
       <Modal
@@ -2166,9 +2732,12 @@ export default function ActiveAdventureScreen() {
               placeholder="Additional details (optional)..."
               placeholderTextColor={theme.tabIconDefault}
               value={hazardDescription}
-              onChangeText={setHazardDescription}
+              onChangeText={(text) =>
+                setHazardDescription(sanitizeDescription(text))
+              }
               multiline
               numberOfLines={3}
+              maxLength={500}
             />
 
             <View style={styles.modalButtons}>
@@ -2248,9 +2817,12 @@ export default function ActiveAdventureScreen() {
               placeholder="e.g., Stuck in mud, need winch or tow strap..."
               placeholderTextColor={theme.tabIconDefault}
               value={assistanceDescription}
-              onChangeText={setAssistanceDescription}
+              onChangeText={(text) =>
+                setAssistanceDescription(sanitizeDescription(text))
+              }
               multiline
               numberOfLines={5}
+              maxLength={500}
               autoFocus
             />
 
