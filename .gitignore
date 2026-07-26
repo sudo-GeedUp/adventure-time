@@ -16,3 +16,6 @@ website/.firebase/
 website/node_modules/
 screenshot*.png
 RoutingAppCoverage*.geojson
+
+*.xcarchive/
+*.dSYM/
