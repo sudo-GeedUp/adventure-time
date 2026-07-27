@@ -13,23 +13,26 @@ The AI Recovery Scan feature uses OpenAI's GPT-4o Vision API to analyze photos o
 
 ## Setup Instructions
 
-### 1. Get an OpenAI API Key
+### 1. Configure the server-side proxy
 
-1. Go to [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
-2. Sign in or create an account
-3. Click "Create new secret key"
-4. Copy the key (you won't be able to see it again!)
-
-### 2. Add API Key to Your Project
-
-Add your OpenAI API key to the `.env` file:
+The app calls a Firebase Cloud Functions proxy. OpenAI and RevenueCat secrets
+must be configured in Firebase Secret Manager; never put either secret in the
+Expo app or `.env` file:
 
 ```bash
-# OpenAI API Key
-EXPO_PUBLIC_OPENAI_API_KEY=sk-proj-your-key-here
+# Firebase Functions secrets
+firebase functions:secrets:set OPENAI_API_KEY
+firebase functions:secrets:set REVENUECAT_API_KEY
 ```
 
-**Important**: Never commit your `.env` file to git! It's already in `.gitignore`.
+Set the deployed function URL in the app environment:
+
+```bash
+EXPO_PUBLIC_OPENAI_PROXY_URL=https://us-central1-YOUR_PROJECT.cloudfunctions.net/openaiProxy
+```
+
+**Important**: Never commit secrets or put an OpenAI key in an Expo
+environment variable. `.env` is already in `.gitignore`.
 
 ### 3. API Costs
 
@@ -96,23 +99,27 @@ For 1000 scans, you'd spend about $0.30.
 AI Recovery Scan is a **premium-only feature**. Users must subscribe to access it.
 
 Free users will see:
+
 - Lock icon on AI Scan tab
 - Premium upgrade prompt when attempting to use
 - Option to subscribe via in-app purchase
 
 ## Troubleshooting
 
-### "OpenAI API key not configured"
-- Make sure you added `EXPO_PUBLIC_OPENAI_API_KEY` to your `.env` file
-- Restart your development server after adding the key
+### "AI Scan unavailable"
+
+- Verify the Firebase function is deployed and its URL is in
+  `EXPO_PUBLIC_OPENAI_PROXY_URL`
+- Verify the `OPENAI_API_KEY` and `REVENUECAT_API_KEY` Firebase secrets exist
+- Confirm the signed-in account has the `It's Adventure Time Pro` entitlement
 
 ### "Failed to analyze image"
+
 - Check your internet connection
-- Verify your API key is valid
 - Check OpenAI API status: [https://status.openai.com](https://status.openai.com)
-- Ensure you have API credits available
 
 ### "Invalid response format from AI"
+
 - This is rare but can happen if the AI doesn't follow the JSON format
 - The app will show a fallback error message
 - Try taking a clearer photo with better lighting
@@ -120,6 +127,7 @@ Free users will see:
 ## Best Practices
 
 ### For Best AI Analysis Results:
+
 1. **Good Lighting**: Take photos in daylight when possible
 2. **Multiple Angles**: Show the vehicle from different perspectives
 3. **Context**: Include surrounding terrain in the frame
@@ -127,12 +135,14 @@ Free users will see:
 5. **Full Vehicle**: Show the entire vehicle and its position
 
 ### Photo Examples That Work Well:
+
 - ✅ Vehicle stuck in mud with wheels visible
 - ✅ High-centered vehicle showing undercarriage
 - ✅ Vehicle on steep incline with terrain visible
 - ✅ Vehicle with flat tire in rocky terrain
 
 ### Photos That May Not Work:
+
 - ❌ Too dark or blurry
 - ❌ Only showing a small part of vehicle
 - ❌ Taken from inside the vehicle
@@ -149,6 +159,7 @@ Free users will see:
 ## Support
 
 If you encounter issues:
+
 1. Check this guide first
 2. Verify your API key is correct
 3. Check OpenAI API status
@@ -158,6 +169,7 @@ If you encounter issues:
 ## Future Enhancements
 
 Potential improvements:
+
 - Support for GPT-4o (more powerful but more expensive)
 - Multi-photo analysis for better context
 - Video analysis for dynamic situations
@@ -167,4 +179,5 @@ Potential improvements:
 
 ---
 
-**Note**: This feature requires an active internet connection and valid OpenAI API key to function.
+**Note**: This feature requires an active internet connection, a signed-in
+premium account, and a deployed Firebase proxy.

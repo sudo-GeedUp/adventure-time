@@ -1,7 +1,5 @@
 import { Alert } from "react-native";
-
-const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+import { OpenAIProxyError, requestOpenAIProxy } from "@/services/openaiProxy";
 
 export interface RecoveryAnalysis {
   situation: string;
@@ -15,97 +13,16 @@ export interface RecoveryAnalysis {
 export async function analyzeRecoverySituation(
   imageUri: string,
 ): Promise<RecoveryAnalysis> {
-  if (!OPENAI_API_KEY) {
-    Alert.alert(
-      "AI Scan Unavailable",
-      "OpenAI API key not configured. This feature requires a valid API key.",
-      [{ text: "OK" }],
-    );
-    throw new Error("OpenAI API key not configured");
-  }
-
   try {
     // Convert image to base64
     const base64Image = await convertImageToBase64(imageUri);
-
-    const response = await fetch(OPENAI_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: `You are an expert off-road vehicle recovery specialist. Analyze images of stuck or disabled vehicles and provide detailed recovery recommendations. 
-
-Your response must be in JSON format with this exact structure:
-{
-  "situation": "Brief description of what you see",
-  "severity": "low|moderate|high|critical",
-  "recommendations": ["Step 1", "Step 2", "Step 3"],
-  "requiredEquipment": ["Equipment item 1", "Equipment item 2"],
-  "safetyWarnings": ["Warning 1", "Warning 2"],
-  "estimatedDifficulty": "Easy|Moderate|Difficult|Expert"
-}
-
-Focus on:
-- Vehicle position and angle
-- Terrain type (mud, sand, rock, snow)
-- Obstacles and hazards
-- Best recovery approach
-- Safety considerations`,
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: "Analyze this off-road recovery situation and provide detailed recommendations.",
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:image/jpeg;base64,${base64Image}`,
-                },
-              },
-            ],
-          },
-        ],
-        max_tokens: 1000,
-        temperature: 0.7,
-      }),
+    const response = await requestOpenAIProxy<{
+      analysis: RecoveryAnalysis;
+    }>({
+      operation: "recovery",
+      imageBase64: base64Image,
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        errorData.error?.message || `OpenAI API error: ${response.status}`,
-      );
-    }
-
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content;
-
-    if (!content) {
-      throw new Error("No response from OpenAI API");
-    }
-
-    // Parse JSON response - handle potential markdown code blocks
-    let jsonContent = content.trim();
-
-    // Remove markdown code blocks if present
-    if (jsonContent.startsWith("```json")) {
-      jsonContent = jsonContent
-        .replace(/```json\n?/g, "")
-        .replace(/```\n?$/g, "");
-    } else if (jsonContent.startsWith("```")) {
-      jsonContent = jsonContent.replace(/```\n?/g, "").replace(/```\n?$/g, "");
-    }
-
-    const analysis: RecoveryAnalysis = JSON.parse(jsonContent.trim());
+    const analysis = response.analysis;
 
     // Validate response structure
     if (
@@ -119,7 +36,21 @@ Focus on:
 
     return analysis;
   } catch (error: any) {
-    console.error("OpenAI API Error:", error);
+    console.error("AI scan error:", error);
+    if (
+      error instanceof OpenAIProxyError &&
+      (error.status === 401 || error.status === 403)
+    ) {
+      Alert.alert(
+        "Premium Feature",
+        "AI Recovery Analysis requires an active premium subscription.",
+      );
+    } else if (error instanceof OpenAIProxyError && error.status === 429) {
+      Alert.alert(
+        "AI Scan Busy",
+        "Too many AI requests right now. Please try again later.",
+      );
+    }
     throw new Error(
       error.message || "Failed to analyze image. Please try again.",
     );

@@ -5,6 +5,7 @@ Complete guide for implementing and using the AI-powered personal virtual guide 
 ## 🎯 Overview
 
 The AI Virtual Guide ("Trail Buddy") is an intelligent assistant that provides:
+
 - **Personalized trail recommendations**
 - **Real-time safety advice**
 - **Trip planning assistance**
@@ -42,7 +43,9 @@ navigation/
 ### Core Features
 
 #### 1. **Context-Aware Conversations**
+
 The AI Guide maintains context about:
+
 - User's current location
 - Active trail information
 - Weather conditions
@@ -52,14 +55,18 @@ The AI Guide maintains context about:
 - Recent activities
 
 #### 2. **Smart Suggestions**
+
 Automatically generates relevant suggestions based on:
+
 - Current conditions
 - User context
 - Safety priorities
 - Trail availability
 
 #### 3. **Trail Recommendations**
+
 AI-powered trail selection considering:
+
 - User skill level
 - Vehicle capabilities
 - Weather conditions
@@ -67,14 +74,18 @@ AI-powered trail selection considering:
 - Terrain type
 
 #### 4. **Safety Analysis**
+
 Evaluates trail safety with:
+
 - Safety score (1-10)
 - Specific warnings
 - Actionable recommendations
 - Risk assessment
 
 #### 5. **Emergency Assistance**
+
 Provides step-by-step guidance for:
+
 - Vehicle breakdowns
 - Medical emergencies
 - Getting lost
@@ -88,10 +99,12 @@ Provides step-by-step guidance for:
 ### Basic Chat
 
 ```typescript
-import { aiGuideService } from '@/services/aiGuideService';
+import { aiGuideService } from "@/services/aiGuideService";
 
 // Send a message
-const response = await aiGuideService.chat('What trails are good for beginners?');
+const response = await aiGuideService.chat(
+  "What trails are good for beginners?",
+);
 console.log(response);
 ```
 
@@ -118,7 +131,7 @@ aiGuideService.updateContext({
 
 // Update vehicle info
 aiGuideService.updateContext({
-  vehicleType: 'Jeep Wrangler',
+  vehicleType: "Jeep Wrangler",
 });
 ```
 
@@ -127,11 +140,11 @@ aiGuideService.updateContext({
 ```typescript
 const suggestions = await aiGuideService.getSmartSuggestions();
 
-suggestions.forEach(suggestion => {
-  console.log(suggestion.type);      // 'trail', 'safety', 'tip', etc.
-  console.log(suggestion.title);     // Short title
-  console.log(suggestion.message);   // Brief message
-  console.log(suggestion.priority);  // 'low', 'medium', 'high', 'critical'
+suggestions.forEach((suggestion) => {
+  console.log(suggestion.type); // 'trail', 'safety', 'tip', etc.
+  console.log(suggestion.title); // Short title
+  console.log(suggestion.message); // Brief message
+  console.log(suggestion.priority); // 'low', 'medium', 'high', 'critical'
 });
 ```
 
@@ -149,9 +162,9 @@ const recommended = await aiGuideService.getTrailRecommendations(allTrails, 3);
 ```typescript
 const safety = await aiGuideService.analyzeTrailSafety(trail);
 
-console.log(safety.safetyScore);        // 1-10
-console.log(safety.warnings);           // Array of warnings
-console.log(safety.recommendations);    // Array of recommendations
+console.log(safety.safetyScore); // 1-10
+console.log(safety.warnings); // Array of warnings
+console.log(safety.recommendations); // Array of recommendations
 ```
 
 ### Get Quick Tip
@@ -165,7 +178,7 @@ const tip = await aiGuideService.getQuickTip();
 
 ```typescript
 const guidance = await aiGuideService.getEmergencyGuidance(
-  'My vehicle is stuck in mud'
+  "My vehicle is stuck in mud",
 );
 
 // Returns detailed step-by-step instructions
@@ -174,14 +187,19 @@ const guidance = await aiGuideService.getEmergencyGuidance(
 ### Generate Trip Plan
 
 ```typescript
-const plan = await aiGuideService.generateTripPlan(
-  'Moab, Utah',
-  '3 days',
-  ['moderate trails', 'scenic views', 'camping']
-);
+const plan = await aiGuideService.generateTripPlan("Moab, Utah", "3 days", [
+  "moderate trails",
+  "scenic views",
+  "camping",
+]);
 
 // Returns comprehensive trip plan
 ```
+
+Trail recommendations, trail safety analysis, emergency guidance, and trip
+planning currently have no production callers and are not exposed through the
+Firebase AI proxy. They retain their existing local fallback behavior until
+those features are brought into active product use.
 
 ---
 
@@ -192,33 +210,39 @@ const plan = await aiGuideService.generateTripPlan(
 The main chat interface includes:
 
 #### **Header**
+
 - Trail Buddy avatar
 - Status indicator
 - Clear conversation button
 
 #### **Quick Tip Card**
+
 - Daily rotating tips
 - Context-aware advice
 - Actionable information
 
 #### **Quick Actions**
+
 - Find Trails
 - Safety Tips
 - Plan Trip
 - Emergency Help
 
 #### **Smart Suggestions**
+
 - Automatically generated
 - Priority-based
 - Tappable to send as message
 
 #### **Chat Messages**
+
 - User messages (right-aligned, primary color)
 - AI responses (left-aligned, secondary color)
 - Timestamps
 - Avatars
 
 #### **Input Area**
+
 - Multi-line text input
 - Send button
 - Loading indicator
@@ -228,40 +252,42 @@ The main chat interface includes:
 
 ## 🔧 Configuration
 
-### OpenAI API Setup
+### Firebase AI Proxy Setup
 
-1. **Get API Key**
-   - Go to https://platform.openai.com/api-keys
-   - Create new secret key
-   - Copy the key
+1. **Configure Firebase secrets**
+   - Store `OPENAI_API_KEY` and `REVENUECAT_API_KEY` in Firebase Secret Manager.
+   - Never put either secret in the Expo app or `.env` file.
 
-2. **Add to Environment**
+2. **Set the proxy URL**
+
    ```bash
    # .env file
-   EXPO_PUBLIC_OPENAI_API_KEY=sk-...your-key-here
+   EXPO_PUBLIC_OPENAI_PROXY_URL=https://us-central1-YOUR_PROJECT.cloudfunctions.net/openaiProxy
    ```
 
 3. **Verify Setup**
    ```typescript
    if (aiGuideService.isAvailable()) {
-     console.log('AI Guide is ready!');
+     console.log("AI Guide is ready!");
    } else {
-     console.log('OpenAI API key not configured');
+     console.log("AI proxy is not configured");
    }
    ```
 
 ### Model Configuration
 
 Currently using: **gpt-4o-mini**
+
 - Fast responses
 - Cost-effective
 - Good for conversational AI
 - 128k context window
 
 To change model:
+
 ```typescript
-// In aiGuideService.ts
-model: 'gpt-4o-mini'  // Change to 'gpt-4' for more advanced reasoning
+// In functions/src/config.ts
+export const OPENAI_MODEL = "gpt-4o-mini";
 ```
 
 ---
@@ -273,6 +299,7 @@ model: 'gpt-4o-mini'  // Change to 'gpt-4' for more advanced reasoning
 **Role**: Expert off-road adventure guide and safety advisor
 
 **Personality Traits**:
+
 - Friendly and encouraging
 - Safety-conscious
 - Knowledgeable
@@ -280,6 +307,7 @@ model: 'gpt-4o-mini'  // Change to 'gpt-4' for more advanced reasoning
 - Engaging
 
 **Communication Style**:
+
 - Concise and actionable
 - Uses bullet points
 - Includes emojis (🚙 🏔️ ⚠️ 🧭)
@@ -287,6 +315,7 @@ model: 'gpt-4o-mini'  // Change to 'gpt-4' for more advanced reasoning
 - Provides context-aware advice
 
 **Safety First**:
+
 - Always prioritizes user safety
 - Warns about dangerous conditions
 - Recommends proper equipment
@@ -321,6 +350,7 @@ interface GuideContext {
 ### How Context is Used
 
 The AI Guide uses context to:
+
 1. **Personalize recommendations** based on vehicle and experience
 2. **Assess safety** considering weather and location
 3. **Suggest appropriate trails** matching preferences
@@ -334,6 +364,7 @@ The AI Guide uses context to:
 ### Emergency Situations
 
 The AI Guide can help with:
+
 - **Vehicle Issues**: Stuck, breakdown, flat tire
 - **Medical**: Injuries, dehydration, heat exhaustion
 - **Navigation**: Lost, off-trail, wrong turn
@@ -351,6 +382,7 @@ The AI Guide can help with:
 ### When to Call 911
 
 The AI Guide will recommend calling 911 for:
+
 - Serious injuries
 - Life-threatening situations
 - Vehicle fires
@@ -402,11 +434,13 @@ What trail are you thinking about? 🌤️"
 **Trail Buddy**: "🚙 Don't worry, I'll help you get unstuck! Here's what to do:
 
 **Immediate Steps**:
+
 1. Stop trying to drive - you'll dig deeper
 2. Assess the situation safely
 3. Check all four wheels
 
 **Recovery Process**:
+
 1. **Lower tire pressure** to 15-18 PSI for better traction
 2. **Clear sand** from around tires
 3. **Place traction aids** (boards, rocks, or mats) under tires
@@ -490,8 +524,9 @@ Do you have recovery boards or a shovel? I can give specific advice based on you
 **Problem**: `aiGuideService.isAvailable()` returns false
 
 **Solutions**:
-- Check OpenAI API key in `.env`
-- Verify API key is valid
+
+- Check `EXPO_PUBLIC_OPENAI_PROXY_URL` in the app environment
+- Verify the Firebase function and its Secret Manager configuration
 - Check internet connection
 - Review API quota/billing
 
@@ -500,6 +535,7 @@ Do you have recovery boards or a shovel? I can give specific advice based on you
 **Problem**: AI takes too long to respond
 
 **Solutions**:
+
 - Check network speed
 - Reduce context size
 - Lower max_tokens
@@ -510,6 +546,7 @@ Do you have recovery boards or a shovel? I can give specific advice based on you
 **Problem**: AI gives irrelevant suggestions
 
 **Solutions**:
+
 - Update context with current data
 - Provide more specific questions
 - Include user preferences
@@ -520,6 +557,7 @@ Do you have recovery boards or a shovel? I can give specific advice based on you
 **Problem**: Getting 429 or 500 errors
 
 **Solutions**:
+
 - Check API quota
 - Implement retry logic
 - Add rate limiting
@@ -625,6 +663,6 @@ generateTripPlan(
 ---
 
 **Last Updated**: AI Guide v1.0
-**Status**: ✅ Ready for use with OpenAI API key
+**Status**: ✅ Ready for use with the Firebase AI proxy
 **Model**: gpt-4o-mini
 **Features**: Chat, Recommendations, Safety Analysis, Emergency Guidance

@@ -82,6 +82,7 @@ export default {
       },
       mapboxAccessToken: process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN,
       mapTilerKey: process.env.EXPO_PUBLIC_MAPTILER_KEY,
+      openaiProxyUrl: process.env.EXPO_PUBLIC_OPENAI_PROXY_URL,
     },
   },
 };
