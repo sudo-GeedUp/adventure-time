@@ -73,6 +73,11 @@
     "typescript": "~5.9.2"
   },
   "private": true,
+  "overrides": {
+    "brace-expansion": "5.0.8",
+    "postcss": "8.5.18",
+    "uuid": "11.1.1"
+  },
   "allowScripts": {
     "@sentry/cli@2.55.0": true,
     "@firebase/util@1.15.1": true,
