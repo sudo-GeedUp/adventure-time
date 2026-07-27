@@ -431,23 +431,38 @@ export default function NavigateScreen() {
           </View>
         </View>
 
-        {communityInsights?.status === "ready" && (
-          <View style={styles.communityInsightRow}>
-            <Feather name="users" size={14} color={theme.accent} />
-            <ThemedText
-              style={[styles.communityInsightText, { color: theme.text }]}
-            >
-              Observed peer pace ~
-              {communityInsights.observedPeerPaceMph?.toFixed(1)} mph
-            </ThemedText>
-            <ThemedText
-              style={[styles.communityInsightText, { color: theme.warning }]}
-            >
-              · {communityInsights.reportedHazardCount} reported hazard
-              {communityInsights.reportedHazardCount === 1 ? "" : "s"}
-            </ThemedText>
-          </View>
-        )}
+        {communityInsights &&
+          (communityInsights.pace.status === "ready" ||
+            communityInsights.hazards.status === "available") && (
+            <View style={styles.communityInsightRow}>
+              {communityInsights.pace.status === "ready" && (
+                <>
+                  <Feather name="users" size={14} color={theme.accent} />
+                  <ThemedText
+                    style={[styles.communityInsightText, { color: theme.text }]}
+                  >
+                    Observed peer pace ~
+                    {communityInsights.pace.observedPeerPaceMph.toFixed(1)} mph
+                  </ThemedText>
+                </>
+              )}
+              {communityInsights.hazards.status === "available" && (
+                <ThemedText
+                  style={[
+                    styles.communityInsightText,
+                    { color: theme.warning },
+                  ]}
+                >
+                  {communityInsights.pace.status === "ready" ? " · " : ""}
+                  {communityInsights.hazards.reportedHazardCount} reported
+                  hazard
+                  {communityInsights.hazards.reportedHazardCount === 1
+                    ? ""
+                    : "s"}
+                </ThemedText>
+              )}
+            </View>
+          )}
 
         <View style={styles.landTypeRow}>
           <ThemedText

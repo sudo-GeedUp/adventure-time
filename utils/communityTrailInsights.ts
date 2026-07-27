@@ -5,14 +5,40 @@ export const MIN_VALID_SPEED_SAMPLES = 3;
 export const MIN_QUALIFYING_ADVENTURES = 5;
 export const MIN_DISTINCT_USERS = 3;
 
+export type TrailPaceInsight =
+  | {
+      status: "ready";
+      observedPeerPaceMph: number;
+      qualifyingAdventureCount: number;
+      distinctUserCount: number;
+    }
+  | {
+      status: "insufficient-data";
+      qualifyingAdventureCount: number;
+      distinctUserCount: number;
+    };
+
+export type TrailHazardInsight =
+  | {
+      status: "available";
+      reportedHazardCount: number;
+      hazards: AdventureHazard[];
+    }
+  | {
+      status: "none";
+      reportedHazardCount: 0;
+      hazards: [];
+    };
+
 export interface TrailCommunityInsights {
   trailId: string;
-  status: "ready" | "insufficient-data";
-  observedPeerPaceMph: number | null;
-  qualifyingAdventureCount: number;
-  distinctUserCount: number;
-  reportedHazardCount: number;
-  hazards: AdventureHazard[];
+  pace: TrailPaceInsight;
+  hazards: TrailHazardInsight;
+}
+
+interface QualifyingAdventure {
+  adventure: CompletedAdventure;
+  medianSpeed: number;
 }
 
 function median(values: number[]): number {
@@ -22,6 +48,56 @@ function median(values: number[]): number {
   return sorted.length % 2 === 0
     ? (sorted[middle - 1] + sorted[middle]) / 2
     : sorted[middle];
+}
+
+function getPaceInsight(
+  qualifyingAdventures: QualifyingAdventure[],
+): TrailPaceInsight {
+  const distinctUserIds = new Set(
+    qualifyingAdventures
+      .map(({ adventure }) => adventure.userId)
+      .filter((userId) => userId.trim().length > 0),
+  );
+  const hasSufficientData =
+    qualifyingAdventures.length >= MIN_QUALIFYING_ADVENTURES &&
+    distinctUserIds.size >= MIN_DISTINCT_USERS;
+
+  if (!hasSufficientData) {
+    return {
+      status: "insufficient-data",
+      qualifyingAdventureCount: qualifyingAdventures.length,
+      distinctUserCount: distinctUserIds.size,
+    };
+  }
+
+  return {
+    status: "ready",
+    observedPeerPaceMph: median(
+      qualifyingAdventures.map(({ medianSpeed }) => medianSpeed),
+    ),
+    qualifyingAdventureCount: qualifyingAdventures.length,
+    distinctUserCount: distinctUserIds.size,
+  };
+}
+
+function getHazardInsight(
+  adventures: CompletedAdventure[],
+): TrailHazardInsight {
+  const hazards = adventures.flatMap((adventure) => adventure.hazards);
+
+  if (hazards.length === 0) {
+    return {
+      status: "none",
+      reportedHazardCount: 0,
+      hazards: [],
+    };
+  }
+
+  return {
+    status: "available",
+    reportedHazardCount: hazards.length,
+    hazards,
+  };
 }
 
 export function aggregateTrailCommunityData(
@@ -49,36 +125,11 @@ export function aggregateTrailCommunityData(
           speeds.length >= MIN_VALID_SPEED_SAMPLES ? median(speeds) : null,
       };
     })
-    .filter(
-      (
-        item,
-      ): item is {
-        adventure: CompletedAdventure;
-        medianSpeed: number;
-      } => item.medianSpeed !== null,
-    );
-
-  const distinctUserIds = new Set(
-    qualifyingAdventures
-      .map(({ adventure }) => adventure.userId)
-      .filter((userId) => userId.trim().length > 0),
-  );
-  const hazards = qualifyingAdventures.flatMap(
-    ({ adventure }) => adventure.hazards,
-  );
-  const hasSufficientData =
-    qualifyingAdventures.length >= MIN_QUALIFYING_ADVENTURES &&
-    distinctUserIds.size >= MIN_DISTINCT_USERS;
+    .filter((item): item is QualifyingAdventure => item.medianSpeed !== null);
 
   return {
     trailId,
-    status: hasSufficientData ? "ready" : "insufficient-data",
-    observedPeerPaceMph: hasSufficientData
-      ? median(qualifyingAdventures.map(({ medianSpeed }) => medianSpeed))
-      : null,
-    qualifyingAdventureCount: qualifyingAdventures.length,
-    distinctUserCount: distinctUserIds.size,
-    reportedHazardCount: hazards.length,
-    hazards,
+    pace: getPaceInsight(qualifyingAdventures),
+    hazards: getHazardInsight(trailAdventures),
   };
 }

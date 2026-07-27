@@ -1928,7 +1928,8 @@ export default function ActiveAdventureScreen() {
           </ThemedText>
         </View>
 
-        {communityInsights.status === "ready" && (
+        {(communityInsights.pace.status === "ready" ||
+          communityInsights.hazards.status === "available") && (
           <View
             style={[
               styles.wazeHeader,
@@ -1938,16 +1939,43 @@ export default function ActiveAdventureScreen() {
               },
             ]}
           >
-            <Feather name="users" size={16} color={theme.primary} />
+            <Feather
+              name={
+                communityInsights.pace.status === "ready"
+                  ? "users"
+                  : "alert-triangle"
+              }
+              size={16}
+              color={
+                communityInsights.pace.status === "ready"
+                  ? theme.primary
+                  : theme.warning
+              }
+            />
             <View style={styles.peerPaceTextContainer}>
-              <ThemedText style={styles.peerPaceText}>
-                Observed peer pace ~
-                {communityInsights.observedPeerPaceMph?.toFixed(1)} mph
-              </ThemedText>
-              <ThemedText style={styles.peerPaceCaveat}>
-                Based on {communityInsights.qualifyingAdventureCount} public
-                drives · not a speed limit
-              </ThemedText>
+              {communityInsights.pace.status === "ready" && (
+                <>
+                  <ThemedText style={styles.peerPaceText}>
+                    Observed peer pace ~
+                    {communityInsights.pace.observedPeerPaceMph.toFixed(1)} mph
+                  </ThemedText>
+                  <ThemedText style={styles.peerPaceCaveat}>
+                    Based on {communityInsights.pace.qualifyingAdventureCount}{" "}
+                    public drives · not a speed limit
+                  </ThemedText>
+                </>
+              )}
+              {communityInsights.hazards.status === "available" && (
+                <ThemedText
+                  style={[styles.peerPaceText, { color: theme.warning }]}
+                >
+                  {communityInsights.hazards.reportedHazardCount} reported
+                  hazard
+                  {communityInsights.hazards.reportedHazardCount === 1
+                    ? ""
+                    : "s"}
+                </ThemedText>
+              )}
             </View>
           </View>
         )}
@@ -1960,7 +1988,10 @@ export default function ActiveAdventureScreen() {
                 top:
                   insets.top +
                   Spacing.md +
-                  (communityInsights.status === "ready" ? 220 : 140),
+                  (communityInsights.pace.status === "ready" ||
+                  communityInsights.hazards.status === "available"
+                    ? 220
+                    : 140),
                 backgroundColor: theme.backgroundDefault + "E0",
               },
             ]}
@@ -2216,30 +2247,59 @@ export default function ActiveAdventureScreen() {
             </Pressable>
           </View>
 
-          {communityInsights.status === "ready" && (
+          {(communityInsights.pace.status === "ready" ||
+            communityInsights.hazards.status === "available") && (
             <View
               style={[
                 styles.peerPaceCallout,
                 { backgroundColor: theme.backgroundSecondary },
               ]}
             >
-              <Feather name="users" size={16} color={theme.primary} />
+              <Feather
+                name={
+                  communityInsights.pace.status === "ready"
+                    ? "users"
+                    : "alert-triangle"
+                }
+                size={16}
+                color={
+                  communityInsights.pace.status === "ready"
+                    ? theme.primary
+                    : theme.warning
+                }
+              />
               <View style={styles.peerPaceTextContainer}>
-                <ThemedText
-                  style={[styles.peerPaceText, { color: theme.text }]}
-                >
-                  Observed peer pace ~
-                  {communityInsights.observedPeerPaceMph?.toFixed(1)} mph
-                </ThemedText>
-                <ThemedText
-                  style={[
-                    styles.peerPaceCaveat,
-                    { color: theme.tabIconDefault },
-                  ]}
-                >
-                  Based on {communityInsights.qualifyingAdventureCount} public
-                  drives · not a speed limit
-                </ThemedText>
+                {communityInsights.pace.status === "ready" && (
+                  <>
+                    <ThemedText
+                      style={[styles.peerPaceText, { color: theme.text }]}
+                    >
+                      Observed peer pace ~
+                      {communityInsights.pace.observedPeerPaceMph.toFixed(1)}{" "}
+                      mph
+                    </ThemedText>
+                    <ThemedText
+                      style={[
+                        styles.peerPaceCaveat,
+                        { color: theme.tabIconDefault },
+                      ]}
+                    >
+                      Based on {communityInsights.pace.qualifyingAdventureCount}{" "}
+                      public drives · not a speed limit
+                    </ThemedText>
+                  </>
+                )}
+                {communityInsights.hazards.status === "available" && (
+                  <ThemedText
+                    style={[styles.peerPaceText, { color: theme.warning }]}
+                  >
+                    {communityInsights.hazards.reportedHazardCount} reported
+                    hazard
+                    {communityInsights.hazards.reportedHazardCount === 1
+                      ? ""
+                      : "s"}
+                  </ThemedText>
+                )}
               </View>
             </View>
           )}
