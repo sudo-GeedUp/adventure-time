@@ -146,7 +146,7 @@ export default function AIGuideScreen() {
     if (!aiGuideService.isAvailable()) {
       Alert.alert(
         "AI Guide Unavailable",
-        "The AI Guide requires an OpenAI API key to function. Please configure your API key in the settings.",
+        "The AI Guide is temporarily unavailable. Please try again later.",
       );
       return;
     }

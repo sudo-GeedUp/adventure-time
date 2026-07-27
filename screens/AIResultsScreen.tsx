@@ -93,7 +93,7 @@ export default function AIResultsScreen() {
         ],
         warning:
           error.message ||
-          "Unable to complete analysis. Please check your API key configuration.",
+          "Unable to complete analysis. Please try again later.",
       });
     } finally {
       setIsAnalyzing(false);
