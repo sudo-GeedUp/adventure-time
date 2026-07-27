@@ -30,6 +30,8 @@ import {
 import { calculateDistance } from "@/utils/location";
 import { OfflineMapsManager } from "@/utils/offlineMaps";
 import { storage } from "@/utils/storage";
+import type { CompletedAdventure } from "@/utils/storage";
+import { aggregateTrailCommunityData } from "@/utils/communityTrailInsights";
 import {
   isFirebaseAvailable,
   CommunityAdventuresService,
@@ -55,6 +57,9 @@ export default function NavigateScreen() {
   );
   const [cachedTrails, setCachedTrails] = useState<Set<string>>(new Set());
   const [communityTrails, setCommunityTrails] = useState<Trail[]>([]);
+  const [communityAdventures, setCommunityAdventures] = useState<
+    CompletedAdventure[]
+  >([]);
   const [viewMode, setViewMode] = useState<"map" | "list">("list");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,35 +92,39 @@ export default function NavigateScreen() {
     setLocation(defaultLocation);
   }, []);
 
-  const updateCommunityTrailsData = useCallback((adventures: any[]) => {
-    if (!adventures || adventures.length === 0) {
-      console.log("No community trails found");
-      setCommunityTrails([]);
-      return;
-    }
-    const communityTrailsData: Trail[] = adventures
-      .filter((adv: any) => adv.route && adv.route.length > 0)
-      .map((adv: any) => ({
-        id: adv.id,
-        name: adv.trailName || adv.title || "Community Trail",
-        description: `Community trail by ${adv.userName || "Unknown"}`,
-        difficulty: adv.difficulty || "Moderate",
-        distance: adv.totalDistance || 0,
-        duration:
-          adv.endTime && adv.startTime
-            ? Math.round((adv.endTime - adv.startTime) / 1000 / 60)
-            : 0,
-        safetyRating: 7,
-        landType: "public" as const,
-        features: [],
-        location: adv.route[0] || { latitude: 0, longitude: 0 },
-        elevation: adv.maxAltitude || 0,
-        vehicleTypes: [adv.vehicleType || "All"],
-        popularity: 5,
-      }));
-    setCommunityTrails(communityTrailsData);
-    console.log("Loaded", communityTrailsData.length, "community trails");
-  }, []);
+  const updateCommunityTrailsData = useCallback(
+    (adventures: CompletedAdventure[]) => {
+      setCommunityAdventures(adventures);
+      if (!adventures || adventures.length === 0) {
+        console.log("No community trails found");
+        setCommunityTrails([]);
+        return;
+      }
+      const communityTrailsData: Trail[] = adventures
+        .filter((adv) => adv.route && adv.route.length > 0)
+        .map((adv) => ({
+          id: adv.id,
+          name: adv.trailName || adv.title || "Community Trail",
+          description: `Community trail by ${adv.userName || "Unknown"}`,
+          difficulty: adv.difficulty || "Moderate",
+          distance: adv.totalDistance || 0,
+          duration:
+            adv.endTime && adv.startTime
+              ? Math.round((adv.endTime - adv.startTime) / 1000 / 60)
+              : 0,
+          safetyRating: 7,
+          landType: "public" as const,
+          features: [],
+          location: adv.route[0] || { latitude: 0, longitude: 0 },
+          elevation: adv.maxAltitude || 0,
+          vehicleTypes: [adv.vehicleType || "All"],
+          popularity: 5,
+        }));
+      setCommunityTrails(communityTrailsData);
+      console.log("Loaded", communityTrailsData.length, "community trails");
+    },
+    [],
+  );
 
   const setupCommunityTrails = useCallback(() => {
     let unsubscribe: (() => void) | null = null;
@@ -193,6 +202,18 @@ export default function NavigateScreen() {
       setIsLoading(false);
     }
   }, [location, communityTrails]);
+
+  const communityInsightsByTrailId = React.useMemo(() => {
+    const trailIds = new Set(
+      [...trails, ...communityTrails].map((trail) => trail.id),
+    );
+    return new Map(
+      [...trailIds].map((trailId) => [
+        trailId,
+        aggregateTrailCommunityData(communityAdventures, trailId),
+      ]),
+    );
+  }, [communityAdventures, communityTrails, trails]);
 
   const applyFilters = useCallback(() => {
     let filtered = [...trails];
@@ -316,6 +337,7 @@ export default function NavigateScreen() {
       location && item.location
         ? calculateDistance(location.coords, item.location)
         : 0;
+    const communityInsights = communityInsightsByTrailId.get(item.id);
 
     const getRiskColor = (difficulty: string) => {
       switch (difficulty) {
@@ -408,6 +430,24 @@ export default function NavigateScreen() {
             </ThemedText>
           </View>
         </View>
+
+        {communityInsights?.status === "ready" && (
+          <View style={styles.communityInsightRow}>
+            <Feather name="users" size={14} color={theme.accent} />
+            <ThemedText
+              style={[styles.communityInsightText, { color: theme.text }]}
+            >
+              Observed peer pace ~
+              {communityInsights.observedPeerPaceMph?.toFixed(1)} mph
+            </ThemedText>
+            <ThemedText
+              style={[styles.communityInsightText, { color: theme.warning }]}
+            >
+              · {communityInsights.reportedHazardCount} reported hazard
+              {communityInsights.reportedHazardCount === 1 ? "" : "s"}
+            </ThemedText>
+          </View>
+        )}
 
         <View style={styles.landTypeRow}>
           <ThemedText
@@ -985,6 +1025,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: Spacing.xs,
+  },
+  communityInsightRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: Spacing.xs,
+    marginBottom: Spacing.md,
+  },
+  communityInsightText: {
+    fontSize: 12,
+    fontWeight: "600",
   },
   featureTag: {
     paddingHorizontal: Spacing.sm,
