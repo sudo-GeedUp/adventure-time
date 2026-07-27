@@ -10,7 +10,10 @@ import { GuidesStackParamList } from "@/navigation/GuidesStackNavigator";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage } from "@/utils/storage";
 
-type GuideDetailScreenRouteProp = RouteProp<GuidesStackParamList, "GuideDetail">;
+type GuideDetailScreenRouteProp = RouteProp<
+  GuidesStackParamList,
+  "GuideDetail"
+>;
 
 export default function GuideDetailScreen() {
   const route = useRoute<GuideDetailScreenRouteProp>();
@@ -62,8 +65,8 @@ export default function GuideDetailScreen() {
     guide.difficulty === "Easy"
       ? theme.success
       : guide.difficulty === "Moderate"
-      ? theme.warning
-      : theme.error;
+        ? theme.warning
+        : theme.error;
 
   return (
     <ScreenScrollView>
@@ -89,13 +92,19 @@ export default function GuideDetailScreen() {
         <View
           style={[
             styles.warningSection,
-            { backgroundColor: theme.warning + "15", borderColor: theme.warning },
+            {
+              backgroundColor: theme.warning + "15",
+              borderColor: theme.warning,
+            },
           ]}
         >
           <View style={styles.warningHeader}>
             <Feather name="alert-triangle" size={24} color={theme.warning} />
             <ThemedText
-              style={[Typography.h4, { marginLeft: Spacing.sm, color: theme.warning }]}
+              style={[
+                Typography.h4,
+                { marginLeft: Spacing.sm, color: theme.warning },
+              ]}
             >
               Safety Warnings
             </ThemedText>
@@ -109,14 +118,23 @@ export default function GuideDetailScreen() {
       ) : null}
 
       <View style={styles.section}>
-        <ThemedText style={[Typography.h4, styles.sectionTitle]}>Procedure</ThemedText>
+        <ThemedText style={[Typography.h4, styles.sectionTitle]}>
+          Procedure
+        </ThemedText>
         {guide.steps.map((step) => (
           <View
             key={step.number}
-            style={[styles.stepCard, { backgroundColor: theme.backgroundDefault }]}
+            style={[
+              styles.stepCard,
+              { backgroundColor: theme.backgroundDefault },
+            ]}
           >
-            <View style={[styles.stepNumber, { backgroundColor: theme.primary }]}>
-              <ThemedText style={[styles.stepNumberText, { color: theme.buttonText }]}>
+            <View
+              style={[styles.stepNumber, { backgroundColor: theme.primary }]}
+            >
+              <ThemedText
+                style={[styles.stepNumberText, { color: theme.buttonText }]}
+              >
                 {step.number}
               </ThemedText>
             </View>
@@ -124,7 +142,9 @@ export default function GuideDetailScreen() {
               <ThemedText style={[Typography.label, styles.stepTitle]}>
                 {step.title}
               </ThemedText>
-              <ThemedText style={styles.stepDescription}>{step.description}</ThemedText>
+              <ThemedText style={styles.stepDescription}>
+                {step.description}
+              </ThemedText>
             </View>
           </View>
         ))}

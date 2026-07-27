@@ -3,14 +3,17 @@ import { Modal, View, StyleSheet, Pressable } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { Typography, Spacing, BorderRadius, Colors } from "@/constants/theme";
+import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 
 interface SpecialThanksModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-export default function SpecialThanksModal({ visible, onClose }: SpecialThanksModalProps) {
+export default function SpecialThanksModal({
+  visible,
+  onClose,
+}: SpecialThanksModalProps) {
   const { theme } = useTheme();
 
   return (
@@ -21,7 +24,12 @@ export default function SpecialThanksModal({ visible, onClose }: SpecialThanksMo
       onRequestClose={onClose}
     >
       <View style={[styles.overlay, { backgroundColor: "rgba(0, 0, 0, 0.5)" }]}>
-        <View style={[styles.container, { backgroundColor: theme.backgroundDefault }]}>
+        <View
+          style={[
+            styles.container,
+            { backgroundColor: theme.backgroundDefault },
+          ]}
+        >
           <View style={styles.header}>
             <Feather name="heart" size={48} color={theme.primary} />
           </View>
@@ -62,8 +70,10 @@ export default function SpecialThanksModal({ visible, onClose }: SpecialThanksMo
             onPress={onClose}
             android_ripple={{ color: theme.secondary }}
           >
-            <ThemedText style={[styles.buttonText, { color: theme.backgroundDefault }]}>
-              Let's Go Adventure
+            <ThemedText
+              style={[styles.buttonText, { color: theme.backgroundDefault }]}
+            >
+              Let&apos;s Go Adventure
             </ThemedText>
           </Pressable>
         </View>
@@ -83,8 +93,15 @@ function ThankItem({
 }) {
   return (
     <View style={styles.thankItem}>
-      <Feather name={icon} size={24} color={theme.primary} style={styles.itemIcon} />
-      <ThemedText style={[styles.itemText, { color: theme.text }]}>{text}</ThemedText>
+      <Feather
+        name={icon}
+        size={24}
+        color={theme.primary}
+        style={styles.itemIcon}
+      />
+      <ThemedText style={[styles.itemText, { color: theme.text }]}>
+        {text}
+      </ThemedText>
     </View>
   );
 }

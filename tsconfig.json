@@ -5,16 +5,11 @@
     "allowJs": true,
     "esModuleInterop": true,
     "jsx": "react-native",
-    "lib": [
-      "DOM",
-      "ESNext"
-    ],
+    "lib": ["DOM", "ESNext"],
     "module": "ESNext",
     "moduleDetection": "force",
     "moduleResolution": "bundler",
-    "customConditions": [
-      "react-native"
-    ],
+    "customConditions": ["react-native"],
     "noEmit": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
@@ -22,15 +17,10 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx"
-  ],
+  "include": ["**/*.ts", "**/*.tsx"],
   "exclude": [
     "${configDir}/node_modules",
     "${configDir}/babel.config.js",

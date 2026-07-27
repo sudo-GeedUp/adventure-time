@@ -12,10 +12,15 @@ interface HeaderTitleProps {
 
 export function HeaderTitle({ title }: HeaderTitleProps) {
   const { theme } = useTheme();
-  
+
   return (
     <View style={styles.container}>
-      <Feather name="navigation" size={24} color={theme.primary} style={styles.icon} />
+      <Feather
+        name="navigation"
+        size={24}
+        color={theme.primary}
+        style={styles.icon}
+      />
       <ThemedText style={styles.title}>{title}</ThemedText>
     </View>
   );

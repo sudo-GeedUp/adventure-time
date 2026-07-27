@@ -1,5 +1,5 @@
-import { Trail } from '@/utils/trails';
-import { WeatherService } from '@/utils/firebase';
+import { Trail } from "@/utils/trails";
+import { WeatherService } from "@/utils/firebase";
 
 interface GuideContext {
   userLocation?: {
@@ -19,19 +19,19 @@ interface GuideContext {
 }
 
 interface GuideMessage {
-  role: 'system' | 'user' | 'assistant';
+  role: "system" | "user" | "assistant";
   content: string;
 }
 
 interface GuideSuggestion {
-  type: 'trail' | 'safety' | 'tip' | 'warning' | 'recommendation';
+  type: "trail" | "safety" | "tip" | "warning" | "recommendation";
   title: string;
   message: string;
-  priority: 'low' | 'medium' | 'high' | 'critical';
+  priority: "low" | "medium" | "high" | "critical";
   actionable?: boolean;
   action?: {
     label: string;
-    type: 'navigate' | 'call' | 'share' | 'view';
+    type: "navigate" | "call" | "share" | "view";
     data?: any;
   };
 }
@@ -41,7 +41,7 @@ class AIGuideService {
   private conversationHistory: GuideMessage[] = [];
   private context: GuideContext = {};
   private systemPrompt: string;
-  private apiUrl = 'https://api.openai.com/v1/chat/completions';
+  private apiUrl = "https://api.openai.com/v1/chat/completions";
 
   constructor() {
     this.initializeAPI();
@@ -50,9 +50,11 @@ class AIGuideService {
 
   private initializeAPI() {
     const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-    
+
     if (!apiKey) {
-      console.warn('OpenAI API key not configured. AI Guide will not be available.');
+      console.warn(
+        "OpenAI API key not configured. AI Guide will not be available.",
+      );
       return;
     }
 
@@ -134,18 +136,18 @@ Use this context to provide personalized, relevant advice.
     try {
       // Add user message to history
       this.conversationHistory.push({
-        role: 'user',
+        role: "user",
         content: userMessage,
       });
 
       // Build context-aware messages
       const messages: GuideMessage[] = [
         {
-          role: 'system',
+          role: "system",
           content: this.systemPrompt,
         },
         {
-          role: 'system',
+          role: "system",
           content: this.buildContextMessage(),
         },
         ...this.conversationHistory.slice(-10), // Keep last 10 messages for context
@@ -153,13 +155,13 @@ Use this context to provide personalized, relevant advice.
 
       // Call OpenAI API
       const response = await fetch(this.apiUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: "gpt-4o-mini",
           messages,
           temperature: 0.7,
           max_tokens: 500,
@@ -171,32 +173,38 @@ Use this context to provide personalized, relevant advice.
       }
 
       const data = await response.json();
-      const assistantMessage = data.choices[0]?.message?.content || 
+      const assistantMessage =
+        data.choices[0]?.message?.content ||
         "I'm having trouble responding right now. Please try again.";
 
       // Add assistant response to history
       this.conversationHistory.push({
-        role: 'assistant',
+        role: "assistant",
         content: assistantMessage,
       });
 
       return assistantMessage;
     } catch (error: any) {
-      console.error('AI Guide chat error:', error);
-      
-      if (error.message?.includes('rate limit') || error.message?.includes('429')) {
+      console.error("AI Guide chat error:", error);
+
+      if (
+        error.message?.includes("rate limit") ||
+        error.message?.includes("429")
+      ) {
         return "I'm getting too many requests right now. Please wait a moment and try again.";
       }
-      
+
       return "I encountered an error. Please try asking your question again.";
     }
   }
 
   private buildContextMessage(): string {
-    const contextParts: string[] = ['**Current Context:**'];
+    const contextParts: string[] = ["**Current Context:**"];
 
     if (this.context.userLocation) {
-      contextParts.push(`📍 Location: ${this.context.userLocation.latitude.toFixed(4)}, ${this.context.userLocation.longitude.toFixed(4)}`);
+      contextParts.push(
+        `📍 Location: ${this.context.userLocation.latitude.toFixed(4)}, ${this.context.userLocation.longitude.toFixed(4)}`,
+      );
     }
 
     if (this.context.currentTrail) {
@@ -205,7 +213,7 @@ Use this context to provide personalized, relevant advice.
       contextParts.push(`   - Difficulty: ${trail.difficulty}`);
       contextParts.push(`   - Distance: ${trail.distance} miles`);
       if (trail.features) {
-        contextParts.push(`   - Features: ${trail.features.join(', ')}`);
+        contextParts.push(`   - Features: ${trail.features.join(", ")}`);
       }
     }
 
@@ -231,11 +239,11 @@ Use this context to provide personalized, relevant advice.
       if (prefs.terrain) prefsList.push(`Terrain: ${prefs.terrain}`);
       if (prefs.distance) prefsList.push(`Distance: ${prefs.distance}`);
       if (prefsList.length > 0) {
-        contextParts.push(`⚙️ Preferences: ${prefsList.join(', ')}`);
+        contextParts.push(`⚙️ Preferences: ${prefsList.join(", ")}`);
       }
     }
 
-    return contextParts.join('\n');
+    return contextParts.join("\n");
   }
 
   async getSmartSuggestions(): Promise<GuideSuggestion[]> {
@@ -259,24 +267,24 @@ Format your response as a JSON array of suggestions with this structure:
 Focus on actionable, relevant suggestions based on current conditions.`;
 
       const response = await fetch(this.apiUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: "gpt-4o-mini",
           messages: [
-            { role: 'system', content: this.systemPrompt },
-            { role: 'user', content: prompt },
+            { role: "system", content: this.systemPrompt },
+            { role: "user", content: prompt },
           ],
           temperature: 0.8,
           max_tokens: 800,
-          response_format: { type: 'json_object' },
+          response_format: { type: "json_object" },
         }),
       });
 
-      if (!response.ok) throw new Error('API error');
+      if (!response.ok) throw new Error("API error");
       const data = await response.json();
 
       const content = data.choices[0]?.message?.content;
@@ -285,18 +293,21 @@ Focus on actionable, relevant suggestions based on current conditions.`;
       const parsed = JSON.parse(content);
       return parsed.suggestions || parsed || [];
     } catch (error) {
-      console.error('Error getting smart suggestions:', error);
+      console.error("Error getting smart suggestions:", error);
       return [];
     }
   }
 
-  async getTrailRecommendations(trails: Trail[], limit: number = 3): Promise<Trail[]> {
+  async getTrailRecommendations(
+    trails: Trail[],
+    limit: number = 3,
+  ): Promise<Trail[]> {
     if (!this.apiKey || trails.length === 0) return trails.slice(0, limit);
 
     try {
-      const trailsInfo = trails.map((t, i) => 
-        `${i + 1}. ${t.name} - ${t.difficulty}, ${t.distance}mi`
-      ).join('\n');
+      const trailsInfo = trails
+        .map((t, i) => `${i + 1}. ${t.name} - ${t.difficulty}, ${t.distance}mi`)
+        .join("\n");
 
       const prompt = `Based on the user's context and these available trails, recommend the top ${limit} trails that would be best suited for them. Return only the trail numbers (e.g., "1,3,5").
 
@@ -308,35 +319,35 @@ ${trailsInfo}
 Return format: Just comma-separated numbers, no explanation.`;
 
       const response = await fetch(this.apiUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: "gpt-4o-mini",
           messages: [
-            { role: 'system', content: this.systemPrompt },
-            { role: 'user', content: prompt },
+            { role: "system", content: this.systemPrompt },
+            { role: "user", content: prompt },
           ],
           temperature: 0.5,
           max_tokens: 50,
         }),
       });
 
-      if (!response.ok) throw new Error('API error');
+      if (!response.ok) throw new Error("API error");
       const data = await response.json();
       const content = data.choices[0]?.message?.content?.trim();
       if (!content) return trails.slice(0, limit);
 
       const indices = content
-        .split(',')
+        .split(",")
         .map((n: string) => parseInt(n.trim()) - 1)
         .filter((i: number) => i >= 0 && i < trails.length);
 
       return indices.map((i: number) => trails[i]).slice(0, limit);
     } catch (error) {
-      console.error('Error getting trail recommendations:', error);
+      console.error("Error getting trail recommendations:", error);
       return trails.slice(0, limit);
     }
   }
@@ -350,7 +361,7 @@ Return format: Just comma-separated numbers, no explanation.`;
       return {
         safetyScore: 7,
         warnings: [],
-        recommendations: ['Check weather conditions before starting'],
+        recommendations: ["Check weather conditions before starting"],
       };
     }
 
@@ -360,7 +371,7 @@ Return format: Just comma-separated numbers, no explanation.`;
 Trail: ${trail.name}
 Difficulty: ${trail.difficulty}
 Distance: ${trail.distance} miles
-Features: ${trail.features?.join(', ') || 'None listed'}
+Features: ${trail.features?.join(", ") || "None listed"}
 
 ${this.buildContextMessage()}
 
@@ -372,35 +383,35 @@ Provide a safety analysis in JSON format:
 }`;
 
       const response = await fetch(this.apiUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: "gpt-4o-mini",
           messages: [
-            { role: 'system', content: this.systemPrompt },
-            { role: 'user', content: prompt },
+            { role: "system", content: this.systemPrompt },
+            { role: "user", content: prompt },
           ],
           temperature: 0.6,
           max_tokens: 400,
-          response_format: { type: 'json_object' },
+          response_format: { type: "json_object" },
         }),
       });
 
-      if (!response.ok) throw new Error('API error');
+      if (!response.ok) throw new Error("API error");
       const data = await response.json();
       const content = data.choices[0]?.message?.content;
-      if (!content) throw new Error('No response');
+      if (!content) throw new Error("No response");
 
       return JSON.parse(content);
     } catch (error) {
-      console.error('Error analyzing trail safety:', error);
+      console.error("Error analyzing trail safety:", error);
       return {
         safetyScore: 7,
-        warnings: ['Unable to analyze safety at this time'],
-        recommendations: ['Proceed with caution and check conditions'],
+        warnings: ["Unable to analyze safety at this time"],
+        recommendations: ["Proceed with caution and check conditions"],
       };
     }
   }
@@ -416,28 +427,30 @@ Provide a safety analysis in JSON format:
 ${this.buildContextMessage()}`;
 
       const response = await fetch(this.apiUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: "gpt-4o-mini",
           messages: [
-            { role: 'system', content: this.systemPrompt },
-            { role: 'user', content: prompt },
+            { role: "system", content: this.systemPrompt },
+            { role: "user", content: prompt },
           ],
           temperature: 0.9,
           max_tokens: 50,
         }),
       });
 
-      if (!response.ok) throw new Error('API error');
+      if (!response.ok) throw new Error("API error");
       const data = await response.json();
-      return data.choices[0]?.message?.content?.trim() || 
-        "💡 Stay safe and have fun on the trails!";
+      return (
+        data.choices[0]?.message?.content?.trim() ||
+        "💡 Stay safe and have fun on the trails!"
+      );
     } catch (error) {
-      console.error('Error getting quick tip:', error);
+      console.error("Error getting quick tip:", error);
       return "💡 Always carry emergency supplies and a first aid kit.";
     }
   }
@@ -462,36 +475,43 @@ ${this.buildContextMessage()}
 Give clear, step-by-step instructions prioritizing safety. Include when to call 911.`;
 
       const response = await fetch(this.apiUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: "gpt-4o-mini",
           messages: [
-            { role: 'system', content: this.systemPrompt + '\n\nIMPORTANT: This is an emergency situation. Prioritize safety and provide clear, actionable steps.' },
-            { role: 'user', content: prompt },
+            {
+              role: "system",
+              content:
+                this.systemPrompt +
+                "\n\nIMPORTANT: This is an emergency situation. Prioritize safety and provide clear, actionable steps.",
+            },
+            { role: "user", content: prompt },
           ],
           temperature: 0.3,
           max_tokens: 600,
         }),
       });
 
-      if (!response.ok) throw new Error('API error');
+      if (!response.ok) throw new Error("API error");
       const data = await response.json();
-      return data.choices[0]?.message?.content || 
-        'Please call 911 for emergency assistance.';
+      return (
+        data.choices[0]?.message?.content ||
+        "Please call 911 for emergency assistance."
+      );
     } catch (error) {
-      console.error('Error getting emergency guidance:', error);
-      return 'Please call 911 immediately if you are in danger.';
+      console.error("Error getting emergency guidance:", error);
+      return "Please call 911 immediately if you are in danger.";
     }
   }
 
   async generateTripPlan(
     destination: string,
     duration: string,
-    preferences: string[]
+    preferences: string[],
   ): Promise<string> {
     if (!this.apiKey) {
       return "I'm unable to generate a trip plan right now. Please try again later.";
@@ -502,7 +522,7 @@ Give clear, step-by-step instructions prioritizing safety. Include when to call 
 
 Destination: ${destination}
 Duration: ${duration}
-Preferences: ${preferences.join(', ')}
+Preferences: ${preferences.join(", ")}
 
 ${this.buildContextMessage()}
 
@@ -514,29 +534,31 @@ Include:
 - Points of interest`;
 
       const response = await fetch(this.apiUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: "gpt-4o-mini",
           messages: [
-            { role: 'system', content: this.systemPrompt },
-            { role: 'user', content: prompt },
+            { role: "system", content: this.systemPrompt },
+            { role: "user", content: prompt },
           ],
           temperature: 0.7,
           max_tokens: 1000,
         }),
       });
 
-      if (!response.ok) throw new Error('API error');
+      if (!response.ok) throw new Error("API error");
       const data = await response.json();
-      return data.choices[0]?.message?.content || 
-        'Unable to generate trip plan at this time.';
+      return (
+        data.choices[0]?.message?.content ||
+        "Unable to generate trip plan at this time."
+      );
     } catch (error) {
-      console.error('Error generating trip plan:', error);
-      return 'Unable to generate trip plan. Please try again.';
+      console.error("Error generating trip plan:", error);
+      return "Unable to generate trip plan. Please try again.";
     }
   }
 }

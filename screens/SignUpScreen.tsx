@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   StyleSheet,
@@ -9,15 +9,15 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { Feather } from '@expo/vector-icons';
-import { ThemedView } from '@/components/ThemedView';
-import ThemedText from '@/components/ThemedText';
-import { useTheme } from '@/hooks/useTheme';
-import { useAuth } from '@/contexts/AuthContext';
-import { Spacing, BorderRadius, Typography } from '@/constants/theme';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Feather } from "@expo/vector-icons";
+import { ThemedView } from "@/components/ThemedView";
+import ThemedText from "@/components/ThemedText";
+import { useTheme } from "@/hooks/useTheme";
+import { useAuth } from "@/contexts/AuthContext";
+import { Spacing, BorderRadius, Typography } from "@/constants/theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function SignUpScreen() {
   const navigation = useNavigation<any>();
@@ -25,38 +25,38 @@ export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
   const { signUp } = useAuth();
 
-  const [displayName, setDisplayName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const validateForm = () => {
     if (!displayName.trim()) {
-      Alert.alert('Error', 'Please enter your name');
+      Alert.alert("Error", "Please enter your name");
       return false;
     }
 
     if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email');
+      Alert.alert("Error", "Please enter your email");
       return false;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      Alert.alert("Error", "Please enter a valid email address");
       return false;
     }
 
     if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      Alert.alert("Error", "Password must be at least 6 characters");
       return false;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      Alert.alert("Error", "Passwords do not match");
       return false;
     }
 
@@ -70,12 +70,12 @@ export default function SignUpScreen() {
     try {
       await signUp(email, password, displayName);
       Alert.alert(
-        'Success!',
-        'Your account has been created. Welcome to Adventure Time!',
-        [{ text: 'OK' }]
+        "Success!",
+        "Your account has been created. Welcome to Adventure Time!",
+        [{ text: "OK" }],
       );
     } catch (error: any) {
-      Alert.alert('Sign Up Failed', error.message);
+      Alert.alert("Sign Up Failed", error.message);
     } finally {
       setLoading(false);
     }
@@ -88,11 +88,14 @@ export default function SignUpScreen() {
   return (
     <ThemedView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
       >
         <ScrollView
-          contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + Spacing.xl }]}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingTop: insets.top + Spacing.xl },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           {/* Header */}
@@ -100,8 +103,12 @@ export default function SignUpScreen() {
             <Pressable onPress={handleSignIn} style={styles.backButton}>
               <Feather name="arrow-left" size={24} color={theme.text} />
             </Pressable>
-            <ThemedText style={[Typography.h1, styles.title]}>Create Account</ThemedText>
-            <ThemedText style={[styles.subtitle, { color: theme.tabIconDefault }]}>
+            <ThemedText style={[Typography.h1, styles.title]}>
+              Create Account
+            </ThemedText>
+            <ThemedText
+              style={[styles.subtitle, { color: theme.tabIconDefault }]}
+            >
               Join the adventure community
             </ThemedText>
           </View>
@@ -111,7 +118,12 @@ export default function SignUpScreen() {
             {/* Name Input */}
             <View style={styles.inputContainer}>
               <ThemedText style={styles.label}>Full Name</ThemedText>
-              <View style={[styles.inputWrapper, { backgroundColor: theme.backgroundSecondary }]}>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  { backgroundColor: theme.backgroundSecondary },
+                ]}
+              >
                 <Feather name="user" size={20} color={theme.tabIconDefault} />
                 <TextInput
                   style={[styles.input, { color: theme.text }]}
@@ -129,7 +141,12 @@ export default function SignUpScreen() {
             {/* Email Input */}
             <View style={styles.inputContainer}>
               <ThemedText style={styles.label}>Email</ThemedText>
-              <View style={[styles.inputWrapper, { backgroundColor: theme.backgroundSecondary }]}>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  { backgroundColor: theme.backgroundSecondary },
+                ]}
+              >
                 <Feather name="mail" size={20} color={theme.tabIconDefault} />
                 <TextInput
                   style={[styles.input, { color: theme.text }]}
@@ -148,7 +165,12 @@ export default function SignUpScreen() {
             {/* Password Input */}
             <View style={styles.inputContainer}>
               <ThemedText style={styles.label}>Password</ThemedText>
-              <View style={[styles.inputWrapper, { backgroundColor: theme.backgroundSecondary }]}>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  { backgroundColor: theme.backgroundSecondary },
+                ]}
+              >
                 <Feather name="lock" size={20} color={theme.tabIconDefault} />
                 <TextInput
                   style={[styles.input, { color: theme.text }]}
@@ -163,7 +185,7 @@ export default function SignUpScreen() {
                 />
                 <Pressable onPress={() => setShowPassword(!showPassword)}>
                   <Feather
-                    name={showPassword ? 'eye-off' : 'eye'}
+                    name={showPassword ? "eye-off" : "eye"}
                     size={20}
                     color={theme.tabIconDefault}
                   />
@@ -174,7 +196,12 @@ export default function SignUpScreen() {
             {/* Confirm Password Input */}
             <View style={styles.inputContainer}>
               <ThemedText style={styles.label}>Confirm Password</ThemedText>
-              <View style={[styles.inputWrapper, { backgroundColor: theme.backgroundSecondary }]}>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  { backgroundColor: theme.backgroundSecondary },
+                ]}
+              >
                 <Feather name="lock" size={20} color={theme.tabIconDefault} />
                 <TextInput
                   style={[styles.input, { color: theme.text }]}
@@ -187,9 +214,11 @@ export default function SignUpScreen() {
                   autoComplete="password-new"
                   editable={!loading}
                 />
-                <Pressable onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                <Pressable
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
                   <Feather
-                    name={showConfirmPassword ? 'eye-off' : 'eye'}
+                    name={showConfirmPassword ? "eye-off" : "eye"}
                     size={20}
                     color={theme.tabIconDefault}
                   />
@@ -199,11 +228,17 @@ export default function SignUpScreen() {
 
             {/* Terms */}
             <View style={styles.termsContainer}>
-              <ThemedText style={[styles.termsText, { color: theme.tabIconDefault }]}>
-                By signing up, you agree to our{' '}
-                <ThemedText style={{ color: theme.primary }}>Terms of Service</ThemedText>
-                {' '}and{' '}
-                <ThemedText style={{ color: theme.primary }}>Privacy Policy</ThemedText>
+              <ThemedText
+                style={[styles.termsText, { color: theme.tabIconDefault }]}
+              >
+                By signing up, you agree to our{" "}
+                <ThemedText style={{ color: theme.primary }}>
+                  Terms of Service
+                </ThemedText>{" "}
+                and{" "}
+                <ThemedText style={{ color: theme.primary }}>
+                  Privacy Policy
+                </ThemedText>
               </ThemedText>
             </View>
 
@@ -221,7 +256,9 @@ export default function SignUpScreen() {
                 <ActivityIndicator color="white" />
               ) : (
                 <>
-                  <ThemedText style={styles.signUpButtonText}>Create Account</ThemedText>
+                  <ThemedText style={styles.signUpButtonText}>
+                    Create Account
+                  </ThemedText>
                   <Feather name="arrow-right" size={20} color="white" />
                 </>
               )}
@@ -231,7 +268,7 @@ export default function SignUpScreen() {
           {/* Sign In Link */}
           <View style={styles.footer}>
             <ThemedText style={{ color: theme.tabIconDefault }}>
-              Already have an account?{' '}
+              Already have an account?{" "}
             </ThemedText>
             <Pressable onPress={handleSignIn} disabled={loading}>
               <ThemedText style={[styles.signInLink, { color: theme.primary }]}>
@@ -258,7 +295,7 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xl,
   },
   header: {
-    marginBottom: Spacing['2xl'],
+    marginBottom: Spacing["2xl"],
   },
   backButton: {
     marginBottom: Spacing.lg,
@@ -277,12 +314,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: Spacing.sm,
   },
   inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.md,
     height: 56,
@@ -291,7 +328,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    height: '100%',
+    height: "100%",
   },
   termsContainer: {
     marginBottom: Spacing.xl,
@@ -299,12 +336,12 @@ const styles = StyleSheet.create({
   termsText: {
     fontSize: 12,
     lineHeight: 18,
-    textAlign: 'center',
+    textAlign: "center",
   },
   signUpButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: Spacing.lg,
     borderRadius: BorderRadius.md,
     gap: Spacing.sm,
@@ -313,18 +350,18 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   signUpButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 'auto',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: "auto",
   },
   signInLink: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

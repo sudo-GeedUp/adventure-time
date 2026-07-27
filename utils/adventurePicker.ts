@@ -1,8 +1,8 @@
-import { Trail } from './trails';
+import { Trail } from "./trails";
 
 export interface RandomAdventureOptions {
   maxDistance?: number;
-  difficulty?: 'Easy' | 'Moderate' | 'Hard' | 'Expert';
+  difficulty?: "Easy" | "Moderate" | "Hard" | "Expert";
   userLocation?: {
     latitude: number;
     longitude: number;
@@ -20,7 +20,7 @@ export interface RandomAdventureResult {
  */
 export function pickRandomAdventure(
   trails: Trail[],
-  options: RandomAdventureOptions = {}
+  options: RandomAdventureOptions = {},
 ): RandomAdventureResult | null {
   if (trails.length === 0) {
     return null;
@@ -30,7 +30,9 @@ export function pickRandomAdventure(
 
   // Apply difficulty filter if specified
   if (options.difficulty) {
-    filteredTrails = filteredTrails.filter(t => t.difficulty === options.difficulty);
+    filteredTrails = filteredTrails.filter(
+      (t) => t.difficulty === options.difficulty,
+    );
   }
 
   // If no trails match filters, use all trails
@@ -72,7 +74,7 @@ export function pickRandomAdventure(
  */
 export function pickSmartRandomAdventure(
   trails: Trail[],
-  options: RandomAdventureOptions = {}
+  options: RandomAdventureOptions = {},
 ): RandomAdventureResult | null {
   if (trails.length === 0) {
     return null;
@@ -82,7 +84,9 @@ export function pickSmartRandomAdventure(
 
   // Apply difficulty filter if specified
   if (options.difficulty) {
-    filteredTrails = filteredTrails.filter(t => t.difficulty === options.difficulty);
+    filteredTrails = filteredTrails.filter(
+      (t) => t.difficulty === options.difficulty,
+    );
   }
 
   // If no trails match filters, use all trails
@@ -91,7 +95,7 @@ export function pickSmartRandomAdventure(
   }
 
   // Weight trails based on various factors
-  const weightedTrails = filteredTrails.map(trail => {
+  const weightedTrails = filteredTrails.map((trail) => {
     let weight = 1;
 
     // Higher rated trails get more weight
@@ -99,11 +103,11 @@ export function pickSmartRandomAdventure(
 
     // Popular trails get slight boost
     if (trail.popularity) {
-      weight += (trail.popularity / 10);
+      weight += trail.popularity / 10;
     }
 
     // Moderate difficulty gets slight preference (good for most users)
-    if (trail.difficulty === 'Moderate') {
+    if (trail.difficulty === "Moderate") {
       weight += 0.5;
     }
 
@@ -111,7 +115,10 @@ export function pickSmartRandomAdventure(
   });
 
   // Calculate total weight
-  const totalWeight = weightedTrails.reduce((sum, item) => sum + item.weight, 0);
+  const totalWeight = weightedTrails.reduce(
+    (sum, item) => sum + item.weight,
+    0,
+  );
 
   // Random selection based on weights
   let random = Math.random() * totalWeight;
@@ -157,7 +164,7 @@ export function pickSmartRandomAdventure(
 export function pickMultipleRandomAdventures(
   trails: Trail[],
   count: number = 3,
-  options: RandomAdventureOptions = {}
+  options: RandomAdventureOptions = {},
 ): RandomAdventureResult[] {
   if (trails.length === 0) {
     return [];
@@ -170,7 +177,9 @@ export function pickMultipleRandomAdventures(
 
   // Apply difficulty filter if specified
   if (options.difficulty) {
-    filteredTrails = filteredTrails.filter(t => t.difficulty === options.difficulty);
+    filteredTrails = filteredTrails.filter(
+      (t) => t.difficulty === options.difficulty,
+    );
   }
 
   // If no trails match filters, use all trails
@@ -182,11 +191,11 @@ export function pickMultipleRandomAdventures(
 
   while (results.length < actualCount) {
     const randomIndex = Math.floor(Math.random() * filteredTrails.length);
-    
+
     if (!usedIndices.has(randomIndex)) {
       usedIndices.add(randomIndex);
       const trail = filteredTrails[randomIndex];
-      
+
       const reasons = [
         { text: "A hidden gem!", emoji: "💎" },
         { text: "Worth exploring!", emoji: "🔍" },

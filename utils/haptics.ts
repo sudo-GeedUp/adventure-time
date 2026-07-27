@@ -1,11 +1,11 @@
-import * as Haptics from 'expo-haptics';
+import * as Haptics from "expo-haptics";
 
 export const hapticFeedback = {
   light: async () => {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (error) {
-      console.log('Haptics not available');
+      console.log("Haptics not available");
     }
   },
 
@@ -13,7 +13,7 @@ export const hapticFeedback = {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (error) {
-      console.log('Haptics not available');
+      console.log("Haptics not available");
     }
   },
 
@@ -21,7 +21,7 @@ export const hapticFeedback = {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     } catch (error) {
-      console.log('Haptics not available');
+      console.log("Haptics not available");
     }
   },
 
@@ -29,7 +29,7 @@ export const hapticFeedback = {
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      console.log('Haptics not available');
+      console.log("Haptics not available");
     }
   },
 
@@ -37,7 +37,7 @@ export const hapticFeedback = {
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     } catch (error) {
-      console.log('Haptics not available');
+      console.log("Haptics not available");
     }
   },
 
@@ -45,7 +45,7 @@ export const hapticFeedback = {
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } catch (error) {
-      console.log('Haptics not available');
+      console.log("Haptics not available");
     }
   },
 
@@ -53,7 +53,7 @@ export const hapticFeedback = {
     try {
       await Haptics.selectionAsync();
     } catch (error) {
-      console.log('Haptics not available');
+      console.log("Haptics not available");
     }
   },
 };

@@ -1,33 +1,33 @@
-const fs = require('fs');
-const crypto = require('crypto');
+const fs = require("fs");
+const crypto = require("crypto");
 
-const ISSUER_ID = '46781a73-a825-49fa-a503-82d6dabe8b5a';
-const KEY_ID = 'ZSQK8UYFZ9';
-const PRIVATE_KEY_PATH = './AuthKey_Cancel.p8';
-const BASE_URL = 'https://api.appstoreconnect.apple.com/v1';
+const ISSUER_ID = "46781a73-a825-49fa-a503-82d6dabe8b5a";
+const KEY_ID = "ZSQK8UYFZ9";
+const PRIVATE_KEY_PATH = "./AuthKey_Cancel.p8";
+const BASE_URL = "https://api.appstoreconnect.apple.com/v1";
 
 const IAPS = [
-  '193a8513-ace3-48df-a911-111217ae75a0', // monthly
-  '7dd389eb-25fa-4514-983e-af7f40dace0a', // yearly
+  "193a8513-ace3-48df-a911-111217ae75a0", // monthly
+  "7dd389eb-25fa-4514-983e-af7f40dace0a", // yearly
 ];
 
 function base64url(input) {
-  if (typeof input === 'string') input = Buffer.from(input);
-  return input.toString('base64url');
+  if (typeof input === "string") input = Buffer.from(input);
+  return input.toString("base64url");
 }
 
 function derToRaw(derSig) {
-  if (derSig[0] !== 0x30) throw new Error('Invalid DER signature');
+  if (derSig[0] !== 0x30) throw new Error("Invalid DER signature");
   let idx = 2;
   function readInt() {
-    if (derSig[idx++] !== 0x02) throw new Error('Expected INTEGER');
+    if (derSig[idx++] !== 0x02) throw new Error("Expected INTEGER");
     const len = derSig[idx++];
-    if (len & 0x80) throw new Error('Long-form DER length not supported');
+    if (len & 0x80) throw new Error("Long-form DER length not supported");
     const bytes = derSig.slice(idx, idx + len);
     idx += len;
     let trimmed = bytes;
     if (trimmed.length > 32 && trimmed[0] === 0x00) trimmed = trimmed.slice(1);
-    if (trimmed.length > 32) throw new Error('Integer too long');
+    if (trimmed.length > 32) throw new Error("Integer too long");
     const padded = Buffer.alloc(32);
     trimmed.copy(padded, 32 - trimmed.length);
     return padded;
@@ -36,13 +36,18 @@ function derToRaw(derSig) {
 }
 
 function makeJwt() {
-  const keyPem = fs.readFileSync(PRIVATE_KEY_PATH, 'utf8');
+  const keyPem = fs.readFileSync(PRIVATE_KEY_PATH, "utf8");
   const privateKey = crypto.createPrivateKey(keyPem);
   const now = Math.floor(Date.now() / 1000);
-  const header = { alg: 'ES256', kid: KEY_ID, typ: 'JWT' };
-  const payload = { iss: ISSUER_ID, iat: now, exp: now + 1200, aud: 'appstoreconnect-v1' };
+  const header = { alg: "ES256", kid: KEY_ID, typ: "JWT" };
+  const payload = {
+    iss: ISSUER_ID,
+    iat: now,
+    exp: now + 1200,
+    aud: "appstoreconnect-v1",
+  };
   const signingInput = `${base64url(JSON.stringify(header))}.${base64url(JSON.stringify(payload))}`;
-  const derSig = crypto.sign('SHA256', Buffer.from(signingInput), privateKey);
+  const derSig = crypto.sign("SHA256", Buffer.from(signingInput), privateKey);
   const rawSig = derToRaw(derSig);
   return `${signingInput}.${base64url(rawSig)}`;
 }
@@ -50,12 +55,24 @@ function makeJwt() {
 async function api(method, path, body) {
   const jwt = makeJwt();
   const url = `${BASE_URL}${path}`;
-  const options = { method, headers: { Authorization: `Bearer ${jwt}`, 'Content-Type': 'application/json' } };
+  const options = {
+    method,
+    headers: {
+      Authorization: `Bearer ${jwt}`,
+      "Content-Type": "application/json",
+    },
+  };
   if (body) options.body = JSON.stringify(body);
   const res = await fetch(url, options);
   const text = await res.text();
   let json = null;
-  if (text) { try { json = JSON.parse(text); } catch { json = text; } }
+  if (text) {
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = text;
+    }
+  }
   console.log(`${method} ${path} -> ${res.status}`);
   if (text) console.log(text.slice(0, 2000));
   if (!res.ok) {
@@ -71,12 +88,13 @@ async function api(method, path, body) {
   for (const id of IAPS) {
     // Try to set a review note to trigger state recalculation
     try {
-      await api('PATCH', `/inAppPurchases/${id}`, {
+      await api("PATCH", `/inAppPurchases/${id}`, {
         data: {
-          type: 'inAppPurchases',
+          type: "inAppPurchases",
           id,
           attributes: {
-            reviewNote: 'Premium subscription for full app access. Users can subscribe on the paywall.',
+            reviewNote:
+              "Premium subscription for full app access. Users can subscribe on the paywall.",
           },
         },
       });
@@ -85,8 +103,11 @@ async function api(method, path, body) {
     }
   }
   // Check state after
-  const list = await api('GET', `/apps/6758251454/inAppPurchases?limit=200`);
+  const list = await api("GET", `/apps/6758251454/inAppPurchases?limit=200`);
   for (const s of list.data || []) {
     console.log(`${s.attributes.productId} | state=${s.attributes.state}`);
   }
-})().catch(err => { console.error(err); process.exit(1); });
+})().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

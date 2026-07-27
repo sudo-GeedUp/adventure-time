@@ -40,9 +40,15 @@ export const SAMPLE_TRAILS: Trail[] = [
     distance: 15.5,
     duration: 180,
     landType: "public",
-    description: "Technical trail with stunning canyon views. Rocky terrain and steep grades.",
+    description:
+      "Technical trail with stunning canyon views. Rocky terrain and steep grades.",
     elevation: 1200,
-    features: ["Scenic Views", "Technical Rocks", "Steep Climbs", "Water Crossings"],
+    features: [
+      "Scenic Views",
+      "Technical Rocks",
+      "Steep Climbs",
+      "Water Crossings",
+    ],
     vehicleTypes: ["Jeep", "4Runner", "Bronco"],
     safetyRating: 7.5,
     popularity: 8.2,
@@ -70,7 +76,8 @@ export const SAMPLE_TRAILS: Trail[] = [
     distance: 8.5,
     duration: 90,
     landType: "public",
-    description: "Beautiful sand dunes with moderate difficulty. Good for beginners.",
+    description:
+      "Beautiful sand dunes with moderate difficulty. Good for beginners.",
     elevation: 300,
     features: ["Sand Dunes", "Scenic Views", "Family Friendly"],
     vehicleTypes: ["Any 4WD", "SUV"],
@@ -85,7 +92,8 @@ export const SAMPLE_TRAILS: Trail[] = [
     distance: 10.0,
     duration: 120,
     landType: "mixed",
-    description: "Narrow canyon with technical rock formations. Requires skilled driving.",
+    description:
+      "Narrow canyon with technical rock formations. Requires skilled driving.",
     elevation: 600,
     features: ["Canyon Scenery", "Technical Rocks", "Narrow Passages"],
     vehicleTypes: ["Jeep", "High Clearance"],
@@ -100,7 +108,8 @@ export const SAMPLE_TRAILS: Trail[] = [
     distance: 5.0,
     duration: 60,
     landType: "public",
-    description: "Steep rocky hill with hairpin turns. Popular and well-maintained.",
+    description:
+      "Steep rocky hill with hairpin turns. Popular and well-maintained.",
     elevation: 400,
     features: ["Hill Climb", "Rocky Terrain", "Scenic Overlook"],
     vehicleTypes: ["Jeep", "4Runner", "Trucks"],
@@ -115,7 +124,8 @@ export const SAMPLE_TRAILS: Trail[] = [
     distance: 3.0,
     duration: 45,
     landType: "private",
-    description: "Extremely tight slot canyon. Owner permission required. Advanced only.",
+    description:
+      "Extremely tight slot canyon. Owner permission required. Advanced only.",
     elevation: 200,
     features: ["Slot Canyon", "Extreme Tight Spaces", "Scrambling"],
     vehicleTypes: ["Small Jeep", "Modified Vehicle"],
@@ -145,13 +155,14 @@ export const SAMPLE_ROUTES: Route[] = [
     totalDistance: 8.5,
     totalDuration: 90,
     difficulty: "Moderate",
-    description: "Perfect for families and beginners. Beautiful dunes and low difficulty.",
+    description:
+      "Perfect for families and beginners. Beautiful dunes and low difficulty.",
   },
 ];
 
 export function getTrailsNearLocation(
   location: { latitude: number; longitude: number },
-  radiusMiles: number
+  radiusMiles: number,
 ): Trail[] {
   return SAMPLE_TRAILS.filter((trail) => {
     const lat1 = location.latitude;
@@ -177,18 +188,19 @@ export function getTrailsNearLocation(
 
 export function filterTrailsByDifficulty(
   trails: Trail[],
-  difficulty: "Easy" | "Moderate" | "Hard" | "Expert"
+  difficulty: "Easy" | "Moderate" | "Hard" | "Expert",
 ): Trail[] {
   return trails.filter((trail) => trail.difficulty === difficulty);
 }
 
 export function filterTrailsByLandType(
   trails: Trail[],
-  landType: "public" | "private" | "mixed"
+  landType: "public" | "private" | "mixed",
 ): Trail[] {
   return trails.filter((trail) => {
     if (landType === "private") return trail.landType === "private";
-    if (landType === "public") return trail.landType === "public" || trail.landType === "mixed";
+    if (landType === "public")
+      return trail.landType === "public" || trail.landType === "mixed";
     return true;
   });
 }
