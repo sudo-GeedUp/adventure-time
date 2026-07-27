@@ -58,6 +58,7 @@ import {
 } from "@/services/rallyNavigatorService";
 import { EmergencySOS } from "@/utils/emergencySOS";
 import { analyticsService } from "@/services/analyticsService";
+import { aggregateTrailCommunityData } from "@/utils/communityTrailInsights";
 
 let MapView: any = null;
 let Marker: any = null;
@@ -429,6 +430,27 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     lineHeight: 18,
+  },
+  peerPaceCallout: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+  },
+  peerPaceTextContainer: {
+    flex: 1,
+  },
+  peerPaceText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  peerPaceCaveat: {
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 11,
+    marginTop: 2,
   },
   speedometerCard: {
     padding: Spacing.xl,
@@ -856,6 +878,9 @@ export default function ActiveAdventureScreen() {
   >([]);
   const [showNavigator, setShowNavigator] = useState(true);
   const [communityTrails, setCommunityTrails] = useState<any[]>([]);
+  const [communityAdventures, setCommunityAdventures] = useState<
+    CompletedAdventure[]
+  >([]);
 
   const sessionRef = useRef<AdventureSession | null>(null);
   const selectedRouteRef = useRef(selectedRoute);
@@ -877,6 +902,10 @@ export default function ActiveAdventureScreen() {
         }))
         .filter((communityTrail) => communityTrail.coordinates.length > 1),
     [communityTrails],
+  );
+  const communityInsights = useMemo(
+    () => aggregateTrailCommunityData(communityAdventures, trail.id),
+    [communityAdventures, trail.id],
   );
   const currentRoutePolyline = useMemo(
     () => toPolylineCoordinates(session?.route || []),
@@ -1128,6 +1157,57 @@ export default function ActiveAdventureScreen() {
     } catch (error) {
       console.error("[Community Data] Error loading trails:", error);
     }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    let unsubscribe: (() => void) | null = null;
+
+    const loadCommunityAdventures = async () => {
+      try {
+        const localAdventures = await storage.getCommunityAdventures();
+        if (!active) return;
+
+        const mergeAdventures = (firebaseAdventures: CompletedAdventure[]) => {
+          const combined = [...localAdventures];
+          firebaseAdventures.forEach((adventure) => {
+            const existingIndex = combined.findIndex(
+              (existing) => existing.id === adventure.id,
+            );
+            if (existingIndex >= 0) {
+              combined[existingIndex] = adventure;
+            } else {
+              combined.push(adventure);
+            }
+          });
+          return combined;
+        };
+
+        if (isFirebaseAvailable()) {
+          unsubscribe =
+            CommunityAdventuresService.subscribeToCommunityAdventures(
+              (firebaseAdventures) => {
+                if (active) {
+                  setCommunityAdventures(mergeAdventures(firebaseAdventures));
+                }
+              },
+            );
+        } else {
+          setCommunityAdventures(localAdventures);
+        }
+      } catch (error) {
+        if (active) {
+          console.error("[Community Data] Error loading pace data:", error);
+        }
+      }
+    };
+
+    void loadCommunityAdventures();
+
+    return () => {
+      active = false;
+      unsubscribe?.();
+    };
   }, []);
 
   // Restore the last cached route when no route was passed via navigation
@@ -1473,6 +1553,7 @@ export default function ActiveAdventureScreen() {
       route: session.route,
       hazards: session.hazards,
       assistanceWaypoints: session.assistanceWaypoints,
+      trailId: trail.id,
       trailName: trail.name,
       difficulty: trail.difficulty,
     } as CompletedAdventure;
@@ -1847,12 +1928,70 @@ export default function ActiveAdventureScreen() {
           </ThemedText>
         </View>
 
-        {showNavigator && navigationCallouts.length > 0 && (
+        {(communityInsights.pace.status === "ready" ||
+          communityInsights.hazards.status === "available") && (
           <View
             style={[
               styles.wazeHeader,
               {
                 top: insets.top + Spacing.md + 140,
+                backgroundColor: theme.backgroundDefault + "E0",
+              },
+            ]}
+          >
+            <Feather
+              name={
+                communityInsights.pace.status === "ready"
+                  ? "users"
+                  : "alert-triangle"
+              }
+              size={16}
+              color={
+                communityInsights.pace.status === "ready"
+                  ? theme.primary
+                  : theme.warning
+              }
+            />
+            <View style={styles.peerPaceTextContainer}>
+              {communityInsights.pace.status === "ready" && (
+                <>
+                  <ThemedText style={styles.peerPaceText}>
+                    Observed peer pace ~
+                    {communityInsights.pace.observedPeerPaceMph.toFixed(1)} mph
+                  </ThemedText>
+                  <ThemedText style={styles.peerPaceCaveat}>
+                    Based on {communityInsights.pace.qualifyingAdventureCount}{" "}
+                    public drives · not a speed limit
+                  </ThemedText>
+                </>
+              )}
+              {communityInsights.hazards.status === "available" && (
+                <ThemedText
+                  style={[styles.peerPaceText, { color: theme.warning }]}
+                >
+                  {communityInsights.hazards.reportedHazardCount} reported
+                  hazard
+                  {communityInsights.hazards.reportedHazardCount === 1
+                    ? ""
+                    : "s"}
+                </ThemedText>
+              )}
+            </View>
+          </View>
+        )}
+
+        {showNavigator && navigationCallouts.length > 0 && (
+          <View
+            style={[
+              styles.wazeHeader,
+              {
+                top:
+                  insets.top +
+                  Spacing.md +
+                  (communityInsights.pace.status === "ready" ||
+                  communityInsights.hazards.status === "available"
+                    ? 220
+                    : 140),
                 backgroundColor: theme.backgroundDefault + "E0",
               },
             ]}
@@ -2107,6 +2246,63 @@ export default function ActiveAdventureScreen() {
               />
             </Pressable>
           </View>
+
+          {(communityInsights.pace.status === "ready" ||
+            communityInsights.hazards.status === "available") && (
+            <View
+              style={[
+                styles.peerPaceCallout,
+                { backgroundColor: theme.backgroundSecondary },
+              ]}
+            >
+              <Feather
+                name={
+                  communityInsights.pace.status === "ready"
+                    ? "users"
+                    : "alert-triangle"
+                }
+                size={16}
+                color={
+                  communityInsights.pace.status === "ready"
+                    ? theme.primary
+                    : theme.warning
+                }
+              />
+              <View style={styles.peerPaceTextContainer}>
+                {communityInsights.pace.status === "ready" && (
+                  <>
+                    <ThemedText
+                      style={[styles.peerPaceText, { color: theme.text }]}
+                    >
+                      Observed peer pace ~
+                      {communityInsights.pace.observedPeerPaceMph.toFixed(1)}{" "}
+                      mph
+                    </ThemedText>
+                    <ThemedText
+                      style={[
+                        styles.peerPaceCaveat,
+                        { color: theme.tabIconDefault },
+                      ]}
+                    >
+                      Based on {communityInsights.pace.qualifyingAdventureCount}{" "}
+                      public drives · not a speed limit
+                    </ThemedText>
+                  </>
+                )}
+                {communityInsights.hazards.status === "available" && (
+                  <ThemedText
+                    style={[styles.peerPaceText, { color: theme.warning }]}
+                  >
+                    {communityInsights.hazards.reportedHazardCount} reported
+                    hazard
+                    {communityInsights.hazards.reportedHazardCount === 1
+                      ? ""
+                      : "s"}
+                  </ThemedText>
+                )}
+              </View>
+            </View>
+          )}
 
           {/* Rally Navigator Callouts */}
           {showNavigator && navigationCallouts.length > 0 && (

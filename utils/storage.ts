@@ -261,6 +261,7 @@ export interface CompletedAdventure {
   route: RoutePoint[];
   hazards: AdventureHazard[];
   assistanceWaypoints: AssistanceWaypoint[];
+  trailId?: string;
   difficulty?: "Easy" | "Moderate" | "Hard" | "Expert";
   trailName?: string;
   description?: string;
