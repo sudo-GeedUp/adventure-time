@@ -963,8 +963,8 @@ export default function ActiveAdventureScreen() {
           clearInterval(locationPoll);
           locationPoll = null;
         }
+        setWeather(currentWeather);
       }
-      setWeather(currentWeather);
     };
 
     void loadWeather();
