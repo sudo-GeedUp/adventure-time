@@ -436,15 +436,25 @@ export default function NavigateScreen() {
             communityInsights.hazards.status === "available") && (
             <View style={styles.communityInsightRow}>
               {communityInsights.pace.status === "ready" && (
-                <>
+                <View style={styles.communityPaceGroup}>
                   <Feather name="users" size={14} color={theme.accent} />
-                  <ThemedText
-                    style={[styles.communityInsightText, { color: theme.text }]}
-                  >
-                    Observed peer pace ~
-                    {communityInsights.pace.observedPeerPaceMph.toFixed(1)} mph
-                  </ThemedText>
-                </>
+                  <View>
+                    <ThemedText
+                      style={[
+                        styles.communityInsightText,
+                        { color: theme.text },
+                      ]}
+                    >
+                      Observed peer pace ~
+                      {communityInsights.pace.observedPeerPaceMph.toFixed(1)}{" "}
+                      mph
+                    </ThemedText>
+                    <ThemedText style={styles.communityInsightCaveat}>
+                      Based on {communityInsights.pace.qualifyingAdventureCount}{" "}
+                      public drives · not a speed limit
+                    </ThemedText>
+                  </View>
+                </View>
               )}
               {communityInsights.hazards.status === "available" && (
                 <ThemedText
@@ -1051,6 +1061,15 @@ const styles = StyleSheet.create({
   communityInsightText: {
     fontSize: 12,
     fontWeight: "600",
+  },
+  communityPaceGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+  },
+  communityInsightCaveat: {
+    fontSize: 10,
+    opacity: 0.7,
   },
   featureTag: {
     paddingHorizontal: Spacing.sm,

@@ -1,9 +1,7 @@
 import type { AdventureHazard, CompletedAdventure } from "@/utils/storage";
 
 export const MAX_COMMUNITY_SPEED_MPH = 55;
-export const MIN_VALID_SPEED_SAMPLES = 3;
-export const MIN_QUALIFYING_ADVENTURES = 5;
-export const MIN_DISTINCT_USERS = 3;
+export const MIN_VALID_SPEED_SAMPLES = 2;
 
 export type TrailPaceInsight =
   | {
@@ -38,7 +36,7 @@ export interface TrailCommunityInsights {
 
 interface QualifyingAdventure {
   adventure: CompletedAdventure;
-  medianSpeed: number;
+  speeds: number[];
 }
 
 function median(values: number[]): number {
@@ -58,11 +56,9 @@ function getPaceInsight(
       .map(({ adventure }) => adventure.userId)
       .filter((userId) => userId.trim().length > 0),
   );
-  const hasSufficientData =
-    qualifyingAdventures.length >= MIN_QUALIFYING_ADVENTURES &&
-    distinctUserIds.size >= MIN_DISTINCT_USERS;
+  const pooledSpeeds = qualifyingAdventures.flatMap(({ speeds }) => speeds);
 
-  if (!hasSufficientData) {
+  if (pooledSpeeds.length === 0) {
     return {
       status: "insufficient-data",
       qualifyingAdventureCount: qualifyingAdventures.length,
@@ -72,9 +68,7 @@ function getPaceInsight(
 
   return {
     status: "ready",
-    observedPeerPaceMph: median(
-      qualifyingAdventures.map(({ medianSpeed }) => medianSpeed),
-    ),
+    observedPeerPaceMph: median(pooledSpeeds),
     qualifyingAdventureCount: qualifyingAdventures.length,
     distinctUserCount: distinctUserIds.size,
   };
@@ -121,11 +115,13 @@ export function aggregateTrailCommunityData(
 
       return {
         adventure,
-        medianSpeed:
-          speeds.length >= MIN_VALID_SPEED_SAMPLES ? median(speeds) : null,
+        speeds,
       };
     })
-    .filter((item): item is QualifyingAdventure => item.medianSpeed !== null);
+    .filter(
+      (item): item is QualifyingAdventure =>
+        item.speeds.length >= MIN_VALID_SPEED_SAMPLES,
+    );
 
   return {
     trailId,
