@@ -3,6 +3,8 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useRef,
+  useCallback,
   ReactNode,
 } from "react";
 import { Platform } from "react-native";
@@ -38,16 +40,37 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
   const [isPremium, setIsPremium] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
+  const mountedRef = useRef(false);
+  const generationRef = useRef(0);
+  const initializationPromiseRef = useRef<Promise<boolean> | null>(null);
+  const identifiedUserIdRef = useRef<string | null>(null);
+  const identityOperationRef = useRef(Promise.resolve());
+  const userRef = useRef(user);
+  userRef.current = user;
 
-  const refreshStatus = async () => {
+  const ensureInitialized = useCallback(() => {
+    if (!initializationPromiseRef.current) {
+      initializationPromiseRef.current = initializeRevenueCat();
+    }
+    return initializationPromiseRef.current;
+  }, []);
+
+  const refreshStatus = useCallback(async () => {
+    const requestGeneration = ++generationRef.current;
+
     if (Platform.OS === "web") {
       // Web users get free access (no IAP on web)
-      setIsPremium(true);
+      if (mountedRef.current && requestGeneration === generationRef.current) {
+        setIsPremium(true);
+      }
       return;
     }
 
     try {
       const info = await Purchases.getCustomerInfo();
+      if (!mountedRef.current || requestGeneration !== generationRef.current) {
+        return;
+      }
       setCustomerInfo(info);
       const hasPremium = !!info.entitlements.active[ENTITLEMENT_IDS.PREMIUM];
       setIsPremium(hasPremium);
@@ -55,9 +78,10 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
       console.error("Error refreshing subscription status:", error);
       // Don't clobber premium state on error; the SDK listener or a later refresh will update it.
     }
-  };
+  }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     let customerInfoUpdateListener: ((info: CustomerInfo) => void) | null =
       null;
 
@@ -65,16 +89,21 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
       try {
         if (Platform.OS === "web") {
           // Web platform - no RevenueCat, grant free access
-          setIsPremium(true);
-          setIsLoading(false);
+          if (mountedRef.current) {
+            setIsPremium(true);
+            setIsLoading(false);
+          }
           return;
         }
 
         // Initialize RevenueCat for mobile platforms
-        const initialized = await initializeRevenueCat();
+        const initialized = await ensureInitialized();
+        if (!mountedRef.current) return;
         if (initialized) {
           // Listen for background customer-info updates (pushes, restores, renewals)
           customerInfoUpdateListener = (info: CustomerInfo) => {
+            generationRef.current += 1;
+            if (!mountedRef.current) return;
             setCustomerInfo(info);
             setIsPremium(!!info.entitlements.active[ENTITLEMENT_IDS.PREMIUM]);
           };
@@ -91,36 +120,73 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
       } catch (error) {
         console.error("Error initializing subscriptions:", error);
       } finally {
-        setIsLoading(false);
+        if (mountedRef.current) {
+          setIsLoading(false);
+        }
       }
     };
 
     initSubscriptions();
 
     return () => {
+      mountedRef.current = false;
       if (customerInfoUpdateListener) {
         Purchases.removeCustomerInfoUpdateListener(customerInfoUpdateListener);
       }
     };
-  }, []);
+  }, [ensureInitialized, refreshStatus]);
 
-  const updatePremiumFromCustomerInfo = (
-    info: CustomerInfo | null,
-  ): boolean => {
-    const activeEntitlements = Object.keys(info?.entitlements?.active ?? {});
-    const hasPremium = !!info?.entitlements.active[ENTITLEMENT_IDS.PREMIUM];
-    console.warn(
-      "[SubscriptionContext] active entitlements:",
-      activeEntitlements,
-      "expected premium key:",
-      ENTITLEMENT_IDS.PREMIUM,
-      "hasPremium:",
-      hasPremium,
+  useEffect(() => {
+    const syncRevenueCatIdentity = identityOperationRef.current.then(
+      async () => {
+        if (Platform.OS === "web" || !mountedRef.current) return;
+
+        const initialized = await ensureInitialized();
+        if (!initialized || !mountedRef.current) return;
+
+        const nextUserId = userRef.current?.uid ?? null;
+        if (nextUserId === identifiedUserIdRef.current) return;
+
+        generationRef.current += 1;
+        try {
+          if (nextUserId) {
+            await Purchases.logIn(nextUserId);
+          } else {
+            await Purchases.logOut();
+          }
+
+          if (!mountedRef.current) return;
+          identifiedUserIdRef.current = nextUserId;
+          await refreshStatus();
+        } catch (error) {
+          console.error("Error synchronizing RevenueCat user identity:", error);
+        }
+      },
     );
-    setIsPremium(hasPremium);
-    setCustomerInfo(info);
-    return hasPremium;
-  };
+    identityOperationRef.current = syncRevenueCatIdentity.catch(() => {});
+  }, [ensureInitialized, refreshStatus, user]);
+
+  const updatePremiumFromCustomerInfo = useCallback(
+    (info: CustomerInfo | null): boolean => {
+      generationRef.current += 1;
+      const activeEntitlements = Object.keys(info?.entitlements?.active ?? {});
+      const hasPremium = !!info?.entitlements.active[ENTITLEMENT_IDS.PREMIUM];
+      console.warn(
+        "[SubscriptionContext] active entitlements:",
+        activeEntitlements,
+        "expected premium key:",
+        ENTITLEMENT_IDS.PREMIUM,
+        "hasPremium:",
+        hasPremium,
+      );
+      if (mountedRef.current) {
+        setIsPremium(hasPremium);
+        setCustomerInfo(info);
+      }
+      return hasPremium;
+    },
+    [],
+  );
 
   // Sync RevenueCat premium state to the local auth profile so AuthContext stays consistent
   useEffect(() => {
