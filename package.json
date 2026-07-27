@@ -74,6 +74,7 @@
   },
   "private": true,
   "overrides": {
+    "brace-expansion": "5.0.8",
     "minimatch@3": {
       "brace-expansion": "1.1.16"
     },
@@ -86,7 +87,11 @@
     "minimatch@10": {
       "brace-expansion": "5.0.8"
     },
-    "postcss": "8.5.18"
+    "postcss": "8.5.18",
+    "uuid": "11.1.1",
+    "xcode": {
+      "uuid": "7.0.3"
+    }
   },
   "allowScripts": {
     "@sentry/cli@2.55.0": true,
