@@ -1,0 +1,33 @@
+rules_version = '2';
+
+// Deploy with: firebase deploy --only storage,database
+// This file is the source of truth for Firebase Storage rules.
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Stuck of the Week submissions are community-visible.
+    match /scan-submissions/{userId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                    && request.auth.uid == userId;
+    }
+
+    // Profile photos are keyed by Firebase user ID.
+    match /profiles/{userId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                    && request.auth.uid == userId;
+    }
+
+    // These paths contain an adventure ID rather than an owner UID, so
+    // authenticated writes are the narrowest rule the current data model supports.
+    match /adventures/{adventureId}/{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // These paths contain an event ID rather than an owner UID, so
+    // authenticated writes are the narrowest rule the current data model supports.
+    match /trail-events/{eventId}/{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

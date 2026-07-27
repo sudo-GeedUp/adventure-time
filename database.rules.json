@@ -1,0 +1,65 @@
+{
+  "//": "Deploy with: firebase deploy --only storage,database. This file is the source of truth for Realtime Database rules.",
+  "rules": {
+    "users": {
+      "locations": {
+        "$uid": {
+          ".read": "auth != null",
+          ".write": "auth != null && auth.uid == $uid"
+        }
+      },
+      "$uid": {
+        "friends": {
+          ".read": "auth != null && auth.uid == $uid",
+          ".write": "auth != null && auth.uid == $uid",
+          "$friendId": {
+            ".read": "auth != null && auth.uid == $uid",
+            ".write": "auth != null && auth.uid == $uid"
+          }
+        }
+      }
+    },
+    "trail-events": {
+      ".read": "auth != null",
+      "$eventId": {
+        ".write": "auth != null && ((!data.exists() && newData.child('reportedBy').val() == auth.uid) || (data.exists() && (data.child('reportedBy').val() == auth.uid || !newData.exists())))"
+      }
+    },
+    "friend-requests": {
+      "//": "The client reads and filters this whole node, so authenticated reads are intentionally broad.",
+      ".read": "auth != null",
+      "$requestId": {
+        ".write": "auth != null && ((!data.exists() && newData.child('fromUserId').val() == auth.uid) || (data.exists() && (data.child('fromUserId').val() == auth.uid || data.child('toUserId').val() == auth.uid)))"
+      }
+    },
+    "friendships": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        "$friendId": {
+          ".write": "auth != null && (auth.uid == $uid || auth.uid == $friendId)"
+        }
+      }
+    },
+    "messages": {
+      "//": "The schema has no explicit participant list, so authenticated reads are intentionally broad.",
+      "$conversationId": {
+        ".read": "auth != null",
+        "$messageId": {
+          ".write": "auth != null && (newData.child('senderId').val() == auth.uid || data.child('senderId').val() == auth.uid)"
+        }
+      }
+    },
+    "community-adventures": {
+      ".read": "auth != null",
+      "$adventureId": {
+        ".write": "auth != null && ((!data.exists() && newData.child('userId').val() == auth.uid) || (data.exists() && (data.child('userId').val() == auth.uid || !newData.exists())))"
+      }
+    },
+    "scan-submissions": {
+      ".read": "auth != null",
+      "$submissionId": {
+        ".write": "auth != null && ((!data.exists() && newData.child('userId').val() == auth.uid) || (data.exists() && data.child('userId').val() == auth.uid))"
+      }
+    }
+  }
+}

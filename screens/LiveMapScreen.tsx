@@ -38,6 +38,7 @@ import {
   AssistanceWaypoint,
 } from "@/utils/storage";
 import { gpxRecorder } from "@/utils/gpxRecording";
+import { authService } from "@/services/authService";
 
 let MapView: any = null;
 let Marker: any = null;
@@ -325,9 +326,10 @@ export default function LiveMapScreen() {
 
       // Broadcast location to other users
       const userProfile = await storage.getUserProfile();
-      FirebaseLocationService.startLocationBroadcast(
-        userProfile?.id || "anonymous",
-      );
+      const userId = authService.getCurrentUser()?.uid || userProfile?.id;
+      if (userId) {
+        FirebaseLocationService.startLocationBroadcast(userId);
+      }
 
       // Start location tracking
       const subscription = await Location.watchPositionAsync(
