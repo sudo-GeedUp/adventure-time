@@ -77,9 +77,6 @@ export const initializeRevenueCat = async () => {
     await Purchases.configure({ apiKey });
     revenueCatConfigured = true;
 
-    // Optional: Set user ID if you have your own user system
-    // await Purchases.logIn(userId);
-
     return true;
   } catch (error) {
     console.error("Failed to initialize RevenueCat:", error);

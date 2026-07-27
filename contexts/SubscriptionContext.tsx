@@ -43,6 +43,10 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
   const mountedRef = useRef(false);
   const generationRef = useRef(0);
   const initializationPromiseRef = useRef<Promise<boolean> | null>(null);
+  const identifiedUserIdRef = useRef<string | null>(null);
+  const identityOperationRef = useRef(Promise.resolve());
+  const userRef = useRef(user);
+  userRef.current = user;
 
   const ensureInitialized = useCallback(() => {
     if (!initializationPromiseRef.current) {
@@ -131,6 +135,36 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
       }
     };
   }, [ensureInitialized, refreshStatus]);
+
+  useEffect(() => {
+    const syncRevenueCatIdentity = identityOperationRef.current.then(
+      async () => {
+        if (Platform.OS === "web" || !mountedRef.current) return;
+
+        const initialized = await ensureInitialized();
+        if (!initialized || !mountedRef.current) return;
+
+        const nextUserId = userRef.current?.uid ?? null;
+        if (nextUserId === identifiedUserIdRef.current) return;
+
+        generationRef.current += 1;
+        try {
+          if (nextUserId) {
+            await Purchases.logIn(nextUserId);
+          } else {
+            await Purchases.logOut();
+          }
+
+          if (!mountedRef.current) return;
+          identifiedUserIdRef.current = nextUserId;
+          await refreshStatus();
+        } catch (error) {
+          console.error("Error synchronizing RevenueCat user identity:", error);
+        }
+      },
+    );
+    identityOperationRef.current = syncRevenueCatIdentity.catch(() => {});
+  }, [ensureInitialized, refreshStatus, user]);
 
   const updatePremiumFromCustomerInfo = useCallback(
     (info: CustomerInfo | null): boolean => {
