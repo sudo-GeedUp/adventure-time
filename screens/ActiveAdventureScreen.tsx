@@ -36,6 +36,8 @@ import { OfflineMapsManager } from "@/utils/offlineMaps";
 import { gpxRecorder } from "@/utils/gpxRecording";
 import * as Location from "expo-location";
 import { calculateDistance } from "@/utils/location";
+import { getWeather } from "@/utils/weather";
+import { WeatherCondition } from "@/utils/conditions";
 import {
   snapToRoute,
   isOffRoute,
@@ -99,6 +101,8 @@ interface AdventureSession {
 
 const METERS_PER_SECOND_TO_MPH = 2.237;
 const MAX_REASONABLE_SPEED_MPS = 55;
+const WEATHER_REFRESH_INTERVAL_MS = 30 * 60 * 1000;
+const WEATHER_LOCATION_POLL_INTERVAL_MS = 5000;
 
 interface TrackingLifecycle {
   cancelled: boolean;
@@ -594,6 +598,31 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "600",
   },
+  wazeWeatherBadge: {
+    position: "absolute",
+    right: Spacing.md + 80,
+    width: 88,
+    height: 72,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
+    paddingHorizontal: Spacing.xs,
+  },
+  wazeWeatherValue: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "800",
+    lineHeight: 23,
+  },
+  wazeWeatherCondition: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "600",
+    maxWidth: 76,
+  },
   wazeBottomCard: {
     position: "absolute",
     left: Spacing.md,
@@ -812,6 +841,7 @@ export default function ActiveAdventureScreen() {
   const [speed, setSpeed] = useState(0);
   const [altitude, setAltitude] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [weather, setWeather] = useState<WeatherCondition | null>(null);
   const [showHazardModal, setShowHazardModal] = useState(false);
   const [showAssistanceModal, setShowAssistanceModal] = useState(false);
   const [selectedHazardType, setSelectedHazardType] = useState<string | null>(
@@ -854,6 +884,8 @@ export default function ActiveAdventureScreen() {
   );
   const mapRef = React.useRef<any>(null);
   const trailRef = useRef(trail);
+  const weatherAttemptedRef = useRef(false);
+  const weatherRequestRef = useRef(0);
 
   const recenterMap = useCallback(() => {
     const currentLocation = session?.locations[session.locations.length - 1];
@@ -893,6 +925,59 @@ export default function ActiveAdventureScreen() {
   useEffect(() => {
     trailRef.current = trail;
   }, [trail]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadWeather = async (forceRefresh = false) => {
+      if (
+        cancelled ||
+        !screenActiveRef.current ||
+        (!forceRefresh && weatherAttemptedRef.current)
+      ) {
+        return;
+      }
+
+      const currentLocation =
+        sessionRef.current?.locations[sessionRef.current.locations.length - 1];
+      if (!currentLocation) return;
+
+      if (!forceRefresh) {
+        weatherAttemptedRef.current = true;
+      }
+
+      const requestId = ++weatherRequestRef.current;
+      const currentWeather = await getWeather(
+        currentLocation.latitude,
+        currentLocation.longitude,
+      );
+
+      if (
+        cancelled ||
+        !screenActiveRef.current ||
+        requestId !== weatherRequestRef.current
+      ) {
+        return;
+      }
+
+      setWeather(currentWeather);
+    };
+
+    void loadWeather();
+    const locationPoll = setInterval(() => {
+      void loadWeather();
+    }, WEATHER_LOCATION_POLL_INTERVAL_MS);
+    const weatherRefresh = setInterval(() => {
+      void loadWeather(true);
+    }, WEATHER_REFRESH_INTERVAL_MS);
+
+    return () => {
+      cancelled = true;
+      weatherRequestRef.current += 1;
+      clearInterval(locationPoll);
+      clearInterval(weatherRefresh);
+    };
+  }, []);
 
   const HAZARD_TYPES = [
     { id: "washout", label: "Washout", icon: "alert-triangle" },
@@ -1741,6 +1826,21 @@ export default function ActiveAdventureScreen() {
           <ThemedText style={styles.wazeSpeedUnit}>mph</ThemedText>
         </View>
 
+        <View
+          style={[
+            styles.wazeWeatherBadge,
+            { top: insets.top + Spacing.md + 60 },
+          ]}
+        >
+          <Feather name="cloud" size={14} color="#fff" />
+          <ThemedText style={styles.wazeWeatherValue}>
+            {weather ? `${weather.temperature}°` : "--"}
+          </ThemedText>
+          <ThemedText style={styles.wazeWeatherCondition} numberOfLines={1}>
+            {weather?.condition || "Weather"}
+          </ThemedText>
+        </View>
+
         {showNavigator && navigationCallouts.length > 0 && (
           <View
             style={[
@@ -2469,6 +2569,20 @@ export default function ActiveAdventureScreen() {
                 style={[styles.statLabel, { color: theme.tabIconDefault }]}
               >
                 ft
+              </ThemedText>
+            </View>
+
+            {/* Weather */}
+            <View style={styles.statBlock}>
+              <Feather name="cloud" size={28} color={theme.accent} />
+              <ThemedText style={[Typography.h3, styles.statValue]}>
+                {weather ? `${weather.temperature}°` : "--"}
+              </ThemedText>
+              <ThemedText
+                style={[styles.statLabel, { color: theme.tabIconDefault }]}
+                numberOfLines={1}
+              >
+                {weather?.condition || "weather"}
               </ThemedText>
             </View>
           </View>
