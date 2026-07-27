@@ -75,10 +75,7 @@ export default function AIScanScreen() {
     if (recentScans.length === 0) return;
 
     const winner = recentScans.sort((a, b) => {
-      if (b.difficultyScore !== a.difficultyScore) {
-        return b.difficultyScore - a.difficultyScore;
-      }
-      return (b.votes || 0) - (a.votes || 0);
+      return b.difficultyScore - a.difficultyScore;
     })[0];
 
     setStuckOfTheWeek(winner);
@@ -87,27 +84,6 @@ export default function AIScanScreen() {
   const loadScanHistory = async () => {
     const history = await storage.getScanHistory();
     setScanHistory(history);
-  };
-
-  const handleVote = async () => {
-    if (!stuckOfTheWeek) return;
-
-    // Optimistically update local UI
-    setScanSubmissions((prev) =>
-      prev.map((scan) =>
-        scan.id === stuckOfTheWeek.id
-          ? { ...scan, votes: (scan.votes || 0) + 1 }
-          : scan,
-      ),
-    );
-
-    if (isFirebaseAvailable()) {
-      try {
-        await ScanSubmissionsService.voteOnScan(stuckOfTheWeek.id);
-      } catch (error) {
-        console.error("Error voting on stuck of the week:", error);
-      }
-    }
   };
 
   const analyzeImage = async (imageUri: string) => {
@@ -397,35 +373,8 @@ export default function AIScanScreen() {
                   {stuckOfTheWeek.difficultyScore || 8}/10
                 </ThemedText>
               </View>
-
-              <View style={styles.statItem}>
-                <ThemedText
-                  style={[styles.statLabel, { color: theme.tabIconDefault }]}
-                >
-                  Community Votes
-                </ThemedText>
-                <ThemedText
-                  style={[styles.statValue, { color: theme.primary }]}
-                >
-                  {stuckOfTheWeek.votes || 0} 👍
-                </ThemedText>
-              </View>
             </View>
           </View>
-
-          <Pressable
-            style={[
-              styles.voteButton,
-              { backgroundColor: theme.backgroundSecondary },
-            ]}
-            onPress={handleVote}
-            android_ripple={{ color: theme.backgroundSecondary }}
-          >
-            <Feather name="thumbs-up" size={18} color={theme.primary} />
-            <ThemedText style={[styles.voteText, { color: theme.primary }]}>
-              Vote for this Stuck ({stuckOfTheWeek.votes || 0})
-            </ThemedText>
-          </Pressable>
 
           <Pressable
             style={[
@@ -630,19 +579,6 @@ const styles = StyleSheet.create({
   difficultyFill: {
     height: "100%",
     borderRadius: BorderRadius.sm,
-  },
-  voteButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    marginTop: Spacing.md,
-    gap: Spacing.sm,
-  },
-  voteText: {
-    fontSize: 16,
-    fontWeight: "600",
   },
   viewDetailsButton: {
     flexDirection: "row",

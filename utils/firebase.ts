@@ -677,7 +677,6 @@ export interface SharedScanSubmission {
   situationType: string;
   description?: string;
   difficultyScore: number;
-  votes: number;
   userName: string;
   userId: string;
   timestamp: number;
@@ -724,10 +723,10 @@ export class CommunityAdventuresService {
   }
 }
 
-// AI Scan Submissions - shared "Stuck of the Week" with voting
+// AI Scan Submissions - shared "Stuck of the Week"
 export class ScanSubmissionsService {
   static async submitScan(
-    scan: Omit<SharedScanSubmission, "id" | "votes" | "timestamp">,
+    scan: Omit<SharedScanSubmission, "id" | "timestamp">,
   ): Promise<string> {
     if (!database) throw new Error("Firebase not available");
 
@@ -736,28 +735,11 @@ export class ScanSubmissionsService {
     const fullScan: SharedScanSubmission = {
       ...scan,
       id: newRef.key!,
-      votes: 0,
       timestamp: Date.now(),
     };
 
     await set(newRef, fullScan);
     return newRef.key!;
-  }
-
-  static async voteOnScan(scanId: string): Promise<void> {
-    if (!database) return;
-
-    const scanRef = ref(database, `scan-submissions/${scanId}`);
-    onValue(
-      scanRef,
-      (snapshot) => {
-        const scan = snapshot.val() as SharedScanSubmission | null;
-        if (scan) {
-          update(scanRef, { votes: (scan.votes || 0) + 1 });
-        }
-      },
-      { onlyOnce: true },
-    );
   }
 
   static subscribeToScanSubmissions(
