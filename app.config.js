@@ -56,7 +56,7 @@ export default {
 
     ios: {
       bundleIdentifier: "com.masongallegos.itsadventuretime",
-      buildNumber: "4",
+      buildNumber: "5",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },
