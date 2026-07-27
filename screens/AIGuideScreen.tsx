@@ -83,10 +83,14 @@ export default function AIGuideScreen() {
     };
     setMessages([welcomeMessage]);
 
-    // Load suggestions and tip
-    loadSuggestions();
-    loadQuickTip();
-  }, [userProfile]);
+    if (isPremium) {
+      loadSuggestions();
+      loadQuickTip();
+    } else {
+      setSuggestions([]);
+      setQuickTip("");
+    }
+  }, [isPremium, userProfile]);
 
   useEffect(() => {
     initializeGuide();
