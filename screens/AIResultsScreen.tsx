@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -17,7 +17,11 @@ import { AIScanStackParamList } from "@/navigation/AIScanStackNavigator";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage } from "@/utils/storage";
 import { analyzeRecoverySituation, RecoveryAnalysis } from "@/services/openai";
-import { ScanSubmissionsService, isFirebaseAvailable } from "@/utils/firebase";
+import {
+  MediaService,
+  ScanSubmissionsService,
+  isFirebaseAvailable,
+} from "@/utils/firebase";
 
 type AIResultsScreenRouteProp = RouteProp<AIScanStackParamList, "AIResults">;
 
@@ -30,6 +34,7 @@ export default function AIResultsScreen() {
   const [rawResult, setRawResult] = useState<RecoveryAnalysis | null>(null);
   const [shareWithCommunity, setShareWithCommunity] = useState(false);
   const [hasShared, setHasShared] = useState(false);
+  const scanIdRef = useRef(Date.now().toString());
 
   const { imageUri } = route.params;
 
@@ -68,7 +73,7 @@ export default function AIResultsScreen() {
       setAnalysis(transformedResult);
 
       await storage.addScanHistory({
-        id: Date.now().toString(),
+        id: scanIdRef.current,
         imageUri,
         timestamp: Date.now(),
         situationType: result.situation,
@@ -125,15 +130,21 @@ export default function AIResultsScreen() {
       };
       const difficultyScore =
         difficultyToScore[rawResult.estimatedDifficulty] || 5;
+      const sharedImageUri = await MediaService.uploadPhoto(
+        imageUri,
+        `scan-submissions/${userProfile?.id || "anonymous"}`,
+        `${scanIdRef.current}.jpg`,
+      );
 
       await ScanSubmissionsService.submitScan({
-        imageUri,
+        imageUri: sharedImageUri,
         situationType: rawResult.situation,
         description: rawResult.recommendations.join("\n"),
         difficultyScore,
         userName: userProfile?.name || "Anonymous",
         userId: userProfile?.id || "anonymous",
       });
+      await storage.markScanShared(scanIdRef.current, sharedImageUri);
 
       setHasShared(true);
       setShareWithCommunity(true);
@@ -432,7 +443,7 @@ export default function AIResultsScreen() {
           >
             {hasShared
               ? "Your scan is eligible for Stuck of the Week."
-              : "Let others vote on your scan for Stuck of the Week."}
+              : "Share your scan for Stuck of the Week."}
           </ThemedText>
         </View>
         <Switch

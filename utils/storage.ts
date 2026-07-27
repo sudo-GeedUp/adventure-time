@@ -134,6 +134,8 @@ export interface ScanHistoryItem {
   timestamp: number;
   situationType: string;
   analysis?: string;
+  sharedWithCommunity?: boolean;
+  sharedImageUri?: string;
 }
 
 export interface HelpRequest {
@@ -458,6 +460,27 @@ export const storage = {
       );
     } catch (error) {
       console.error("Error saving scan history:", error);
+    }
+  },
+
+  async markScanShared(scanId: string, sharedImageUri: string): Promise<void> {
+    try {
+      const history = await this.getScanHistory();
+      const updatedHistory = history.map((scan) =>
+        scan.id === scanId
+          ? {
+              ...scan,
+              sharedWithCommunity: true,
+              sharedImageUri,
+            }
+          : scan,
+      );
+      await AsyncStorage.setItem(
+        KEYS.SCAN_HISTORY,
+        JSON.stringify(updatedHistory),
+      );
+    } catch (error) {
+      console.error("Error marking scan as shared:", error);
     }
   },
 
@@ -953,14 +976,14 @@ export const storage = {
   async getCommunityScanSubmissions(): Promise<any[]> {
     try {
       const scanHistory = await this.getScanHistory();
-      // Filter for scans that users have opted to share with community
-      // Add difficulty scoring based on situation type and AI analysis
-      const communityScans = scanHistory.map((scan: any) => ({
-        ...scan,
-        difficultyScore: this.calculateDifficultyScore(scan),
-        votes: scan.votes || 0,
-        userName: scan.userName || "Anonymous",
-      }));
+      const communityScans = scanHistory
+        .filter((scan) => scan.sharedWithCommunity && scan.sharedImageUri)
+        .map((scan: any) => ({
+          ...scan,
+          imageUri: scan.sharedImageUri,
+          difficultyScore: this.calculateDifficultyScore(scan),
+          userName: scan.userName || "Anonymous",
+        }));
       return communityScans;
     } catch (error) {
       console.error("Error getting community scan submissions:", error);
