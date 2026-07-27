@@ -158,6 +158,8 @@ async function hasPremiumEntitlement(uid: string): Promise<boolean> {
     );
   }
 
+  // This runs on every request without caching. If latency or rate limits become
+  // a problem, cache positive results briefly only; never cache a negative result.
   const response = await fetch(
     `${REVENUECAT_API_URL}/${encodeURIComponent(uid)}`,
     {
@@ -635,18 +637,6 @@ export const openaiProxy = onRequest(
           "The request body is too large.",
         );
       }
-      const request = parseRequest(req.body);
-      operation = request.operation;
-      if (
-        Buffer.byteLength(JSON.stringify(req.body), "utf8") >
-        MAX_REQUEST_BODY_BYTES
-      ) {
-        throw new HttpError(
-          413,
-          "request_too_large",
-          "The request body is too large.",
-        );
-      }
 
       const decodedToken = await authenticateUser(req.headers.authorization);
       uid = decodedToken.uid;
@@ -657,6 +647,9 @@ export const openaiProxy = onRequest(
           "A premium subscription is required.",
         );
       }
+
+      const request = parseRequest(req.body);
+      operation = request.operation;
       await consumeQuota(uid);
 
       const result = await performOperation(request);
