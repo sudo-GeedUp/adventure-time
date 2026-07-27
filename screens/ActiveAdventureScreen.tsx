@@ -928,6 +928,7 @@ export default function ActiveAdventureScreen() {
 
   useEffect(() => {
     let cancelled = false;
+    let locationPoll: ReturnType<typeof setInterval> | null = null;
 
     const loadWeather = async (forceRefresh = false) => {
       if (
@@ -941,10 +942,6 @@ export default function ActiveAdventureScreen() {
       const currentLocation =
         sessionRef.current?.locations[sessionRef.current.locations.length - 1];
       if (!currentLocation) return;
-
-      if (!forceRefresh) {
-        weatherAttemptedRef.current = true;
-      }
 
       const requestId = ++weatherRequestRef.current;
       const currentWeather = await getWeather(
@@ -960,11 +957,18 @@ export default function ActiveAdventureScreen() {
         return;
       }
 
+      if (currentWeather) {
+        weatherAttemptedRef.current = true;
+        if (locationPoll) {
+          clearInterval(locationPoll);
+          locationPoll = null;
+        }
+      }
       setWeather(currentWeather);
     };
 
     void loadWeather();
-    const locationPoll = setInterval(() => {
+    locationPoll = setInterval(() => {
       void loadWeather();
     }, WEATHER_LOCATION_POLL_INTERVAL_MS);
     const weatherRefresh = setInterval(() => {
@@ -974,7 +978,9 @@ export default function ActiveAdventureScreen() {
     return () => {
       cancelled = true;
       weatherRequestRef.current += 1;
-      clearInterval(locationPoll);
+      if (locationPoll !== null) {
+        clearInterval(locationPoll);
+      }
       clearInterval(weatherRefresh);
     };
   }, []);
