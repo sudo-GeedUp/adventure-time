@@ -19,6 +19,9 @@ export default function AIScanScreen() {
   const { isPremium } = useSubscription();
   const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [stuckOfTheWeek, setStuckOfTheWeek] = useState<any>(null);
+  const [stuckOfTheWeekImageUri, setStuckOfTheWeekImageUri] = useState<
+    string | undefined
+  >();
   const [scanSubmissions, setScanSubmissions] = useState<any[]>([]);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
 
@@ -65,6 +68,7 @@ export default function AIScanScreen() {
   useEffect(() => {
     if (!scanSubmissions || scanSubmissions.length === 0) {
       setStuckOfTheWeek(null);
+      setStuckOfTheWeekImageUri(undefined);
       return;
     }
 
@@ -74,11 +78,27 @@ export default function AIScanScreen() {
     );
     if (recentScans.length === 0) return;
 
-    const winner = recentScans.sort((a, b) => {
+    const winner = [...recentScans].sort((a, b) => {
       return b.difficultyScore - a.difficultyScore;
     })[0];
 
     setStuckOfTheWeek(winner);
+    setStuckOfTheWeekImageUri(winner.imageUri);
+
+    if (winner.imageUri) return;
+
+    let cancelled = false;
+    ScanSubmissionsService.getScanImage(winner.id)
+      .then((imageUri) => {
+        if (!cancelled) setStuckOfTheWeekImageUri(imageUri || undefined);
+      })
+      .catch((error) => {
+        console.error("Error loading scan submission image:", error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [scanSubmissions]);
 
   const loadScanHistory = async () => {
@@ -143,7 +163,8 @@ export default function AIScanScreen() {
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: "images",
         allowsEditing: false,
-        quality: 0.8,
+        quality: 0.5,
+        base64: true,
       });
 
       if (!result.canceled && result.assets[0]) {
@@ -171,6 +192,7 @@ export default function AIScanScreen() {
         }
         navigation.navigate("AIResults", {
           imageUri: result.assets[0].uri,
+          imageBase64: result.assets[0].base64 || undefined,
           analysisResult,
         });
       }
@@ -203,17 +225,22 @@ export default function AIScanScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: "images",
       allowsEditing: false,
-      quality: 0.8,
+      quality: 0.5,
+      base64: true,
     });
 
     if (!result.canceled && result.assets[0]) {
       hapticFeedback.success();
       analyticsService.logAIScanUsage("upload", isPremium);
-      navigation.navigate("AIResults", { imageUri: result.assets[0].uri });
+      navigation.navigate("AIResults", {
+        imageUri: result.assets[0].uri,
+        imageBase64: result.assets[0].base64 || undefined,
+      });
     }
   };
 
-  const handleScanPress = (imageUri: string) => {
+  const handleScanPress = (imageUri?: string) => {
+    if (!imageUri) return;
     navigation.navigate("AIResults", { imageUri });
   };
 
@@ -311,9 +338,9 @@ export default function AIScanScreen() {
             The most challenging recovery situation this week
           </ThemedText>
 
-          {stuckOfTheWeek.imageUri && (
+          {stuckOfTheWeekImageUri && (
             <Image
-              source={{ uri: stuckOfTheWeek.imageUri }}
+              source={{ uri: stuckOfTheWeekImageUri }}
               style={styles.stuckImage}
               resizeMode="cover"
             />
@@ -381,7 +408,7 @@ export default function AIScanScreen() {
               styles.viewDetailsButton,
               { backgroundColor: theme.warning },
             ]}
-            onPress={() => handleScanPress(stuckOfTheWeek.imageUri)}
+            onPress={() => handleScanPress(stuckOfTheWeekImageUri)}
             android_ripple={{ color: "rgba(255,255,255,0.2)" }}
           >
             <ThemedText style={styles.viewDetailsText}>

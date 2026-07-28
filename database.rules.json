@@ -61,6 +61,13 @@
       "$submissionId": {
         ".write": "auth != null && ((!data.exists() && newData.child('userId').val() == auth.uid) || (data.exists() && data.child('userId').val() == auth.uid))"
       }
+    },
+    "scan-submission-images": {
+      "//": "Images are separate so the metadata subscription does not download every image. The submission must be written first because this rule checks its owner.",
+      ".read": "auth != null",
+      "$submissionId": {
+        ".write": "auth != null && root.child('scan-submissions').child($submissionId).child('userId').val() == auth.uid"
+      }
     }
   }
 }

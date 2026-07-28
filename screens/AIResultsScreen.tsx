@@ -18,13 +18,12 @@ import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage } from "@/utils/storage";
 import { authService } from "@/services/authService";
 import { analyzeRecoverySituation, RecoveryAnalysis } from "@/services/openai";
-import {
-  MediaService,
-  ScanSubmissionsService,
-  isFirebaseAvailable,
-} from "@/utils/firebase";
+import { ScanSubmissionsService, isFirebaseAvailable } from "@/utils/firebase";
 
 type AIResultsScreenRouteProp = RouteProp<AIScanStackParamList, "AIResults">;
+
+// Cloud Storage is unavailable, and no OTA-safe image resizer is installed.
+const MAX_SCAN_IMAGE_BASE64_LENGTH = 1_000_000;
 
 export default function AIResultsScreen() {
   const route = useRoute<AIResultsScreenRouteProp>();
@@ -37,7 +36,7 @@ export default function AIResultsScreen() {
   const [hasShared, setHasShared] = useState(false);
   const scanIdRef = useRef(Date.now().toString());
 
-  const { imageUri } = route.params;
+  const { imageUri, imageBase64 } = route.params;
 
   const performAnalysis = useCallback(async () => {
     setIsAnalyzing(true);
@@ -142,21 +141,32 @@ export default function AIResultsScreen() {
       };
       const difficultyScore =
         difficultyToScore[rawResult.estimatedDifficulty] || 5;
-      const sharedImageUri = await MediaService.uploadPhoto(
-        imageUri,
-        `scan-submissions/${userId}`,
-        `${scanIdRef.current}.jpg`,
-      );
+      if (!imageBase64) {
+        throw new Error("The scan image is unavailable for sharing.");
+      }
+      if (imageBase64.length > MAX_SCAN_IMAGE_BASE64_LENGTH) {
+        setShareWithCommunity(false);
+        Alert.alert(
+          "Photo Too Large",
+          "This photo is too large to share with the community. Please take or choose a smaller photo.",
+        );
+        return;
+      }
 
-      await ScanSubmissionsService.submitScan({
-        imageUri: sharedImageUri,
+      const submissionId = await ScanSubmissionsService.submitScan({
         situationType: rawResult.situation,
         description: rawResult.recommendations.join("\n"),
         difficultyScore,
         userName: userProfile?.name || "Anonymous",
         userId,
       });
-      await storage.markScanShared(scanIdRef.current, sharedImageUri);
+      const sharedImageDataUri = `data:image/jpeg;base64,${imageBase64}`;
+      // The metadata must exist before this write so its ownership rule can pass.
+      await ScanSubmissionsService.submitScanImage(
+        submissionId,
+        sharedImageDataUri,
+      );
+      await storage.markScanShared(scanIdRef.current, sharedImageDataUri);
 
       setHasShared(true);
       setShareWithCommunity(true);
