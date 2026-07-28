@@ -3,8 +3,9 @@
   "rules": {
     "users": {
       "locations": {
+        "//": "subscribeToNearbyUsers() reads this whole node, so the read grant must live here rather than on $uid.",
+        ".read": "auth != null",
         "$uid": {
-          ".read": "auth != null",
           ".write": "auth != null && auth.uid == $uid"
         }
       },
