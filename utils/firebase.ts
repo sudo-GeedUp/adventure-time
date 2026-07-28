@@ -2,6 +2,7 @@ import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import {
   getDatabase,
   ref,
+  get,
   set,
   onValue,
   off,
@@ -673,7 +674,6 @@ export class WeatherService {
 // Shared scan submission for "Stuck of the Week"
 export interface SharedScanSubmission {
   id: string;
-  imageUri: string;
   situationType: string;
   description?: string;
   difficultyScore: number;
@@ -740,6 +740,25 @@ export class ScanSubmissionsService {
 
     await set(newRef, fullScan);
     return newRef.key!;
+  }
+
+  static async submitScanImage(
+    submissionId: string,
+    imageDataUri: string,
+  ): Promise<void> {
+    if (!database) throw new Error("Firebase not available");
+
+    const imageRef = ref(database, `scan-submission-images/${submissionId}`);
+    await set(imageRef, imageDataUri);
+  }
+
+  static async getScanImage(submissionId: string): Promise<string | null> {
+    if (!database) return null;
+
+    const imageSnapshot = await get(
+      ref(database, `scan-submission-images/${submissionId}`),
+    );
+    return imageSnapshot.exists() ? (imageSnapshot.val() as string) : null;
   }
 
   static subscribeToScanSubmissions(

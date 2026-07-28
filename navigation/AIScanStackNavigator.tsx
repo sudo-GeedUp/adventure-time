@@ -9,7 +9,7 @@ import { getCommonScreenOptions } from "@/navigation/screenOptions";
 
 export type AIScanStackParamList = {
   AIScan: undefined;
-  AIResults: { imageUri: string };
+  AIResults: { imageUri: string; imageBase64?: string };
   Guides: undefined;
   GuideDetail: { guideId: string };
 };
