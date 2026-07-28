@@ -166,7 +166,7 @@ export default function AIResultsScreen() {
         submissionId,
         sharedImageDataUri,
       );
-      await storage.markScanShared(scanIdRef.current, sharedImageDataUri);
+      await storage.markScanShared(scanIdRef.current, submissionId);
 
       setHasShared(true);
       setShareWithCommunity(true);
@@ -475,27 +475,39 @@ export default function AIResultsScreen() {
         </ThemedText>
       </View>
 
-      <View
-        style={[styles.shareRow, { backgroundColor: theme.backgroundDefault }]}
-      >
-        <View style={styles.shareTextContainer}>
-          <ThemedText style={Typography.label}>Share with community</ThemedText>
-          <ThemedText
-            style={[styles.shareDescription, { color: theme.tabIconDefault }]}
-          >
-            {hasShared
-              ? "Your scan is eligible for Stuck of the Week."
-              : "Share your scan for Stuck of the Week."}
-          </ThemedText>
+      {imageBase64 && (
+        <View
+          style={[
+            styles.shareRow,
+            { backgroundColor: theme.backgroundDefault },
+          ]}
+        >
+          <View style={styles.shareTextContainer}>
+            <ThemedText style={Typography.label}>
+              Share with community
+            </ThemedText>
+            <ThemedText
+              style={[styles.shareDescription, { color: theme.tabIconDefault }]}
+            >
+              {hasShared
+                ? "Your scan is eligible for Stuck of the Week."
+                : "Share your scan for Stuck of the Week."}
+            </ThemedText>
+          </View>
+          <Switch
+            value={shareWithCommunity}
+            onValueChange={handleShareToggle}
+            disabled={hasShared || !isFirebaseAvailable()}
+            trackColor={{
+              false: theme.backgroundSecondary,
+              true: theme.primary,
+            }}
+            thumbColor={
+              shareWithCommunity ? theme.primary : theme.tabIconDefault
+            }
+          />
         </View>
-        <Switch
-          value={shareWithCommunity}
-          onValueChange={handleShareToggle}
-          disabled={hasShared || !isFirebaseAvailable()}
-          trackColor={{ false: theme.backgroundSecondary, true: theme.primary }}
-          thumbColor={shareWithCommunity ? theme.primary : theme.tabIconDefault}
-        />
-      </View>
+      )}
 
       <Pressable
         style={[styles.helpButton, { backgroundColor: theme.error }]}

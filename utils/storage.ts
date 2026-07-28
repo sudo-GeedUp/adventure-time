@@ -135,7 +135,7 @@ export interface ScanHistoryItem {
   situationType: string;
   analysis?: string;
   sharedWithCommunity?: boolean;
-  sharedImageDataUri?: string;
+  sharedSubmissionId?: string;
 }
 
 export interface HelpRequest {
@@ -466,19 +466,23 @@ export const storage = {
 
   async markScanShared(
     scanId: string,
-    sharedImageDataUri: string,
+    sharedSubmissionId: string,
   ): Promise<void> {
     try {
       const history = await this.getScanHistory();
-      const updatedHistory = history.map((scan) =>
-        scan.id === scanId
+      const updatedHistory = history.map((scan) => {
+        const {
+          sharedImageDataUri: _legacyImageDataUri,
+          ...scanWithoutLegacy
+        } = scan as ScanHistoryItem & { sharedImageDataUri?: string };
+        return scan.id === scanId
           ? {
-              ...scan,
+              ...scanWithoutLegacy,
               sharedWithCommunity: true,
-              sharedImageDataUri,
+              sharedSubmissionId,
             }
-          : scan,
-      );
+          : scanWithoutLegacy;
+      });
       await AsyncStorage.setItem(
         KEYS.SCAN_HISTORY,
         JSON.stringify(updatedHistory),
@@ -981,10 +985,10 @@ export const storage = {
     try {
       const scanHistory = await this.getScanHistory();
       const communityScans = scanHistory
-        .filter((scan) => scan.sharedWithCommunity && scan.sharedImageDataUri)
+        .filter((scan) => scan.sharedWithCommunity)
         .map((scan: any) => ({
           ...scan,
-          imageUri: scan.sharedImageDataUri,
+          imageUri: scan.imageUri,
           difficultyScore: this.calculateDifficultyScore(scan),
           userName: scan.userName || "Anonymous",
         }));
