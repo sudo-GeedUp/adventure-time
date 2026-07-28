@@ -59,6 +59,7 @@ import {
 import { EmergencySOS } from "@/utils/emergencySOS";
 import { analyticsService } from "@/services/analyticsService";
 import { aggregateTrailCommunityData } from "@/utils/communityTrailInsights";
+import { authService } from "@/services/authService";
 
 let MapView: any = null;
 let Marker: any = null;
@@ -1066,6 +1067,7 @@ export default function ActiveAdventureScreen() {
       }
       const initialAltitude = location.coords.altitude || 0;
       const userProfile = await storage.getUserProfile();
+      const userId = authService.getCurrentUser()?.uid || userProfile?.id;
       if (lifecycle.cancelled || !screenActiveRef.current) return;
 
       const initialGpsSpeed = location.coords.speed;
@@ -1111,13 +1113,14 @@ export default function ActiveAdventureScreen() {
       setSession(initialSession);
 
       // Start broadcasting location so other users can see this offroader
-      const broadcastStart = FirebaseLocationService.startLocationBroadcast(
-        userProfile?.id || "anonymous",
-      );
-      lifecycle.broadcastStartPromise = broadcastStart;
-      broadcastStart.catch((error) => {
-        console.error("Error starting location broadcast:", error);
-      });
+      if (userId) {
+        const broadcastStart =
+          FirebaseLocationService.startLocationBroadcast(userId);
+        lifecycle.broadcastStartPromise = broadcastStart;
+        broadcastStart.catch((error) => {
+          console.error("Error starting location broadcast:", error);
+        });
+      }
 
       analyticsService.logAdventureStart(
         currentTrail.id || currentTrail.name || "unknown",
@@ -1536,12 +1539,21 @@ export default function ActiveAdventureScreen() {
 
     // Get user profile for community adventure
     const userProfile = await storage.getUserProfile();
+    const userId = authService.getCurrentUser()?.uid || userProfile?.id;
     if (!screenActiveRef.current) return;
+
+    if (!userId) {
+      Alert.alert(
+        "Error",
+        "Could not share trail. It was still saved locally.",
+      );
+      return;
+    }
 
     // Save completed adventure to community database
     const completedAdventure: CompletedAdventure = {
       id: `adventure_${Date.now()}`,
-      userId: userProfile?.id || "anonymous",
+      userId,
       userName: userProfile?.name || "Anonymous",
       vehicleType: userProfile?.vehicleType || "Unknown",
       title: trail.name || "Custom Adventure",

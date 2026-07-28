@@ -16,6 +16,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { AIScanStackParamList } from "@/navigation/AIScanStackNavigator";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage } from "@/utils/storage";
+import { authService } from "@/services/authService";
 import { analyzeRecoverySituation, RecoveryAnalysis } from "@/services/openai";
 import {
   MediaService,
@@ -122,6 +123,17 @@ export default function AIResultsScreen() {
 
     try {
       const userProfile = await storage.getUserProfile();
+      const firebaseUser = authService.getCurrentUser();
+      const userId = firebaseUser?.uid || userProfile?.id;
+      if (!userId) {
+        setShareWithCommunity(false);
+        Alert.alert(
+          "Sign In Required",
+          "Please sign in to share your scan with the community.",
+        );
+        return;
+      }
+
       const difficultyToScore: Record<string, number> = {
         Easy: 2,
         Moderate: 4,
@@ -132,7 +144,7 @@ export default function AIResultsScreen() {
         difficultyToScore[rawResult.estimatedDifficulty] || 5;
       const sharedImageUri = await MediaService.uploadPhoto(
         imageUri,
-        `scan-submissions/${userProfile?.id || "anonymous"}`,
+        `scan-submissions/${userId}`,
         `${scanIdRef.current}.jpg`,
       );
 
@@ -142,16 +154,36 @@ export default function AIResultsScreen() {
         description: rawResult.recommendations.join("\n"),
         difficultyScore,
         userName: userProfile?.name || "Anonymous",
-        userId: userProfile?.id || "anonymous",
+        userId,
       });
       await storage.markScanShared(scanIdRef.current, sharedImageUri);
 
       setHasShared(true);
       setShareWithCommunity(true);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error sharing scan:", error);
       setShareWithCommunity(false);
-      Alert.alert("Error", "Could not share scan with community.");
+
+      let errorDetails = "Unknown error";
+      if (error instanceof Error) {
+        errorDetails = error.message;
+      } else if (typeof error === "string") {
+        errorDetails = error;
+      } else if (error && typeof error === "object") {
+        const code =
+          "code" in error && typeof error.code === "string" ? error.code : "";
+        const message =
+          "message" in error && typeof error.message === "string"
+            ? error.message
+            : "";
+        errorDetails =
+          [code, message].filter(Boolean).join(": ") || errorDetails;
+      }
+
+      Alert.alert(
+        "Error",
+        `Could not share scan with community.\n\n${errorDetails}`,
+      );
     }
   };
 
