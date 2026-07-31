@@ -1800,7 +1800,7 @@ export default function ActiveAdventureScreen() {
           showsCompass={false}
           showsTraffic
           showsBuildings
-          mapType={mapLayer === "default" ? "hybrid" : "standard"}
+          mapType="standard"
         >
           {tileSource && UrlTile && (
             <UrlTile
@@ -2418,7 +2418,7 @@ export default function ActiveAdventureScreen() {
                 followsUserLocation={false}
                 showsMyLocationButton={false}
                 showsCompass
-                mapType={mapLayer === "default" ? "hybrid" : "standard"}
+                mapType="standard"
               >
                 {tileSource && UrlTile && (
                   <UrlTile
