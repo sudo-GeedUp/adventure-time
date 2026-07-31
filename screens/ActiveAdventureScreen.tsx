@@ -1921,10 +1921,16 @@ export default function ActiveAdventureScreen() {
         <View
           style={[styles.wazeSpeedBadge, { top: insets.top + Spacing.md + 60 }]}
         >
-          <ThemedText style={styles.wazeSpeedValue}>
+          <ThemedText
+            style={styles.wazeSpeedValue}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
             {formatSpeed(speed)}
           </ThemedText>
-          <ThemedText style={styles.wazeSpeedUnit}>mph</ThemedText>
+          <ThemedText style={styles.wazeSpeedUnit} numberOfLines={1}>
+            mph
+          </ThemedText>
         </View>
 
         <View
