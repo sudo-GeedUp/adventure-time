@@ -1604,9 +1604,7 @@ export default function ActiveAdventureScreen() {
       const publicText = isPublic ? "\n\n🌎 Shared with the community!" : "";
       const badgeText =
         earnedBadgeIds.length > 0
-          ? `\n\n🏆 New badge${
-              earnedBadgeIds.length > 1 ? "s" : ""
-            } unlocked!`
+          ? `\n\n🏆 New badge${earnedBadgeIds.length > 1 ? "s" : ""} unlocked!`
           : "";
       const upsellText = isPremium
         ? ""
