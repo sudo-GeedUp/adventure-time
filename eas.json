@@ -44,7 +44,7 @@
         "appleId": "sinjin.gallegos@aol.com",
         "appleTeamId": "2AU7KFCM84",
 
-        "ascApiKeyPath": "./AuthKey_NXTJS2D9R7.p8",
+        "ascApiKeyPath": "private_keys/AuthKey_NXTJS2D9R7.p8",
         "ascApiKeyIssuerId": "46781a73-a825-49fa-a503-82d6dabe8b5a",
         "ascApiKeyId": "NXTJS2D9R7"
       },
