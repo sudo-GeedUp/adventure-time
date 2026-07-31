@@ -876,6 +876,9 @@ export default function ActiveAdventureScreen() {
   const [assistanceDescription, setAssistanceDescription] = useState("");
   const [showMap] = useState(true);
   const [mapLayer, setMapLayer] = useState<MapLayerType>("default");
+  const [mapCameraMode, setMapCameraMode] = useState<
+    "firstPerson" | "birdsEye"
+  >("firstPerson");
   const [navigationCallouts, setNavigationCallouts] = useState<
     NavigationCallout[]
   >([]);
@@ -923,20 +926,23 @@ export default function ActiveAdventureScreen() {
     const currentLocation = session?.locations[session.locations.length - 1];
     if (!currentLocation || !mapRef.current) return;
 
+    const firstPerson = mapCameraMode === "firstPerson";
+    const center = snappedLocation || {
+      latitude: currentLocation.latitude,
+      longitude: currentLocation.longitude,
+    };
+
     mapRef.current.animateCamera(
       {
-        center: snappedLocation || {
-          latitude: currentLocation.latitude,
-          longitude: currentLocation.longitude,
-        },
-        heading: currentLocation.heading || 0,
-        pitch: 60,
-        zoom: 19,
-        altitude: 60,
+        center,
+        heading: firstPerson ? currentLocation.heading || 0 : 0,
+        pitch: firstPerson ? 60 : 0,
+        zoom: firstPerson ? 19 : 16,
+        altitude: firstPerson ? 60 : 800,
       },
       { duration: 500 },
     );
-  }, [session, snappedLocation]);
+  }, [session, snappedLocation, mapCameraMode]);
 
   useEffect(() => {
     recenterMap();
@@ -1907,6 +1913,21 @@ export default function ActiveAdventureScreen() {
               accessibilityLabel="Recenter map"
             >
               <Feather name="crosshair" size={20} color="#fff" />
+            </Pressable>
+            <Pressable
+              style={styles.wazeHeaderButton}
+              onPress={() =>
+                setMapCameraMode(
+                  mapCameraMode === "firstPerson" ? "birdsEye" : "firstPerson",
+                )
+              }
+              accessibilityLabel="Toggle camera mode"
+            >
+              <Feather
+                name={mapCameraMode === "firstPerson" ? "navigation" : "map"}
+                size={20}
+                color="#fff"
+              />
             </Pressable>
             <Pressable
               style={styles.wazeHeaderButton}
