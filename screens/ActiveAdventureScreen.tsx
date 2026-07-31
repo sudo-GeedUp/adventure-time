@@ -1795,7 +1795,7 @@ export default function ActiveAdventureScreen() {
             longitudeDelta: 0.002,
           }}
           showsUserLocation={!selectedRoute}
-          followsUserLocation={false}
+          followsUserLocation={true}
           showsMyLocationButton={false}
           showsCompass={false}
           showsTraffic
@@ -2415,7 +2415,7 @@ export default function ActiveAdventureScreen() {
                   longitudeDelta: 0.002,
                 }}
                 showsUserLocation={!selectedRoute}
-                followsUserLocation={false}
+                followsUserLocation={true}
                 showsMyLocationButton={false}
                 showsCompass
                 mapType="standard"
