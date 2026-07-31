@@ -330,6 +330,7 @@ export const storage = {
 
   async addTrailMiles(
     miles: number,
+    shouldAwardBadges: boolean = true,
   ): Promise<{ newBadges: Badge[]; profile: UserProfile }> {
     const profile = await this.getUserProfile();
     if (!profile) {
@@ -356,14 +357,16 @@ export const storage = {
     const earnedBadges = profile.earnedBadges || [];
     const newBadges: Badge[] = [];
 
-    for (const badge of MILESTONE_BADGES) {
-      if (
-        previousMiles < badge.milesRequired &&
-        newTotalMiles >= badge.milesRequired
-      ) {
-        if (!earnedBadges.includes(badge.id)) {
-          earnedBadges.push(badge.id);
-          newBadges.push({ ...badge, earnedAt: Date.now() });
+    if (shouldAwardBadges) {
+      for (const badge of MILESTONE_BADGES) {
+        if (
+          previousMiles < badge.milesRequired &&
+          newTotalMiles >= badge.milesRequired
+        ) {
+          if (!earnedBadges.includes(badge.id)) {
+            earnedBadges.push(badge.id);
+            newBadges.push({ ...badge, earnedAt: Date.now() });
+          }
         }
       }
     }

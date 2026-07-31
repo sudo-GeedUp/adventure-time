@@ -1591,28 +1591,29 @@ export default function ActiveAdventureScreen() {
       session.currentDistance,
     );
 
-    // Only save to profile if premium
+    // Log miles to profile for everyone; only award badges to premium users
     let earnedBadgeIds: string[] = [];
-    if (isPremium) {
-      // Log miles to profile
-      const { newBadges: earnedBadges } = await storage.addTrailMiles(
-        session.currentDistance,
-      );
-      earnedBadgeIds = earnedBadges.map((b) => b.id);
-    }
+    const { newBadges: earnedBadges } = await storage.addTrailMiles(
+      session.currentDistance,
+      isPremium,
+    );
+    earnedBadgeIds = earnedBadges.map((b) => b.id);
 
     const showSummary = (isPublic: boolean = false) => {
       if (!screenActiveRef.current) return;
       const publicText = isPublic ? "\n\n🌎 Shared with the community!" : "";
-      const message = isPremium
-        ? `You traveled ${session.currentDistance.toFixed(1)} miles on ${trail.name}${
-            earnedBadgeIds.length > 0
-              ? `\n\n🏆 New badge${
-                  earnedBadgeIds.length > 1 ? "s" : ""
-                } unlocked!`
-              : ""
-          }${publicText}\n\nAdventure saved to your profile!`
-        : `You traveled ${session.currentDistance.toFixed(1)} miles on ${trail.name}${publicText}\n\n🔒 Subscribe to save adventures to your profile and unlock badges!`;
+      const badgeText =
+        earnedBadgeIds.length > 0
+          ? `\n\n🏆 New badge${
+              earnedBadgeIds.length > 1 ? "s" : ""
+            } unlocked!`
+          : "";
+      const upsellText = isPremium
+        ? ""
+        : "\n\n🔒 Subscribe to unlock premium badges.";
+      const message = `You traveled ${session.currentDistance.toFixed(
+        1,
+      )} miles on ${trail.name}${badgeText}${publicText}${upsellText}\n\nAdventure saved to your profile!`;
 
       Alert.alert("Adventure Complete!", message, [
         {
