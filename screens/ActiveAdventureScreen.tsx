@@ -18,6 +18,7 @@ import {
   FlatList,
 } from "react-native";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import ThemedText from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -713,6 +714,7 @@ export default function ActiveAdventureScreen() {
   const { theme } = useTheme();
   const { isPremium } = useSubscription();
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const trail = useMemo<Trail>(
     () => (route.params as any)?.trail || ({ name: "Unknown Trail" } as Trail),
     [route],
@@ -2043,7 +2045,10 @@ export default function ActiveAdventureScreen() {
         <View
           style={[
             styles.wazeBottomCard,
-            { backgroundColor: theme.backgroundDefault + "E0" },
+            {
+              backgroundColor: theme.backgroundDefault + "E0",
+              bottom: insets.bottom + tabBarHeight + Spacing.md,
+            },
           ]}
         >
           <View style={styles.mapLayerRow}>

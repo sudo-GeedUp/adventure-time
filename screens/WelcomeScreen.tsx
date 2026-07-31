@@ -43,7 +43,11 @@ export default function WelcomeScreen() {
       <ThemedView style={styles.content}>
         <View style={styles.header}>
           <Feather name="compass" size={64} color={theme.primary} />
-          <ThemedText style={[Typography.h1, styles.title]}>
+          <ThemedText
+            style={[Typography.h1, styles.title]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
             Adventure Time
           </ThemedText>
           <ThemedText
