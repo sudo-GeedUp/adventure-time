@@ -930,13 +930,17 @@ export default function ActiveAdventureScreen() {
           longitude: currentLocation.longitude,
         },
         heading: currentLocation.heading || 0,
-        pitch: 45,
-        zoom: 18,
-        altitude: 100,
+        pitch: 60,
+        zoom: 19,
+        altitude: 60,
       },
       { duration: 500 },
     );
   }, [session, snappedLocation]);
+
+  useEffect(() => {
+    recenterMap();
+  }, [recenterMap]);
 
   useEffect(() => {
     screenActiveRef.current = true;
