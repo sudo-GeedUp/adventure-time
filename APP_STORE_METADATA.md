@@ -1,115 +1,86 @@
-# Adventure Time - App Store Metadata
+# App Store Metadata
 
-## App Name
+Last updated: 2026-07-31
 
-Adventure Time
+## App
 
-## Subtitle (30 characters max)
+- **Name:** Its Adventure Time
+- **Bundle ID:** `com.masongallegos.itsadventuretime`
+- **Version:** 2.1.1 (5)
+- **Copyright:** © 2026 Mason Gallegos. All Rights Reserved
 
-Off-Road Trail Tracker & GPS
+## Legal URLs
 
-## Description
+- **Terms of Use (EULA):** https://thegoodadventuretime.web.app/terms-of-use
+- **Privacy Policy:** https://thegoodadventuretime.web.app/privacy-policy
+- **Marketing / Support URL:** https://thegoodadventuretime.web.app
 
-Discover, track, and share your off-road adventures with Adventure Time - the ultimate companion for off-highway enthusiasts.
+## Resolving 3.1.2 Business: Payments - Subscriptions
 
-**TRACK YOUR ADVENTURES**
-• Real-time GPS tracking with live map view
-• Record distance, speed, altitude, and route
-• Mark hazards and assistance waypoints
-• Save adventures to your profile and community database
+Apple rejected version 2.1.1 (5) because the App Store metadata was missing a functional link to the Terms of Use (EULA). Follow these steps and then resubmit.
 
-**DISCOVER TRAILS**
-• Browse curated off-road trails sorted by distance
-• View community-created trails from other users
-• Filter by difficulty, land type, and features
-• GPS navigation to trailheads with "Take Me There"
+### Step 1 - Redeploy the legal pages
 
-**COMMUNITY FEATURES**
-• Share completed adventures with the community
-• Request assistance when you need recovery help
-• View nearby offroaders and their locations
-• Connect with friends and track their adventures
+The hosted `terms-of-use.html` and `privacy-policy.html` are already live, but the terms page has just been updated. Redeploy the `website/` folder to Firebase Hosting:
 
-**AI RECOVERY SCAN (Premium)**
-• Analyze recovery situations with AI-powered image analysis
-• Get equipment recommendations and safety warnings
-• Step-by-step recovery instructions
-• Difficulty assessment for recovery scenarios
+```bash
+cd website
+firebase deploy --only hosting
+```
 
-**SAFETY FIRST**
-• Real-time weather and trail conditions
-• Emergency contact management
-• Offline map downloads for remote areas
-• Community hazard warnings and assistance waypoints
+If you do not have the Firebase CLI installed:
 
-**PREMIUM FEATURES**
-• AI Recovery Scan with GPT-4 analysis
-• Unlimited adventure history
-• Achievement badges and milestones
-• Advanced statistics and insights
+```bash
+npm install -g firebase-tools
+firebase login
+firebase deploy --only hosting
+```
 
-Whether you're exploring desert trails, mountain passes, or forest roads, Adventure Time keeps you safe, connected, and ready for your next adventure.
+### Step 2 - Add the EULA in App Store Connect
 
-## Keywords (100 characters max, comma-separated)
+1. Open [App Store Connect](https://appstoreconnect.apple.com).
+2. Go to **My Apps > Its Adventure Time > App Information**.
+3. Scroll down to **License Agreement (EULA)**.
+4. Select **Apply a custom EULA to all chosen territories**.
+5. Paste the Terms of Use URL:
+   ```
+   https://thegoodadventuretime.web.app/terms-of-use
+   ```
+6. Click **Save**.
 
-off-road,4x4,trails,GPS,adventure,tracking,recovery,offroad,jeep,overlanding,navigation,hiking
+### Step 3 - Confirm the App Description (already in store.config.json)
 
-## Promotional Text (170 characters max)
+The `store.config.json` already includes both links in the description. If you want to update App Store Connect directly from this repo, run:
 
-Track your off-road adventures with live GPS, discover nearby trails, and get AI-powered recovery assistance. Join the Adventure Time community today!
+```bash
+eas metadata:push
+```
 
-## Support URL
+This will push `description`, `privacyPolicyUrl`, and related metadata to the App Store for version 2.1.1 (5).
 
-[https://adventuretime.app/support](https://adventuretime.app/support)
+### Step 4 - Reply and resubmit
 
-## Marketing URL
+1. Go to **App Store Connect > Its Adventure Time > App Review > Messages**.
+2. Reply to the reviewer:
 
-[https://adventuretime.app](https://adventuretime.app)
+   > Hello,
+   >
+   > We have added a custom EULA to the App Store Connect metadata and included the Terms of Use link in the App Description. The Terms of Use (EULA) and Privacy Policy are hosted at:
+   > - https://thegoodadventuretime.web.app/terms-of-use
+   > - https://thegoodadventuretime.web.app/privacy-policy
+   >
+   > These links are also tappable from the paywall and subscription screens inside the app.
+   >
+   > Thank you for the review.
 
-## Privacy Policy URL
+3. Save the reply and click **Resubmit to App Review**.
 
-[https://adventuretime.app/privacy](https://adventuretime.app/privacy)
+## What changed to fix this
 
-## Category
+- `store.config.json` `version` updated from `2.1.1(2)` to `2.1.1(5)`.
+- `website/public/terms-of-use.html` updated to list both monthly and yearly subscriptions instead of a fixed $4.99/month price.
 
-Primary: Navigation
-Secondary: Travel
+## Product IDs
 
-## Age Rating
-
-4+ (No objectionable content)
-
-## Copyright
-
-© 2025 Adventure Time
-
-## Screenshots Needed
-
-1. Navigate Screen - Trail list with "Take Me There" buttons
-2. Active Adventure Screen - Live GPS map tracking
-3. AI Scan Screen - Recovery analysis example
-4. Profile Screen - Badges and achievements
-5. Nearby Screen - Map with community features
-6. Friends Screen - Social connections
-
-## App Preview Video (Optional)
-
-- Show starting an adventure
-- Live GPS tracking in action
-- Using "Take Me There" navigation
-- AI Recovery Scan demo
-- Community features
-
-## What's New (Version 2.1.1)
-
-Welcome to Adventure Time!
-
-• Track your off-road adventures with live GPS
-• Discover trails near you with GPS navigation
-• Share routes with the community
-• AI-powered recovery assistance (Premium)
-• Connect with fellow offroaders
-• Mark hazards and request assistance
-• Earn badges for your adventures
-
-Start your journey today!
+- Monthly: `com.masongallegos.itsadventuretime.premium.monthly.v2`
+- Yearly: `com.masongallegos.itsadventuretime.premium.yearly.v2`
