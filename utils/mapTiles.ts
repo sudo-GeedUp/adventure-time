@@ -8,20 +8,6 @@ export interface TileSource {
   maxZoom?: number;
 }
 
-const FREE_TILE_SOURCES: Record<MapLayerType, TileSource | null> = {
-  default: null,
-  satellite: {
-    // ArcGIS World Imagery tiles use TMS row order and a {z}/{y}/{x} path.
-    url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    flipY: true,
-    maxZoom: 18,
-  },
-  topo: {
-    url: "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
-    maxZoom: 17,
-  },
-};
-
 const MAPBOX_SATELLITE_URL =
   "https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.png?access_token={token}";
 
@@ -49,37 +35,45 @@ export function getTileSource(
   layer: MapLayerType,
   isPremium: boolean,
 ): TileSource | null {
-  if (layer === "default") return null;
+  if (layer === "default" || !isPremium) return null;
 
-  if (isPremium) {
-    if (layer === "satellite") {
-      const mapboxToken = getMapboxToken();
-      if (mapboxToken) {
-        return {
-          url: MAPBOX_SATELLITE_URL.replace("{token}", mapboxToken),
-          maxZoom: 20,
-        };
-      }
-
-      const mapTilerKey = getMapTilerKey();
-      if (mapTilerKey) {
-        return {
-          url: MAPTILER_SATELLITE_URL.replace("{key}", mapTilerKey),
-          maxZoom: 20,
-        };
-      }
+  if (layer === "satellite") {
+    const mapboxToken = getMapboxToken();
+    if (mapboxToken) {
+      return {
+        url: MAPBOX_SATELLITE_URL.replace("{token}", mapboxToken),
+        maxZoom: 20,
+      };
     }
 
-    if (layer === "topo") {
-      const mapTilerKey = getMapTilerKey();
-      if (mapTilerKey) {
-        return {
-          url: MAPTILER_TOPO_URL.replace("{key}", mapTilerKey),
-          maxZoom: 18,
-        };
-      }
+    const mapTilerKey = getMapTilerKey();
+    if (mapTilerKey) {
+      return {
+        url: MAPTILER_SATELLITE_URL.replace("{key}", mapTilerKey),
+        maxZoom: 20,
+      };
     }
   }
 
-  return FREE_TILE_SOURCES[layer];
+  if (layer === "topo") {
+    const mapTilerKey = getMapTilerKey();
+    if (mapTilerKey) {
+      return {
+        url: MAPTILER_TOPO_URL.replace("{key}", mapTilerKey),
+        maxZoom: 18,
+      };
+    }
+  }
+
+  return null;
+}
+
+export function getMapViewMapType(
+  layer: MapLayerType,
+  tileSource: TileSource | null,
+): string {
+  if (tileSource) return "standard";
+  if (layer === "satellite") return "satellite";
+  if (layer === "topo") return "terrain";
+  return "standard";
 }

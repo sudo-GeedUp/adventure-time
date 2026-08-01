@@ -6,14 +6,14 @@ Last updated: 2026-07-31
 
 - **Name:** Its Adventure Time
 - **Bundle ID:** `com.masongallegos.itsadventuretime`
-- **Version:** 2.1.1 (5)
+- **Version:** 2.1.1 (6)
 - **Copyright:** © 2026 Mason Gallegos. All Rights Reserved
 
 ## Legal URLs
 
-- **Terms of Use (EULA):** https://thegoodadventuretime.web.app/terms-of-use
-- **Privacy Policy:** https://thegoodadventuretime.web.app/privacy-policy
-- **Marketing / Support URL:** https://thegoodadventuretime.web.app
+- **Terms of Use (EULA):** <https://thegoodadventuretime.web.app/terms-of-use>
+- **Privacy Policy:** <https://thegoodadventuretime.web.app/privacy-policy>
+- **Marketing / Support URL:** <https://thegoodadventuretime.web.app>
 
 ## Resolving 3.1.2 Business: Payments - Subscriptions
 
@@ -43,9 +43,11 @@ firebase deploy --only hosting
 3. Scroll down to **License Agreement (EULA)**.
 4. Select **Apply a custom EULA to all chosen territories**.
 5. Paste the Terms of Use URL:
-   ```
+
+   ```text
    https://thegoodadventuretime.web.app/terms-of-use
    ```
+
 6. Click **Save**.
 
 ### Step 3 - Confirm the App Description (already in store.config.json)
@@ -66,8 +68,9 @@ This will push `description`, `privacyPolicyUrl`, and related metadata to the Ap
    > Hello,
    >
    > We have added a custom EULA to the App Store Connect metadata and included the Terms of Use link in the App Description. The Terms of Use (EULA) and Privacy Policy are hosted at:
-   > - https://thegoodadventuretime.web.app/terms-of-use
-   > - https://thegoodadventuretime.web.app/privacy-policy
+   >
+   > - <https://thegoodadventuretime.web.app/terms-of-use>
+   > - <https://thegoodadventuretime.web.app/privacy-policy>
    >
    > These links are also tappable from the paywall and subscription screens inside the app.
    >

@@ -8,6 +8,8 @@ import {
   Alert,
   ActivityIndicator,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -188,7 +190,8 @@ export default function ReportConditionModal({
       onRequestClose={onClose}
     >
       <View style={[styles.container, { backgroundColor: "rgba(0,0,0,0.5)" }]}>
-        <View
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={[styles.content, { backgroundColor: theme.backgroundDefault }]}
         >
           <View style={styles.header}>
@@ -211,6 +214,7 @@ export default function ReportConditionModal({
           <ScrollView
             style={styles.warningList}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
             {WARNING_TYPES.map((warning) => (
               <Pressable
@@ -290,6 +294,7 @@ export default function ReportConditionModal({
                 keyboardType="numeric"
                 value={suggestedSpeed}
                 onChangeText={setSuggestedSpeed}
+                autoFocus={false}
                 maxLength={3}
               />
               <ThemedText
@@ -333,7 +338,7 @@ export default function ReportConditionModal({
               )}
             </Pressable>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );

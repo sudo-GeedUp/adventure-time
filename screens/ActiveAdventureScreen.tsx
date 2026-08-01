@@ -32,7 +32,11 @@ import {
   AssistanceWaypoint,
   CompletedAdventure,
 } from "@/utils/storage";
-import { MapLayerType, getTileSource } from "@/utils/mapTiles";
+import {
+  MapLayerType,
+  getTileSource,
+  getMapViewMapType,
+} from "@/utils/mapTiles";
 import { OfflineMapsManager } from "@/utils/offlineMaps";
 import { gpxRecorder } from "@/utils/gpxRecording";
 import * as Location from "expo-location";
@@ -1809,7 +1813,7 @@ export default function ActiveAdventureScreen() {
           showsCompass={false}
           showsTraffic
           showsBuildings
-          mapType="standard"
+          mapType={getMapViewMapType(mapLayer, tileSource)}
         >
           {tileSource && UrlTile && (
             <UrlTile
@@ -2442,7 +2446,7 @@ export default function ActiveAdventureScreen() {
                 followsUserLocation={true}
                 showsMyLocationButton={false}
                 showsCompass
-                mapType="standard"
+                mapType={getMapViewMapType(mapLayer, tileSource)}
               >
                 {tileSource && UrlTile && (
                   <UrlTile
@@ -3014,7 +3018,10 @@ export default function ActiveAdventureScreen() {
         animationType="slide"
         onRequestClose={() => setShowHazardModal(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
           <View
             style={[
               styles.modalContent,
@@ -3039,6 +3046,7 @@ export default function ActiveAdventureScreen() {
             <ScrollView
               style={styles.hazardList}
               showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
             >
               {HAZARD_TYPES.map((hazard) => (
                 <Pressable
@@ -3101,6 +3109,7 @@ export default function ActiveAdventureScreen() {
               multiline
               numberOfLines={3}
               maxLength={500}
+              autoFocus={false}
             />
 
             <View style={styles.modalButtons}>
@@ -3132,7 +3141,7 @@ export default function ActiveAdventureScreen() {
               </Pressable>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Assistance Request Modal */}
@@ -3186,7 +3195,7 @@ export default function ActiveAdventureScreen() {
               multiline
               numberOfLines={5}
               maxLength={500}
-              autoFocus
+              autoFocus={false}
             />
 
             <View

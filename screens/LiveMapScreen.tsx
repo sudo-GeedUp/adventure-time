@@ -23,7 +23,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
-import { MapLayerType, getTileSource } from "@/utils/mapTiles";
+import { MapLayerType, getTileSource, getMapViewMapType } from "@/utils/mapTiles";
 import { SAMPLE_TRAILS, Trail } from "@/utils/trails";
 import { calculateDistance } from "@/utils/location";
 import { OfflineMapsManager } from "@/utils/offlineMaps";
@@ -528,7 +528,7 @@ export default function LiveMapScreen() {
         showsScale
         onPanDrag={() => isTracking && setIsTracking(false)}
         onMapReady={() => setMapReady(true)}
-        mapType="standard"
+        mapType={getMapViewMapType(mapLayer, tileSource)}
       >
         {tileSource && UrlTile && (
           <UrlTile

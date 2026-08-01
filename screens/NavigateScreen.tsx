@@ -710,7 +710,11 @@ export default function NavigateScreen() {
             <Feather name="navigation" size={48} color="white" />
           </View>
           <View style={styles.heroTextContainer}>
-            <ThemedText style={[styles.heroTitle, { color: "white" }]}>
+            <ThemedText
+              style={[styles.heroTitle, { color: "white" }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
               🏁 Adventure Time
             </ThemedText>
             <ThemedText
