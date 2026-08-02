@@ -1,7 +1,4 @@
-import { Alert } from "react-native";
-
-const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+import { callAIProxy } from "@/services/aiProxy";
 
 export interface RecoveryAnalysis {
   situation: string;
@@ -15,31 +12,16 @@ export interface RecoveryAnalysis {
 export async function analyzeRecoverySituation(
   imageUri: string,
 ): Promise<RecoveryAnalysis> {
-  if (!OPENAI_API_KEY) {
-    Alert.alert(
-      "AI Scan Unavailable",
-      "OpenAI API key not configured. This feature requires a valid API key.",
-      [{ text: "OK" }],
-    );
-    throw new Error("OpenAI API key not configured");
-  }
-
   try {
     // Convert image to base64
     const base64Image = await convertImageToBase64(imageUri);
 
-    const response = await fetch(OPENAI_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: `You are an expert off-road vehicle recovery specialist. Analyze images of stuck or disabled vehicles and provide detailed recovery recommendations. 
+    const data = await callAIProxy({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert off-road vehicle recovery specialist. Analyze images of stuck or disabled vehicles and provide detailed recovery recommendations.
 
 Your response must be in JSON format with this exact structure:
 {
@@ -57,40 +39,31 @@ Focus on:
 - Obstacles and hazards
 - Best recovery approach
 - Safety considerations`,
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: "Analyze this off-road recovery situation and provide detailed recommendations.",
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Analyze this off-road recovery situation and provide detailed recommendations.",
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:image/jpeg;base64,${base64Image}`,
               },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:image/jpeg;base64,${base64Image}`,
-                },
-              },
-            ],
-          },
-        ],
-        max_tokens: 1000,
-        temperature: 0.7,
-      }),
+            },
+          ],
+        },
+      ],
+      max_tokens: 1000,
+      temperature: 0.7,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        errorData.error?.message || `OpenAI API error: ${response.status}`,
-      );
-    }
-
-    const data = await response.json();
     const content = data.choices[0]?.message?.content;
 
     if (!content) {
-      throw new Error("No response from OpenAI API");
+      throw new Error("No response from AI service");
     }
 
     // Parse JSON response - handle potential markdown code blocks
@@ -119,7 +92,7 @@ Focus on:
 
     return analysis;
   } catch (error: any) {
-    console.error("OpenAI API Error:", error);
+    console.error("AI analysis error:", error);
     throw new Error(
       error.message || "Failed to analyze image. Please try again.",
     );

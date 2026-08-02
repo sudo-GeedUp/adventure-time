@@ -1,9 +1,7 @@
 const fs = require("fs");
 const crypto = require("crypto");
 
-const ISSUER_ID = "46781a73-a825-49fa-a503-82d6dabe8b5a";
-const KEY_ID = "ZSQK8UYFZ9";
-const PRIVATE_KEY_PATH = "./AuthKey_Cancel.p8";
+const { ISSUER_ID, KEY_ID, PRIVATE_KEY_PATH } = require("./asc-config");
 const APP_ID = "6758251454";
 const BASE_URL = "https://api.appstoreconnect.apple.com/v1";
 

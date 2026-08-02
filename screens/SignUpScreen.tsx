@@ -72,7 +72,9 @@ export default function SignUpScreen() {
       Alert.alert(
         "Success!",
         "Your account has been created. Welcome to Adventure Time!",
-        [{ text: "OK" }],
+        // getParent() dismisses the whole Auth modal; a plain goBack() would
+        // only pop back to the login screen underneath.
+        [{ text: "OK", onPress: () => navigation.getParent()?.goBack() }],
       );
     } catch (error: any) {
       Alert.alert("Sign Up Failed", error.message);

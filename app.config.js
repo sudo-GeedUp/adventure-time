@@ -23,7 +23,7 @@ export default {
         "expo-location",
         {
           locationWhenInUsePermission:
-            "Its Adventure Time uses your location for the live trail map, nearby trail and offroader discovery, route and distance tracking during adventures, turn-by-turn voice guidance, AR trail markers, live convoy sharing, and emergency SOS. For example, when you start an adventure your GPS coordinates are recorded along the route, and if you trigger SOS your current location is shared with emergency contacts.",
+            "Its Adventure Time uses your location for the live trail map, nearby trail and offroader discovery, route and distance tracking during adventures, spoken trail callouts, and emergency SOS. For example, when you start an adventure your GPS coordinates are recorded along the route, and if you trigger SOS your current location is shared with emergency contacts.",
           locationAlwaysAndWhenInUsePermission: false,
           locationAlwaysPermission: false,
           isIosBackgroundLocationEnabled: false,
@@ -56,7 +56,7 @@ export default {
 
     ios: {
       bundleIdentifier: "com.masongallegos.itsadventuretime",
-      buildNumber: "6",
+      buildNumber: "10",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },
@@ -64,7 +64,7 @@ export default {
 
     android: {
       package: "com.masongallegos.itsadventuretime",
-      versionCode: 10,
+      versionCode: 11,
       adaptiveIcon: {
         foregroundImage: "./assets/images/icon.png",
         backgroundColor: "#FF6B35",

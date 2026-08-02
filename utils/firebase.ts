@@ -17,6 +17,17 @@ import {
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
+import { getAuth, initializeAuth, type Persistence } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
+
+// Metro resolves firebase/auth to @firebase/auth's react-native build, which
+// exports getReactNativePersistence; the published types describe the web build
+// instead, so a normal import does not type-check. Undefined on web, which is
+// fine because only the native branch below calls it.
+const { getReactNativePersistence } = require("firebase/auth") as {
+  getReactNativePersistence: (storage: unknown) => Persistence;
+};
 import * as Location from "expo-location";
 import { storage, CompletedAdventure } from "./storage";
 
@@ -46,6 +57,18 @@ export function initializeFirebase() {
 
     if (getApps().length === 0) {
       app = initializeApp(firebaseConfig);
+
+      // Must happen here, before anything reaches getAuth(). On native,
+      // getAuth() quietly installs memory-only persistence, so the session —
+      // and with it the uid that owns the user's data — is discarded on every
+      // cold start. This module self-initializes on import and authService
+      // imports it, so this is the first code to touch the Firebase app.
+      if (Platform.OS !== "web") {
+        initializeAuth(app, {
+          persistence: getReactNativePersistence(AsyncStorage),
+        });
+      }
+
       database = getDatabase(app);
       storageInstance = getStorage(app);
       isFirebaseEnabled = true;
@@ -62,6 +85,18 @@ export function initializeFirebase() {
 // Check if Firebase is available
 export function isFirebaseAvailable(): boolean {
   return isFirebaseEnabled && database !== null;
+}
+
+// Whether the current session may touch shared data. Anonymous sign-in exists
+// only to give the AI proxy a token to verify, so it is not an account: the
+// database and storage rules reject it. Gate reads and writes on this rather
+// than isFirebaseAvailable(), which only reports that Firebase booted.
+//
+// Reads getAuth() directly instead of authService, which imports this module.
+export function hasAccountAccess(): boolean {
+  if (!isFirebaseAvailable()) return false;
+  const user = getAuth().currentUser;
+  return !!user && !user.isAnonymous;
 }
 
 // User Location Tracking

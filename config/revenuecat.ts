@@ -97,21 +97,27 @@ export const getOfferings = async (): Promise<PurchasesOffering | null> => {
   }
 };
 
+// Configuration faults are logged for diagnostics; users only ever see this.
+export const SUBSCRIPTION_UNAVAILABLE_MESSAGE =
+  "Subscriptions are temporarily unavailable. Please try again later.";
+
 export const purchaseSubscription = async (
   productIdentifier: string = PRODUCT_IDS.MONTHLY_SUBSCRIPTION,
 ): Promise<CustomerInfo | null> => {
   try {
     if (!revenueCatConfigured) {
-      throw new Error(
-        getRevenueCatInitError() || "RevenueCat is not configured.",
+      console.error(
+        "RevenueCat not configured:",
+        getRevenueCatInitError() || "unknown reason",
       );
+      throw new Error(SUBSCRIPTION_UNAVAILABLE_MESSAGE);
     }
     const offerings = await getOfferings();
     if (!offerings) {
-      throw new Error(
-        "No subscription offerings available. " +
-          "Verify your RevenueCat offering is linked to products in App Store Connect.",
+      console.error(
+        "No RevenueCat offerings returned. Verify the offering is linked to products in App Store Connect.",
       );
+      throw new Error(SUBSCRIPTION_UNAVAILABLE_MESSAGE);
     }
 
     const packageToBuy = offerings.availablePackages.find(
@@ -119,10 +125,10 @@ export const purchaseSubscription = async (
     );
 
     if (!packageToBuy) {
-      throw new Error(
-        `Subscription product "${productIdentifier}" was not found in the current offering. ` +
-          "Check that the product ID matches App Store Connect / RevenueCat and is approved.",
+      console.error(
+        `Product "${productIdentifier}" missing from the current offering. Check the product ID matches App Store Connect / RevenueCat and is approved.`,
       );
+      throw new Error(SUBSCRIPTION_UNAVAILABLE_MESSAGE);
     }
 
     const { customerInfo } = await Purchases.purchasePackage(packageToBuy);

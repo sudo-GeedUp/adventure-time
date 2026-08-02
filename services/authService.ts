@@ -15,6 +15,8 @@ import {
   User,
   onAuthStateChanged,
   deleteUser,
+  signInAnonymously,
+  linkWithCredential,
 } from "firebase/auth";
 import { isFirebaseAvailable } from "@/utils/firebase";
 import { storage } from "@/utils/storage";
@@ -81,6 +83,14 @@ class AuthService {
     return this.auth?.currentUser || null;
   }
 
+  // Gives signed-out users a Firebase identity so the AI proxy has a token to
+  // verify. Upgraded in place by signUpWithEmail, which links rather than
+  // creating a second account, so the uid survives and their data comes with it.
+  async signInAnonymouslyIfNeeded(): Promise<void> {
+    if (!this.auth || this.auth.currentUser) return;
+    await signInAnonymously(this.auth);
+  }
+
   async signUpWithEmail(
     email: string,
     password: string,
@@ -89,12 +99,25 @@ class AuthService {
     if (!this.auth) throw new Error("Firebase not initialized");
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        this.auth,
-        email,
-        password,
-      );
+      const anonymousUser = this.auth.currentUser?.isAnonymous
+        ? this.auth.currentUser
+        : null;
+
+      // Linking keeps the uid, so anything created before signing up is retained.
+      const userCredential = anonymousUser
+        ? await linkWithCredential(
+            anonymousUser,
+            EmailAuthProvider.credential(email, password),
+          )
+        : await createUserWithEmailAndPassword(this.auth, email, password);
       const user = userCredential.user;
+
+      if (anonymousUser) {
+        // The cached token still claims sign_in_provider "anonymous", which the
+        // database and storage rules reject. Force a refresh so the new account
+        // is not locked out of its own data until the token expires.
+        await user.getIdToken(true);
+      }
 
       await updateProfile(user, { displayName });
 
@@ -343,7 +366,8 @@ class AuthService {
   }
 
   isAuthenticated(): boolean {
-    return this.getCurrentUser() !== null;
+    const user = this.getCurrentUser();
+    return user !== null && !user.isAnonymous;
   }
 
   async checkPremiumStatus(): Promise<boolean> {

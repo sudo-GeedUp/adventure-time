@@ -1,72 +1,73 @@
 {
-  "//": "Deploy with: firebase deploy --only storage,database. This file is the source of truth for Realtime Database rules.",
+  "//": "Deploy with: firebase deploy --only storage,database. This file is the source of truth for Realtime Database rules. Anonymous sign-in exists only so the AI proxy has a token to verify (see worker/README.md); there is no account behind an anonymous session, so every rule requires a real sign-in provider rather than a bare 'auth != null', which would grant any device that opens the app.",
   "rules": {
     "users": {
       "locations": {
         "//": "subscribeToNearbyUsers() reads this whole node, so the read grant must live here rather than on $uid.",
-        ".read": "auth != null",
+        ".read": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous'",
         "$uid": {
-          ".write": "auth != null && auth.uid == $uid"
+          ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && auth.uid == $uid"
         }
       },
       "$uid": {
         "friends": {
-          ".read": "auth != null && auth.uid == $uid",
-          ".write": "auth != null && auth.uid == $uid",
+          ".read": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && auth.uid == $uid",
+          ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && auth.uid == $uid",
           "$friendId": {
-            ".read": "auth != null && auth.uid == $uid",
-            ".write": "auth != null && auth.uid == $uid"
+            ".read": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && auth.uid == $uid",
+            ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && auth.uid == $uid"
           }
         }
       }
     },
     "trail-events": {
-      ".read": "auth != null",
+      ".read": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous'",
       "$eventId": {
-        ".write": "auth != null && ((!data.exists() && newData.child('reportedBy').val() == auth.uid) || (data.exists() && (data.child('reportedBy').val() == auth.uid || !newData.exists())))"
+        ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && ((!data.exists() && newData.child('reportedBy').val() == auth.uid) || (data.exists() && (data.child('reportedBy').val() == auth.uid || !newData.exists())))"
       }
     },
     "friend-requests": {
       "//": "The client reads and filters this whole node, so authenticated reads are intentionally broad.",
-      ".read": "auth != null",
+      ".read": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous'",
       "$requestId": {
-        ".write": "auth != null && ((!data.exists() && newData.child('fromUserId').val() == auth.uid) || (data.exists() && (data.child('fromUserId').val() == auth.uid || data.child('toUserId').val() == auth.uid)))"
+        ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && ((!data.exists() && newData.child('fromUserId').val() == auth.uid) || (data.exists() && (data.child('fromUserId').val() == auth.uid || data.child('toUserId').val() == auth.uid)))"
       }
     },
     "friendships": {
       "$uid": {
-        ".read": "auth != null && auth.uid == $uid",
+        ".read": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && auth.uid == $uid",
         "$friendId": {
-          ".write": "auth != null && (auth.uid == $uid || auth.uid == $friendId)"
+          ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && (auth.uid == $uid || auth.uid == $friendId)"
         }
       }
     },
     "messages": {
-      "//": "The schema has no explicit participant list, so authenticated reads are intentionally broad.",
+      "//": "Conversation IDs are the two participant UIDs sorted and joined with '_' (MessagingService.getConversationId), so participation is derivable from the key. Firebase UIDs contain no underscores, making these prefix/suffix checks exact.",
       "$conversationId": {
-        ".read": "auth != null",
+        ".read": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && ($conversationId.beginsWith(auth.uid + '_') || $conversationId.endsWith('_' + auth.uid))",
         "$messageId": {
-          ".write": "auth != null && (newData.child('senderId').val() == auth.uid || data.child('senderId').val() == auth.uid)"
+          ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && ($conversationId.beginsWith(auth.uid + '_') || $conversationId.endsWith('_' + auth.uid)) && (newData.child('senderId').val() == auth.uid || data.child('senderId').val() == auth.uid)"
         }
       }
     },
     "community-adventures": {
-      ".read": "auth != null",
+      ".read": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous'",
       "$adventureId": {
-        ".write": "auth != null && ((!data.exists() && newData.child('userId').val() == auth.uid) || (data.exists() && (data.child('userId').val() == auth.uid || !newData.exists())))"
+        ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && ((!data.exists() && newData.child('userId').val() == auth.uid) || (data.exists() && (data.child('userId').val() == auth.uid || !newData.exists())))"
       }
     },
     "scan-submissions": {
-      ".read": "auth != null",
+      ".read": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous'",
       "$submissionId": {
-        ".write": "auth != null && ((!data.exists() && newData.child('userId').val() == auth.uid) || (data.exists() && data.child('userId').val() == auth.uid))"
+        ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && ((!data.exists() && newData.child('userId').val() == auth.uid) || (data.exists() && data.child('userId').val() == auth.uid))"
       }
     },
     "scan-submission-images": {
       "//": "Images are separate so the metadata subscription does not download every image. The submission must be written first because this rule checks its owner.",
-      ".read": "auth != null",
+      ".read": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous'",
       "$submissionId": {
-        ".write": "auth != null && root.child('scan-submissions').child($submissionId).child('userId').val() == auth.uid"
+        ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && root.child('scan-submissions').child($submissionId).child('userId').val() == auth.uid",
+        ".validate": "!newData.exists() || (newData.isString() && newData.val().beginsWith('data:image/') && newData.val().length <= 1100000)"
       }
     }
   }

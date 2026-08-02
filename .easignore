@@ -7,9 +7,16 @@ android/
 upload_cert_new.der
 *.pem
 upload_cert_new.pem
+private_keys/
+*.p8
+*.p12
+*.mobileprovision
+*.keystore
+*.jks
 *.ipa
 build-*.ipa
 build-*.log
 .eas-local-build
 builds-old/
+worker/
 .DS_Store

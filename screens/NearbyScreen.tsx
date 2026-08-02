@@ -332,22 +332,12 @@ export default function NearbyScreen() {
     }
   };
 
-  const handleOffroaderPress = (offroader: NearbyOffroader) => {
-    navigation.navigate("Chat", {
-      participantId: offroader.id,
-      participantName: offroader.name,
-      participantVehicle: offroader.vehicleType,
-    });
-  };
-
   const renderOffroader = ({ item }: { item: NearbyOffroader }) => (
-    <Pressable
+    <View
       style={[
         styles.offroaderCard,
         { backgroundColor: theme.backgroundDefault },
       ]}
-      onPress={() => handleOffroaderPress(item)}
-      android_ripple={{ color: theme.backgroundSecondary }}
     >
       <View style={[styles.avatar, { backgroundColor: theme.primary }]}>
         <Feather name="user" size={28} color={theme.buttonText} />
@@ -368,8 +358,7 @@ export default function NearbyScreen() {
           </ThemedText>
         </View>
       </View>
-      <Feather name="chevron-right" size={24} color={theme.tabIconDefault} />
-    </Pressable>
+    </View>
   );
 
   const renderMapHeader = () => (

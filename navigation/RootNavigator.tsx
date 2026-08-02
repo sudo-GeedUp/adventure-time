@@ -6,7 +6,6 @@ import MainTabNavigator, {
   MainTabParamList,
 } from "@/navigation/MainTabNavigator";
 import AuthStackNavigator from "@/navigation/AuthStackNavigator";
-import ChatScreen from "@/screens/ChatScreen";
 import WelcomeScreen from "@/screens/WelcomeScreen";
 import PaywallScreen from "@/screens/PaywallScreen";
 import { storage } from "@/utils/storage";
@@ -17,11 +16,6 @@ export type RootStackParamList = {
   Welcome: undefined;
   Auth: undefined;
   MainTabs: NavigatorScreenParams<MainTabParamList>;
-  Chat: {
-    participantId: string;
-    participantName: string;
-    participantVehicle: string;
-  };
   Paywall: undefined;
 };
 
@@ -30,25 +24,17 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function RootNavigator() {
   const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
   const { theme } = useTheme();
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { loading: authLoading } = useAuth();
 
   useEffect(() => {
     const checkFirstLaunch = async () => {
       const hasLaunched = await storage.getFirstLaunchDone();
-      console.log("RootNavigator: First launch check:", !hasLaunched);
       setIsFirstLaunch(!hasLaunched);
     };
     checkFirstLaunch();
   }, []);
 
-  console.log("RootNavigator: Rendering with state:", {
-    isFirstLaunch,
-    authLoading,
-    isAuthenticated,
-  });
-
   if (authLoading || isFirstLaunch === null) {
-    console.log("RootNavigator: Showing loading indicator");
     return (
       <View
         style={{
@@ -63,10 +49,6 @@ export default function RootNavigator() {
     );
   }
 
-  console.log(
-    "RootNavigator: Rendering navigator - going directly to MainTabs",
-  );
-
   return (
     <Stack.Navigator
       initialRouteName={isFirstLaunch ? "Welcome" : "MainTabs"}
@@ -74,12 +56,15 @@ export default function RootNavigator() {
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+      {/* Presented on demand rather than gating the app. Guests keep full
+          access to the local features; signing in is what unlocks the shared
+          ones, so this is a modal the user can back out of. */}
       <Stack.Screen
-        name="Chat"
-        component={ChatScreen}
+        name="Auth"
+        component={AuthStackNavigator}
         options={{
-          headerShown: true,
-          headerTitle: "",
+          presentation: "modal",
+          headerShown: false,
         }}
       />
       <Stack.Screen

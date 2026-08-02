@@ -18,7 +18,9 @@ import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 import type { ProfileStackParamList } from "@/navigation/ProfileStackNavigator";
+import type { RootStackParamList } from "@/navigation/RootNavigator";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 import {
@@ -46,8 +48,14 @@ type ProfileScreenNavigationProp = NativeStackNavigationProp<
 
 export default function ProfileScreen() {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
+  // Auth lives on the root stack, above the tabs. Navigate actions bubble up to
+  // whichever navigator owns the route, so this resolves at runtime even though
+  // the hook returns this screen's own navigator.
+  const rootNavigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { theme } = useTheme();
   const { isPremium } = useSubscription();
+  const { isAuthenticated, user, signOut } = useAuth();
   const [profile, setProfile] = useState<UserProfile>({
     id: "1",
     name: "",
@@ -184,6 +192,27 @@ export default function ProfileScreen() {
     const updatedProfile = { ...profile, customPhotoUri: undefined };
     setProfile(updatedProfile);
     await storage.saveUserProfile(updatedProfile);
+  };
+
+  const handleSignOut = () => {
+    Alert.alert(
+      "Sign Out",
+      "Everything saved on this device stays. Shared trails, nearby offroaders, and community scans will be hidden until you sign back in.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Sign Out",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await signOut();
+            } catch (error: any) {
+              Alert.alert("Sign Out Failed", error.message);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const toggleEquipment = async (equipmentId: string) => {
@@ -786,6 +815,70 @@ export default function ProfileScreen() {
 
         <View style={styles.section}>
           <ThemedText style={[Typography.h4, styles.sectionTitle]}>
+            Account
+          </ThemedText>
+          {isAuthenticated ? (
+            <Pressable
+              style={[
+                styles.menuItem,
+                { backgroundColor: theme.backgroundDefault },
+              ]}
+              onPress={handleSignOut}
+              android_ripple={{ color: theme.backgroundSecondary }}
+            >
+              <View style={styles.accountItemContent}>
+                <Feather name="log-out" size={24} color={theme.primary} />
+                <View style={styles.accountTextGroup}>
+                  <ThemedText style={styles.accountLabel}>Sign Out</ThemedText>
+                  <ThemedText
+                    style={[
+                      styles.accountSubtext,
+                      { color: theme.tabIconDefault },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {user?.email}
+                  </ThemedText>
+                </View>
+              </View>
+            </Pressable>
+          ) : (
+            <Pressable
+              style={[
+                styles.menuItem,
+                { backgroundColor: theme.backgroundDefault },
+              ]}
+              onPress={() => rootNavigation.navigate("Auth")}
+              android_ripple={{ color: theme.backgroundSecondary }}
+            >
+              <View style={styles.accountItemContent}>
+                <Feather name="log-in" size={24} color={theme.primary} />
+                <View style={styles.accountTextGroup}>
+                  <ThemedText style={styles.accountLabel}>
+                    Sign In / Create Account
+                  </ThemedText>
+                  <ThemedText
+                    style={[
+                      styles.accountSubtext,
+                      { color: theme.tabIconDefault },
+                    ]}
+                  >
+                    Unlocks nearby offroaders, shared trails, and community
+                    scans
+                  </ThemedText>
+                </View>
+              </View>
+              <Feather
+                name="chevron-right"
+                size={24}
+                color={theme.tabIconDefault}
+              />
+            </Pressable>
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText style={[Typography.h4, styles.sectionTitle]}>
             Vehicle
           </ThemedText>
           <Pressable
@@ -1009,6 +1102,23 @@ const styles = StyleSheet.create({
   menuItemText: {
     marginLeft: Spacing.md,
     fontSize: 16,
+  },
+  accountItemContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    paddingRight: Spacing.md,
+  },
+  accountTextGroup: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+  accountLabel: {
+    fontSize: 16,
+  },
+  accountSubtext: {
+    fontSize: 13,
+    marginTop: 2,
   },
   multilineInput: {
     minHeight: 100,

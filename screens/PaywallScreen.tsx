@@ -259,9 +259,10 @@ export default function PaywallScreen({ navigation }: any) {
         setSelectedPlanId(defaultPkg.identifier);
       }
     } catch (error: any) {
+      console.error("Error loading subscription offerings:", error);
       Alert.alert(
-        "Error",
-        error.message || "Unable to load subscription options.",
+        "Something Went Wrong",
+        "Unable to load subscription options. Please try again later.",
       );
     } finally {
       setLoadingOfferings(false);
@@ -338,9 +339,10 @@ export default function PaywallScreen({ navigation }: any) {
         );
       }
     } catch (error: any) {
+      console.error("Purchase failed:", error);
       Alert.alert(
         "Purchase Failed",
-        error.message || "Please try again later.",
+        "We couldn't complete your purchase. You have not been charged. Please try again later.",
       );
     } finally {
       setPurchasing(false);

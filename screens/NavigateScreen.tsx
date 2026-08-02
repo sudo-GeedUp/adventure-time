@@ -32,10 +32,8 @@ import { OfflineMapsManager } from "@/utils/offlineMaps";
 import { storage } from "@/utils/storage";
 import type { CompletedAdventure } from "@/utils/storage";
 import { aggregateTrailCommunityData } from "@/utils/communityTrailInsights";
-import {
-  isFirebaseAvailable,
-  CommunityAdventuresService,
-} from "@/utils/firebase";
+import { useAuth } from "@/contexts/AuthContext";
+import { hasAccountAccess, CommunityAdventuresService } from "@/utils/firebase";
 
 type DifficultyFilter = "All" | "Easy" | "Moderate" | "Hard" | "Expert";
 type LandTypeFilter = "All" | "Public" | "Private";
@@ -45,6 +43,10 @@ export default function NavigateScreen() {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+  // Not the gate itself (hasAccountAccess is), but the trigger: the effects
+  // below re-subscribe when this flips, so signing in fills the screen
+  // without needing a restart.
+  const { isAuthenticated } = useAuth();
   const [location, setLocation] = useState<any>(null);
   const [trails, setTrails] = useState<Trail[]>([]);
   const [filteredTrails, setFilteredTrails] = useState<Trail[]>([]);
@@ -133,7 +135,7 @@ export default function NavigateScreen() {
       try {
         const localAdventures = await storage.getCommunityAdventures();
 
-        if (isFirebaseAvailable()) {
+        if (hasAccountAccess()) {
           unsubscribe =
             CommunityAdventuresService.subscribeToCommunityAdventures(
               (firebaseAdventures) => {
@@ -163,7 +165,7 @@ export default function NavigateScreen() {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [updateCommunityTrailsData]);
+  }, [updateCommunityTrailsData, isAuthenticated]);
 
   const loadNearbyTrails = useCallback(async () => {
     if (!location) return;

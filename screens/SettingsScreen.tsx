@@ -1,12 +1,18 @@
-import React from "react";
-import { View, StyleSheet, Pressable, Alert } from "react-native";
+import React, { useState, useCallback } from "react";
+import { View, StyleSheet, Pressable, Alert, Linking } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
+import * as Location from "expo-location";
+import * as ImagePicker from "expo-image-picker";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import ThemedText from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Typography, Spacing, BorderRadius } from "@/constants/theme";
 import { storage } from "@/utils/storage";
+import { OfflineMapsManager } from "@/utils/offlineMaps";
 import Constants from "expo-constants";
+
+type PermissionState = "granted" | "denied" | "unknown";
 
 export default function SettingsScreen() {
   const { theme } = useTheme();
@@ -16,20 +22,66 @@ export default function SettingsScreen() {
     ? `${appVersion} (${buildNumber})`
     : appVersion;
 
+  const [permissions, setPermissions] = useState<{
+    location: PermissionState;
+    camera: PermissionState;
+    photos: PermissionState;
+  }>({ location: "unknown", camera: "unknown", photos: "unknown" });
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      const toState = (granted: boolean): PermissionState =>
+        granted ? "granted" : "denied";
+
+      (async () => {
+        try {
+          const [location, camera, photos] = await Promise.all([
+            Location.getForegroundPermissionsAsync(),
+            ImagePicker.getCameraPermissionsAsync(),
+            ImagePicker.getMediaLibraryPermissionsAsync(),
+          ]);
+          if (!active) return;
+          setPermissions({
+            location: toState(location.granted),
+            camera: toState(camera.granted),
+            photos: toState(photos.granted),
+          });
+        } catch (error) {
+          console.error("Error reading permission status:", error);
+        }
+      })();
+
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
+
   const handleClearCache = () => {
     Alert.alert(
-      "Clear Offline Guides",
-      "Are you sure you want to clear all offline guide data? You will need to re-download guides for offline use.",
+      "Clear Offline Cache",
+      "This will remove cached trails, map tiles, and saved routes from this device. Your profile, saved guides, and scan history are not affected.",
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Clear",
           style: "destructive",
-          onPress: () => {
-            Alert.alert(
-              "Cache Cleared",
-              "Offline guide cache has been cleared.",
-            );
+          onPress: async () => {
+            try {
+              await OfflineMapsManager.clearAllCache();
+              Alert.alert(
+                "Cache Cleared",
+                "Cached trails, map tiles, and saved routes have been removed.",
+              );
+            } catch (error) {
+              console.error("Error clearing offline cache:", error);
+              Alert.alert(
+                "Couldn't Clear Cache",
+                "Something went wrong clearing the offline cache. Please try again.",
+              );
+            }
           },
         },
       ],
@@ -60,31 +112,19 @@ export default function SettingsScreen() {
         <ThemedText style={[Typography.h4, styles.sectionTitle]}>
           Offline Content
         </ThemedText>
-        <Pressable
+        <View
           style={[
-            styles.menuItem,
+            styles.infoCard,
             { backgroundColor: theme.backgroundDefault },
           ]}
-          onPress={handleClearCache}
-          android_ripple={{ color: theme.backgroundSecondary }}
         >
-          <View style={styles.menuItemContent}>
-            <Feather name="download" size={24} color={theme.primary} />
-            <View style={styles.menuItemText}>
-              <ThemedText style={Typography.label}>Download Guides</ThemedText>
-              <ThemedText
-                style={[styles.description, { color: theme.tabIconDefault }]}
-              >
-                Save guides for offline access
-              </ThemedText>
-            </View>
-          </View>
-          <Feather
-            name="chevron-right"
-            size={24}
-            color={theme.tabIconDefault}
-          />
-        </Pressable>
+          <ThemedText
+            style={[styles.description, { color: theme.tabIconDefault }]}
+          >
+            Recovery guides are bundled with the app and always available
+            offline. Trails and map tiles are cached as you browse them.
+          </ThemedText>
+        </View>
 
         <Pressable
           style={[
@@ -98,7 +138,7 @@ export default function SettingsScreen() {
             <Feather name="trash-2" size={24} color={theme.warning} />
             <View style={styles.menuItemText}>
               <ThemedText style={Typography.label}>
-                Clear Offline Guides
+                Clear Offline Cache
               </ThemedText>
               <ThemedText
                 style={[styles.description, { color: theme.tabIconDefault }]}
@@ -114,29 +154,48 @@ export default function SettingsScreen() {
         <ThemedText style={[Typography.h4, styles.sectionTitle]}>
           Permissions
         </ThemedText>
-        <View
+        <Pressable
           style={[
             styles.infoCard,
             { backgroundColor: theme.backgroundDefault },
           ]}
+          onPress={() => Linking.openSettings()}
+          android_ripple={{ color: theme.backgroundSecondary }}
         >
-          <View style={styles.permissionRow}>
-            <Feather name="map-pin" size={20} color={theme.success} />
-            <ThemedText style={styles.permissionText}>
-              Location Access
-            </ThemedText>
-          </View>
-          <View style={styles.permissionRow}>
-            <Feather name="camera" size={20} color={theme.success} />
-            <ThemedText style={styles.permissionText}>Camera Access</ThemedText>
-          </View>
-          <View style={styles.permissionRow}>
-            <Feather name="image" size={20} color={theme.success} />
-            <ThemedText style={styles.permissionText}>
-              Photo Library Access
-            </ThemedText>
-          </View>
-        </View>
+          {(
+            [
+              { key: "location", icon: "map-pin", label: "Location Access" },
+              { key: "camera", icon: "camera", label: "Camera Access" },
+              { key: "photos", icon: "image", label: "Photo Library Access" },
+            ] as const
+          ).map(({ key, icon, label }) => {
+            const state = permissions[key];
+            const color =
+              state === "granted"
+                ? theme.success
+                : state === "denied"
+                  ? theme.warning
+                  : theme.tabIconDefault;
+            return (
+              <View key={key} style={styles.permissionRow}>
+                <Feather name={icon} size={20} color={color} />
+                <ThemedText style={styles.permissionText}>{label}</ThemedText>
+                <ThemedText style={[styles.permissionState, { color }]}>
+                  {state === "granted"
+                    ? "Allowed"
+                    : state === "denied"
+                      ? "Not allowed"
+                      : "Checking..."}
+                </ThemedText>
+              </View>
+            );
+          })}
+          <ThemedText
+            style={[styles.description, { color: theme.tabIconDefault }]}
+          >
+            Tap to change these in system settings.
+          </ThemedText>
+        </Pressable>
       </View>
 
       <View style={styles.section}>
@@ -214,6 +273,11 @@ const styles = StyleSheet.create({
   permissionText: {
     marginLeft: Spacing.md,
     fontSize: 16,
+    flex: 1,
+  },
+  permissionState: {
+    fontSize: 14,
+    fontWeight: "600",
   },
   infoLabel: {
     fontSize: 14,

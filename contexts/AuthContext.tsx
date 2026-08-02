@@ -14,6 +14,7 @@ interface AuthContextType {
   userProfile: UserProfile | null;
   loading: boolean;
   isAuthenticated: boolean;
+  isAnonymous: boolean;
   isPremium: boolean;
   signUp: (
     email: string,
@@ -39,7 +40,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = authService.onAuthStateChanged(async (firebaseUser) => {
       setUser(firebaseUser);
 
-      if (firebaseUser) {
+      if (firebaseUser?.isAnonymous) {
+        // No account yet, so there is no profile to load.
+        setUserProfile(null);
+        setIsPremium(false);
+        sentryService.setUser({ id: firebaseUser.uid });
+      } else if (firebaseUser) {
         try {
           // Load user profile from Firestore
           const profile = await authService.getUserProfile(firebaseUser.uid);
@@ -59,6 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUserProfile(null);
         setIsPremium(false);
         sentryService.clearUser();
+        authService.signInAnonymouslyIfNeeded().catch((error) => {
+          console.error("Anonymous sign-in failed:", error);
+        });
       }
 
       setLoading(false);
@@ -129,7 +138,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     userProfile,
     loading,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user && !user.isAnonymous,
+    isAnonymous: !!user?.isAnonymous,
     isPremium,
     signUp,
     signIn,

@@ -23,13 +23,17 @@ import { useTheme } from "@/hooks/useTheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
-import { MapLayerType, getTileSource, getMapViewMapType } from "@/utils/mapTiles";
+import {
+  MapLayerType,
+  getTileSource,
+  getMapViewMapType,
+} from "@/utils/mapTiles";
 import { SAMPLE_TRAILS, Trail } from "@/utils/trails";
 import { calculateDistance } from "@/utils/location";
 import { OfflineMapsManager } from "@/utils/offlineMaps";
 import {
   FirebaseLocationService,
-  isFirebaseAvailable,
+  hasAccountAccess,
   CommunityAdventuresService,
 } from "@/utils/firebase";
 import {
@@ -39,6 +43,7 @@ import {
 } from "@/utils/storage";
 import { gpxRecorder } from "@/utils/gpxRecording";
 import { authService } from "@/services/authService";
+import { useAuth } from "@/contexts/AuthContext";
 
 let MapView: any = null;
 let Marker: any = null;
@@ -70,6 +75,10 @@ export default function LiveMapScreen() {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
   const { isPremium } = useSubscription();
+  // Not the gate itself (hasAccountAccess is), but the trigger: the effects
+  // below re-subscribe when this flips, so signing in fills the screen
+  // without needing a restart.
+  const { isAuthenticated } = useAuth();
   const insets = useSafeAreaInsets();
   const mapRef = useRef<any>(null);
   const lastAcceptedLocationRef = useRef<any>(null);
@@ -229,7 +238,7 @@ export default function LiveMapScreen() {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     return () => {
@@ -324,10 +333,12 @@ export default function LiveMapScreen() {
       setLocation(currentLocation);
       lastAcceptedLocationRef.current = currentLocation;
 
-      // Broadcast location to other users
+      // Broadcast location to other users. Gated on a real account: the
+      // database rules reject anonymous writes, and publishing a live GPS
+      // position is not something a guest session opted into.
       const userProfile = await storage.getUserProfile();
       const userId = authService.getCurrentUser()?.uid || userProfile?.id;
-      if (userId) {
+      if (userId && hasAccountAccess()) {
         FirebaseLocationService.startLocationBroadcast(userId);
       }
 
@@ -413,7 +424,7 @@ export default function LiveMapScreen() {
         const localAdventures = await storage.getCommunityAdventures();
         setCommunityAdventures(localAdventures);
 
-        if (isFirebaseAvailable()) {
+        if (hasAccountAccess()) {
           unsubscribe =
             CommunityAdventuresService.subscribeToCommunityAdventures(
               (firebaseAdventures) => {

@@ -182,6 +182,14 @@ export class OfflineMapsManager {
     }
   }
 
+  static async clearAllCache(): Promise<void> {
+    await AsyncStorage.multiRemove([
+      OFFLINE_TRAILS_KEY,
+      OFFLINE_MAP_TILES_KEY,
+      OFFLINE_SELECTED_ROUTE_KEY,
+    ]);
+  }
+
   // Cache the currently selected navigation route for offline navigation
   static async cacheSelectedRoute(
     route: { latitude: number; longitude: number }[],

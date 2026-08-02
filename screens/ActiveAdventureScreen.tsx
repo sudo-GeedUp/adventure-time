@@ -54,7 +54,7 @@ import { hapticFeedback } from "@/utils/haptics";
 import { Trail } from "@/utils/trails";
 import {
   FirebaseLocationService,
-  isFirebaseAvailable,
+  hasAccountAccess,
   CommunityAdventuresService,
 } from "@/utils/firebase";
 import {
@@ -65,6 +65,7 @@ import { EmergencySOS } from "@/utils/emergencySOS";
 import { analyticsService } from "@/services/analyticsService";
 import { aggregateTrailCommunityData } from "@/utils/communityTrailInsights";
 import { authService } from "@/services/authService";
+import { useAuth } from "@/contexts/AuthContext";
 
 let MapView: any = null;
 let Marker: any = null;
@@ -717,6 +718,10 @@ export default function ActiveAdventureScreen() {
   const navigation = useNavigation();
   const { theme } = useTheme();
   const { isPremium } = useSubscription();
+  // Not the gate itself (hasAccountAccess is), but the trigger: the effects
+  // below re-subscribe when this flips, so signing in fills the screen
+  // without needing a restart.
+  const { isAuthenticated } = useAuth();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const trail = useMemo<Trail>(
@@ -1202,7 +1207,7 @@ export default function ActiveAdventureScreen() {
           return combined;
         };
 
-        if (isFirebaseAvailable()) {
+        if (hasAccountAccess()) {
           unsubscribe =
             CommunityAdventuresService.subscribeToCommunityAdventures(
               (firebaseAdventures) => {
@@ -1227,7 +1232,7 @@ export default function ActiveAdventureScreen() {
       active = false;
       unsubscribe?.();
     };
-  }, []);
+  }, [isAuthenticated]);
 
   // Restore the last cached route when no route was passed via navigation
   useEffect(() => {
@@ -1475,10 +1480,6 @@ export default function ActiveAdventureScreen() {
             const callouts =
               rallyNavigatorService.processGPSUpdate(enhancedLocation);
             if (callouts.length > 0) {
-              console.log(
-                "[Rally Navigator] New callouts:",
-                callouts.map((c) => c.message),
-              );
               setNavigationCallouts((prev) =>
                 [...callouts, ...prev].slice(0, 10),
               );
@@ -1637,7 +1638,7 @@ export default function ActiveAdventureScreen() {
     };
 
     // Ask the user to make this completed drive public
-    if (isFirebaseAvailable()) {
+    if (hasAccountAccess()) {
       Alert.alert(
         "Make this trail public?",
         "Share your completed drive so other users can see it under nearby trails.",

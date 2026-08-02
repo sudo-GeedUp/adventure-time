@@ -79,7 +79,7 @@ class NotificationService {
       });
       this.expoPushToken = pushTokenData.data;
       await storage.saveExpoPushToken(this.expoPushToken);
-      console.log("Expo push token registered:", this.expoPushToken);
+      console.log("Expo push token registered");
 
       this.setupListeners();
       return this.expoPushToken;

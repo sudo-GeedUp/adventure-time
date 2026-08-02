@@ -18,7 +18,7 @@ import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage } from "@/utils/storage";
 import { authService } from "@/services/authService";
 import { analyzeRecoverySituation, RecoveryAnalysis } from "@/services/openai";
-import { ScanSubmissionsService, isFirebaseAvailable } from "@/utils/firebase";
+import { ScanSubmissionsService, hasAccountAccess } from "@/utils/firebase";
 
 type AIResultsScreenRouteProp = RouteProp<AIScanStackParamList, "AIResults">;
 
@@ -92,8 +92,7 @@ export default function AIResultsScreen() {
           },
         ],
         warning:
-          error.message ||
-          "Unable to complete analysis. Please check your API key configuration.",
+          "We couldn't analyze this photo right now. Check your connection and try again, or use the recovery guides below.",
       });
     } finally {
       setIsAnalyzing(false);
@@ -115,7 +114,7 @@ export default function AIResultsScreen() {
       return;
     }
 
-    if (!isFirebaseAvailable() || !rawResult) {
+    if (!hasAccountAccess() || !rawResult) {
       setShareWithCommunity(false);
       return;
     }
@@ -497,7 +496,7 @@ export default function AIResultsScreen() {
           <Switch
             value={shareWithCommunity}
             onValueChange={handleShareToggle}
-            disabled={hasShared || !isFirebaseAvailable()}
+            disabled={hasShared || !hasAccountAccess()}
             trackColor={{
               false: theme.backgroundSecondary,
               true: theme.primary,

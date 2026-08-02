@@ -1,204 +1,235 @@
-its-adventure-time - Offroad Recovery Assistance App
+Its Adventure Time - Offroad Recovery Assistance App
 
-A mobile app built with Expo and React Native that helps drivers when their vehicle is stuck or broken on trails. Get AI-powered recovery procedures, access offline guides, and coordinate rescue with nearby offroaders.
+A mobile app built with Expo and React Native that helps drivers when their vehicle is stuck or broken on trails. Get AI-powered recovery procedures, access offline guides, and navigate trails without cell service.
 
 ## Features
 
 ### 📚 Self-Recovery Guides
+
 - **Category Browser**: Organized guides by recovery situation
   - Stuck Vehicle (sand, mud, snow, rocks)
   - Mechanical Issues (engine, electrical, drivetrain)
   - Trail Navigation (GPS, trail finding, route planning)
   - Emergency Situations (injuries, weather, communication)
 - **Search Functionality**: Quickly find specific guides
-- **Offline Access**: All guides available without internet
+- **Offline Access**: All guides are bundled with the app
 
 ### 📸 AI-Powered Photo Analysis
-- Upload photos or take pictures of your vehicle situation
-- Get AI-powered recommendations for recovery procedures
-- Visual step-by-step instructions
 
-### 🗺️ Nearby Offroaders Map
-- Interactive map showing user location and nearby offroaders
-- Real-time weather from National Weather Service API
+- Take or upload a photo of your vehicle's situation
+- OpenAI vision analysis returns a recommended recovery procedure
+- Links through to the relevant bundled guide
+
+### 🤖 Trail Buddy (Premium)
+
+- Conversational AI assistant for recovery and trail questions
+- Keeps recent context within a session
+
+### 🗺️ Maps & Navigation
+
+- Interactive map with user location and nearby offroaders (Firebase-backed)
+- Turn-by-turn trail navigation with spoken callouts
+- Offline trail and map tile caching
+- Real-time weather from the National Weather Service API
 - Trail condition analysis from community tips
-- 10-mile search radius visualization
-- Contact nearby users for rescue coordination
 
-### 👤 User Profile
+### 🚨 Emergency
+
+- SOS screen with emergency contact notification
+- Location sharing history
+
+### 👤 Profile & Vehicle
+
 - Customizable profile with vehicle information
-- Track equipment you carry
-- Save emergency contact information
+- Equipment tracking
+- Vehicle maintenance and damage logs
+- Emergency contact storage
+
+### 💳 Premium Subscription
+
+- Managed through RevenueCat (App Store / Play Store billing)
 
 ## Tech Stack
 
-- **Framework**: Expo SDK 54 + React Native
-- **Navigation**: React Navigation 7
-- **Maps**: react-native-maps with Google Maps provider
+- **Framework**: Expo SDK 54 + React Native 0.81
+- **Language**: TypeScript
+- **Navigation**: React Navigation 7 (native-stack + bottom-tabs)
+- **Maps**: react-native-maps
 - **Location**: expo-location
 - **Image Handling**: expo-image-picker
-- **Storage**: AsyncStorage for offline data persistence
-- **API**: National Weather Service API (no key required)
-- **Icons**: Feather icons from @expo/vector-icons
+- **Backend**: Firebase (Auth + Realtime Database + Storage)
+- **Local Storage**: AsyncStorage for offline data persistence
+- **Payments**: RevenueCat (`react-native-purchases`)
+- **AI**: OpenAI API
+- **Crash Reporting**: Sentry
+- **Weather**: National Weather Service API (no key required)
+- **Icons**: Feather icons from `@expo/vector-icons`
 
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js 20+
-- Expo Go app installed on your phone
+- Expo Go app (for JS-only changes) or a development build
 - Git
+
+Note: this app uses native modules (RevenueCat, Firebase, maps). Expo Go is fine for
+most UI work, but anything touching purchases or push notifications needs a
+development build.
 
 ### Installation
 
 ```bash
-# Clone the repository
 git clone <repository-url>
-cd adventure-time
+cd its-adventure-time
 
-# Install dependencies
 npm install
-
-# Start the dev server
-npm run dev
+npm start
 ```
+
+`npm run dev` is a Replit-specific variant that sets packager proxy env vars. Use
+`npm start` for local development.
+
+### Environment
+
+Copy the required values into a local `.env` (never commit it). Every variable
+prefixed with `EXPO_PUBLIC_` is **inlined into the JS bundle at build time** and is
+readable by anyone who downloads the app — never put a secret behind that prefix.
+
+| Variable                         | Notes                                                             |
+| -------------------------------- | ----------------------------------------------------------------- |
+| `EXPO_PUBLIC_FIREBASE_*`         | Firebase web config. Public by design; secured by Firebase rules. |
+| `EXPO_PUBLIC_REVENUECAT_IOS_KEY` | RevenueCat public SDK key. Public by design.                      |
+| `EXPO_PUBLIC_SENTRY_DSN`         | Sentry DSN. Public by design.                                     |
+| `EXPO_PUBLIC_AI_PROXY_URL`       | Cloudflare Worker URL for AI calls. Public by design; the Worker requires a Firebase ID token. |
+
+The OpenAI key is **not** in this list on purpose — it lives as a secret on the
+proxy Worker. See [`worker/README.md`](worker/README.md).
 
 ### Testing
 
-#### On Physical Device (iOS/Android)
-1. Install the **Expo Go** app on your phone
-2. Run `npm run dev` in the terminal
-3. Scan the QR code shown in the terminal with:
-   - **iOS**: Camera app
-   - **Android**: Expo Go camera icon
-4. App opens automatically and hot-reloads on code changes
+#### On a physical device
 
-#### Web Preview
+1. Run `npm start`
+2. Scan the QR code with the Camera app (iOS) or Expo Go (Android)
+
+#### Web preview
+
 ```bash
 npm run web
 ```
+
+Several screens have `.web.tsx` variants because `react-native-maps` has no web
+implementation.
 
 ## Project Structure
 
 ```
 ├── App.tsx                          # Root app component
-├── app.json                         # Expo configuration
-├── package.json                     # Dependencies
-├── tsconfig.json                    # TypeScript config
+├── app.config.js                    # Expo configuration (not app.json)
+├── eas.json                         # EAS Build profiles
+├── firebase.json                    # Firebase deploy config
+├── database.rules.json              # Realtime Database security rules
+├── storage.rules                    # Cloud Storage security rules
 │
-├── navigation/
-│   ├── RootNavigator.tsx           # Root stack navigator
-│   ├── MainTabNavigator.tsx        # Bottom tab navigation
-│   └── [*StackNavigator.tsx]       # Screen stacks
-│
-├── screens/
-│   ├── GuidesScreen.tsx            # Guide categories & search
-│   ├── GuideDetailScreen.tsx       # Individual guide details
-│   ├── AIScanScreen.tsx            # Photo analysis
-│   ├── NearbyScreen.tsx            # Map & nearby users
-│   ├── ProfileScreen.tsx           # User profile
-│   ├── FriendsScreen.tsx           # Friend list & chat
-│   └── [Other screens]
-│
-├── components/
-│   ├── ErrorBoundary.tsx           # App crash handler
-│   ├── ScreenScrollView.tsx        # Safe area scroll wrapper
-│   ├── ThemedText.tsx              # Themed text component
-│   ├── ThemedView.tsx              # Themed view component
-│   └── [Other reusable components]
-│
-├── utils/
-│   ├── storage.ts                  # AsyncStorage utilities
-│   ├── weather.ts                  # Weather API integration
-│   ├── conditions.ts               # Trail condition analysis
-│   ├── location.ts                 # Location utilities
-│   └── firebaseHelpers.ts          # Firebase helpers
-│
-├── hooks/
-│   └── useTheme.ts                 # Theme context hook
-│
-├── constants/
-│   └── theme.ts                    # Design system & colors
-│
-├── config/
-│   └── firebase.ts                 # Firebase config
-│
-├── data/
-│   └── guides.ts                   # Recovery guide database
-│
-└── assets/
-    └── images/                     # App icons & images
+├── navigation/                      # Root stack, tab navigator, screen stacks
+├── screens/                         # Screen components (+ .web.tsx variants)
+├── components/                      # Reusable UI (ErrorBoundary, ThemedText, ...)
+├── contexts/                        # AuthContext, SubscriptionContext
+├── services/                        # openai, aiGuideService, authService,
+│                                    #   notificationService, rallyNavigatorService,
+│                                    #   analyticsService, sentryService
+├── config/                          # firebase.ts, revenuecat.ts
+├── utils/                           # storage, weather, location, offlineMaps, ...
+├── hooks/                           # useTheme and friends
+├── constants/                       # theme.ts — design system & colors
+├── data/                            # guides.ts — recovery guide database
+├── scripts/                         # App Store Connect API helper scripts
+├── website/                         # Marketing / support site
+├── store/                           # App Store listing assets & metadata
+└── assets/images/                   # App icons & images
 ```
 
 ## Offline Features
 
-The app is designed to work offline in areas without cell service:
+The app is designed to work in areas without cell service:
 
-- **Guides**: All recovery guides stored locally
-- **Weather Cache**: 30-minute cache for weather data
+- **Guides**: All recovery guides are bundled with the app
+- **Trails & Map Tiles**: Cached as you browse; clearable from Settings
+- **Weather Cache**: 30-minute cache
 - **User Profile**: Saved locally
 - **Community Tips**: Geo-tagged tips stored locally
+
+Features that require connectivity: AI photo analysis, Trail Buddy, nearby
+offroaders, and subscription changes.
 
 ## Design
 
 - **High-Contrast Outdoor Theme**: Optimized for visibility in bright sunlight
-- **Large Touch Targets**: 56x56pt minimum for gloved hands
-- **Liquid Glass UI**: Modern iOS 26+ design aesthetic
+- **Large Touch Targets**: Sized for gloved hands
 - **Dark Theme**: Default dark theme for outdoor use
 
 ## Data Storage
 
 ### AsyncStorage Keys
-- `@trailguard/user_profile` - User profile data
-- `@trailguard/saved_guides` - Bookmarked guides
-- `@trailguard/recent_scans` - AI scan history
-- `@trailguard/weather_cache` - Cached weather data
-- `@trailguard/community_tips` - Geo-tagged tips
+
+All keys are prefixed `@adventure-time/`. Frequently used ones:
+
+- `@adventure-time/user_profile` - User profile data
+- `@adventure-time/saved_guides` - Bookmarked guides
+- `@adventure-time/scan_history` - AI scan history
+- `@adventure-time/weather_cache` - Cached weather data
+- `@adventure-time/community_tips` - Geo-tagged tips
+- `@adventure-time/emergency_contacts` - Emergency contacts
+- `@adventure-time/offline_trails`, `@adventure-time/offline_map_tiles` - Offline cache
+
+See `utils/storage.ts` for the full list.
+
+## Security Notes
+
+- **Never commit `.p8`, `.p12`, or `.pem` files.** `private_keys/` is gitignored and
+  excluded from EAS build uploads via `.easignore`. Note that `.gitignore` does not
+  apply to files that are already tracked.
+- **`EXPO_PUBLIC_*` is not a secret store.** Anything under that prefix ships inside
+  the app bundle. Server-side secrets belong behind a proxy endpoint.
+- Firebase access is controlled by `database.rules.json` and `storage.rules`. Deploy
+  rule changes with `firebase deploy --only database,storage`.
 
 ## Development
 
 ### Hot Reload
-Code changes hot-reload automatically. Only restart the dev server when:
-- Modifying `package.json` (installing new packages)
-- Changing native dependencies
 
-### Debugging
-
-#### Logs
-View logs in the terminal where you ran `npm run dev`
-
-#### Debugger
-Press `j` in the terminal while the dev server is running to open the debugger
-
-#### Remote Debugging
-Press `m` to access more developer tools
+Code changes hot-reload automatically. Restart the dev server when you modify
+`package.json` or change native dependencies.
 
 ### TypeScript
+
 ```bash
-# Check for type errors
 npx tsc --noEmit
 ```
 
-## Future Features
+### Lint & Format
 
-- AI Vision API integration for better image analysis
-- Real-time database for live offroader coordination
-- Push notifications for rescue coordination
-- Enhanced weather sources and radar data
-- Gamified badge system
-- Stripe payment integration for premium features
+```bash
+npm run lint
+npm run check:format
+npm run format
+```
 
 ## Bundle Identifier
 
-- **iOS**: `com.trailguard.app`
-- **Android**: `com.trailguard.app`
+- **iOS**: `com.masongallegos.itsadventuretime`
+- **Android**: `com.masongallegos.itsadventuretime`
 
 ## Contributing
 
 - Follow existing code style and patterns
 - Use TypeScript for all new files
 - Use Feather icons for all icon needs
-- Test on physical device before submitting changes
-- Update `replit.md` with significant changes
+- Run `npx tsc --noEmit` and `npm run check:format` before submitting
+- Test on a physical device before submitting changes
+- Do not ship placeholder, demo, or simulated content — App Review rejects it, and in
+  a safety app fabricated data is actively dangerous
 
 ## License
 
@@ -206,8 +237,9 @@ Private project
 
 ## Support
 
-For issues or questions, refer to the project's GitHub issues or contact the development team.
+For issues or questions, refer to the project's GitHub issues or contact the
+development team.
 
 ---
 
-**Adventure Time** - Get back on the trail with confidence.
+**Its Adventure Time** - Get back on the trail with confidence.

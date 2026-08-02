@@ -23,10 +23,11 @@ import { storage, CompletedAdventure } from "@/utils/storage";
 import { useNavigation } from "@react-navigation/native";
 import { pickSmartRandomAdventure } from "@/utils/adventurePicker";
 import { OfflineMapsManager } from "@/utils/offlineMaps";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   FirebaseLocationService,
   UserLocation,
-  isFirebaseAvailable,
+  hasAccountAccess,
   CommunityAdventuresService,
 } from "@/utils/firebase";
 
@@ -66,6 +67,10 @@ export default function ExploreMapScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
+  // Not the gate itself (hasAccountAccess is), but the trigger: the effects
+  // below re-subscribe when this flips, so signing in fills the screen
+  // without needing a restart.
+  const { isAuthenticated } = useAuth();
   const mapRef = useRef<MapView>(null);
 
   const [userLocation, setUserLocation] =
@@ -150,61 +155,17 @@ export default function ExploreMapScreen() {
     }
     setTrails(nearbyTrails);
 
-    // Use Firebase users if available, otherwise use mock data
-    if (isFirebaseAvailable() && firebaseUsers.length > 0) {
-      const users: NearbyUser[] = firebaseUsers
-        .filter((user) => {
-          const distance = calculateDistance(coords, user.location);
-          return distance <= maxDistance;
-        })
-        .map((user) => ({
-          id: user.userId,
-          name: user.userName,
-          location: user.location,
-          vehicleType: user.vehicleType,
-          isOnline: user.isOnline,
-          lastSeen: user.lastSeen,
-        }));
-      setNearbyUsers(users);
-    } else {
-      // Fallback to mock data for demo purposes
-      const mockUsers: NearbyUser[] = [
-        {
-          id: "1",
-          name: "Trail Rider",
-          location: {
-            latitude: coords.latitude + 0.02,
-            longitude: coords.longitude + 0.02,
-          },
-          vehicleType: "Jeep Wrangler",
-          isOnline: true,
-          lastSeen: Date.now(),
-        },
-        {
-          id: "2",
-          name: "Mountain Explorer",
-          location: {
-            latitude: coords.latitude - 0.03,
-            longitude: coords.longitude + 0.01,
-          },
-          vehicleType: "Toyota 4Runner",
-          isOnline: true,
-          lastSeen: Date.now(),
-        },
-        {
-          id: "3",
-          name: "Desert Wanderer",
-          location: {
-            latitude: coords.latitude + 0.01,
-            longitude: coords.longitude - 0.02,
-          },
-          vehicleType: "Ford Bronco",
-          isOnline: false,
-          lastSeen: Date.now() - 3600000,
-        },
-      ];
-      setNearbyUsers(mockUsers);
-    }
+    const users: NearbyUser[] = firebaseUsers
+      .filter((user) => calculateDistance(coords, user.location) <= maxDistance)
+      .map((user) => ({
+        id: user.userId,
+        name: user.userName,
+        location: user.location,
+        vehicleType: user.vehicleType,
+        isOnline: user.isOnline,
+        lastSeen: user.lastSeen,
+      }));
+    setNearbyUsers(users);
   }, [distanceFilter, userLocation, firebaseUsers]);
 
   useEffect(() => {
@@ -212,7 +173,7 @@ export default function ExploreMapScreen() {
 
     // Subscribe to real-time user locations from Firebase
     let unsubscribe: (() => void) | null = null;
-    if (isFirebaseAvailable()) {
+    if (hasAccountAccess()) {
       unsubscribe = FirebaseLocationService.subscribeToNearbyUsers((users) => {
         setFirebaseUsers(users);
       });
@@ -221,7 +182,7 @@ export default function ExploreMapScreen() {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [initializeLocation]);
+  }, [initializeLocation, isAuthenticated]);
 
   // Load local adventures and subscribe to shared community adventures from Firebase
   useEffect(() => {
@@ -231,7 +192,7 @@ export default function ExploreMapScreen() {
       const localAdventures = await storage.getCommunityAdventures();
       setRawCommunityAdventures(localAdventures);
 
-      if (isFirebaseAvailable()) {
+      if (hasAccountAccess()) {
         unsubscribe = CommunityAdventuresService.subscribeToCommunityAdventures(
           (firebaseAdventures) => {
             setRawCommunityAdventures((prev) => {
@@ -256,7 +217,7 @@ export default function ExploreMapScreen() {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     loadNearbyData();

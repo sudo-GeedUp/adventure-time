@@ -1,5 +1,6 @@
 import { Trail } from "@/utils/trails";
 import { WeatherService } from "@/utils/firebase";
+import { callAIProxy, isAIProxyConfigured } from "@/services/aiProxy";
 
 interface GuideContext {
   userLocation?: {
@@ -37,28 +38,12 @@ interface GuideSuggestion {
 }
 
 class AIGuideService {
-  private apiKey: string | null = null;
   private conversationHistory: GuideMessage[] = [];
   private context: GuideContext = {};
   private systemPrompt: string;
-  private apiUrl = "https://api.openai.com/v1/chat/completions";
 
   constructor() {
-    this.initializeAPI();
     this.systemPrompt = this.createSystemPrompt();
-  }
-
-  private initializeAPI() {
-    const apiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY;
-
-    if (!apiKey) {
-      console.warn(
-        "OpenAI API key not configured. AI Guide will not be available.",
-      );
-      return;
-    }
-
-    this.apiKey = apiKey;
   }
 
   private createSystemPrompt(): string {
@@ -113,7 +98,7 @@ Use this context to provide personalized, relevant advice.
   }
 
   isAvailable(): boolean {
-    return this.apiKey !== null;
+    return isAIProxyConfigured();
   }
 
   updateContext(context: Partial<GuideContext>) {
@@ -129,7 +114,7 @@ Use this context to provide personalized, relevant advice.
   }
 
   async chat(userMessage: string): Promise<string> {
-    if (!this.apiKey) {
+    if (!isAIProxyConfigured()) {
       return "I'm sorry, but I'm not available right now. Please check your internet connection and try again.";
     }
 
@@ -153,26 +138,13 @@ Use this context to provide personalized, relevant advice.
         ...this.conversationHistory.slice(-10), // Keep last 10 messages for context
       ];
 
-      // Call OpenAI API
-      const response = await fetch(this.apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages,
-          temperature: 0.7,
-          max_tokens: 500,
-        }),
+      const data = await callAIProxy({
+        model: "gpt-4o-mini",
+        messages,
+        temperature: 0.7,
+        max_tokens: 500,
       });
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data = await response.json();
       const assistantMessage =
         data.choices[0]?.message?.content ||
         "I'm having trouble responding right now. Please try again.";
@@ -247,7 +219,7 @@ Use this context to provide personalized, relevant advice.
   }
 
   async getSmartSuggestions(): Promise<GuideSuggestion[]> {
-    if (!this.apiKey) return [];
+    if (!isAIProxyConfigured()) return [];
 
     try {
       const prompt = `Based on the current context, provide 3-5 smart suggestions for the user. 
@@ -266,26 +238,16 @@ Format your response as a JSON array of suggestions with this structure:
 
 Focus on actionable, relevant suggestions based on current conditions.`;
 
-      const response = await fetch(this.apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: this.systemPrompt },
-            { role: "user", content: prompt },
-          ],
-          temperature: 0.8,
-          max_tokens: 800,
-          response_format: { type: "json_object" },
-        }),
+      const data = await callAIProxy({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: this.systemPrompt },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.8,
+        max_tokens: 800,
+        response_format: { type: "json_object" },
       });
-
-      if (!response.ok) throw new Error("API error");
-      const data = await response.json();
 
       const content = data.choices[0]?.message?.content;
       if (!content) return [];
@@ -302,7 +264,8 @@ Focus on actionable, relevant suggestions based on current conditions.`;
     trails: Trail[],
     limit: number = 3,
   ): Promise<Trail[]> {
-    if (!this.apiKey || trails.length === 0) return trails.slice(0, limit);
+    if (!isAIProxyConfigured() || trails.length === 0)
+      return trails.slice(0, limit);
 
     try {
       const trailsInfo = trails
@@ -318,25 +281,16 @@ ${trailsInfo}
 
 Return format: Just comma-separated numbers, no explanation.`;
 
-      const response = await fetch(this.apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: this.systemPrompt },
-            { role: "user", content: prompt },
-          ],
-          temperature: 0.5,
-          max_tokens: 50,
-        }),
+      const data = await callAIProxy({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: this.systemPrompt },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.5,
+        max_tokens: 50,
       });
 
-      if (!response.ok) throw new Error("API error");
-      const data = await response.json();
       const content = data.choices[0]?.message?.content?.trim();
       if (!content) return trails.slice(0, limit);
 
@@ -357,7 +311,7 @@ Return format: Just comma-separated numbers, no explanation.`;
     warnings: string[];
     recommendations: string[];
   }> {
-    if (!this.apiKey) {
+    if (!isAIProxyConfigured()) {
       return {
         safetyScore: 7,
         warnings: [],
@@ -382,26 +336,17 @@ Provide a safety analysis in JSON format:
   "recommendations": ["rec1", "rec2"]
 }`;
 
-      const response = await fetch(this.apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: this.systemPrompt },
-            { role: "user", content: prompt },
-          ],
-          temperature: 0.6,
-          max_tokens: 400,
-          response_format: { type: "json_object" },
-        }),
+      const data = await callAIProxy({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: this.systemPrompt },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.6,
+        max_tokens: 400,
+        response_format: { type: "json_object" },
       });
 
-      if (!response.ok) throw new Error("API error");
-      const data = await response.json();
       const content = data.choices[0]?.message?.content;
       if (!content) throw new Error("No response");
 
@@ -417,7 +362,7 @@ Provide a safety analysis in JSON format:
   }
 
   async getQuickTip(): Promise<string> {
-    if (!this.apiKey) {
+    if (!isAIProxyConfigured()) {
       return "💡 Always let someone know your route and expected return time before heading out.";
     }
 
@@ -426,25 +371,16 @@ Provide a safety analysis in JSON format:
 
 ${this.buildContextMessage()}`;
 
-      const response = await fetch(this.apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: this.systemPrompt },
-            { role: "user", content: prompt },
-          ],
-          temperature: 0.9,
-          max_tokens: 50,
-        }),
+      const data = await callAIProxy({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: this.systemPrompt },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.9,
+        max_tokens: 50,
       });
 
-      if (!response.ok) throw new Error("API error");
-      const data = await response.json();
       return (
         data.choices[0]?.message?.content?.trim() ||
         "💡 Stay safe and have fun on the trails!"
@@ -456,7 +392,7 @@ ${this.buildContextMessage()}`;
   }
 
   async getEmergencyGuidance(situation: string): Promise<string> {
-    if (!this.apiKey) {
+    if (!isAIProxyConfigured()) {
       return `Emergency Guidance:
 1. Stay calm and assess the situation
 2. Call 911 if there's immediate danger
@@ -474,30 +410,21 @@ ${this.buildContextMessage()}
 
 Give clear, step-by-step instructions prioritizing safety. Include when to call 911.`;
 
-      const response = await fetch(this.apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content:
-                this.systemPrompt +
-                "\n\nIMPORTANT: This is an emergency situation. Prioritize safety and provide clear, actionable steps.",
-            },
-            { role: "user", content: prompt },
-          ],
-          temperature: 0.3,
-          max_tokens: 600,
-        }),
+      const data = await callAIProxy({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content:
+              this.systemPrompt +
+              "\n\nIMPORTANT: This is an emergency situation. Prioritize safety and provide clear, actionable steps.",
+          },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 600,
       });
 
-      if (!response.ok) throw new Error("API error");
-      const data = await response.json();
       return (
         data.choices[0]?.message?.content ||
         "Please call 911 for emergency assistance."
@@ -513,7 +440,7 @@ Give clear, step-by-step instructions prioritizing safety. Include when to call 
     duration: string,
     preferences: string[],
   ): Promise<string> {
-    if (!this.apiKey) {
+    if (!isAIProxyConfigured()) {
       return "I'm unable to generate a trip plan right now. Please try again later.";
     }
 
@@ -533,25 +460,16 @@ Include:
 - Safety considerations
 - Points of interest`;
 
-      const response = await fetch(this.apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: this.systemPrompt },
-            { role: "user", content: prompt },
-          ],
-          temperature: 0.7,
-          max_tokens: 1000,
-        }),
+      const data = await callAIProxy({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: this.systemPrompt },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 1000,
       });
 
-      if (!response.ok) throw new Error("API error");
-      const data = await response.json();
       return (
         data.choices[0]?.message?.content ||
         "Unable to generate trip plan at this time."

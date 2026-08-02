@@ -29,6 +29,11 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // This screen is a modal over the root stack, so the parent navigator is what
+  // holds it. Nothing here changes route on success; closing reveals the app
+  // underneath, already re-rendered against the new auth state.
+  const dismiss = () => navigation.getParent()?.goBack();
+
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert("Error", "Please enter both email and password");
@@ -38,6 +43,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await signIn(email, password);
+      dismiss();
     } catch (error: any) {
       Alert.alert("Login Failed", error.message);
     } finally {
@@ -55,6 +61,15 @@ export default function LoginScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <Pressable
+        onPress={dismiss}
+        style={[styles.closeButton, { top: insets.top + Spacing.sm }]}
+        hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel="Close sign in"
+      >
+        <Feather name="x" size={24} color={theme.tabIconDefault} />
+      </Pressable>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -233,6 +248,11 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  closeButton: {
+    position: "absolute",
+    left: Spacing.lg,
+    zIndex: 1,
   },
   keyboardView: {
     flex: 1,

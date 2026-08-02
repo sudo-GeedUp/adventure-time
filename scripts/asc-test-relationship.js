@@ -1,9 +1,7 @@
 const fs = require("fs");
 const crypto = require("crypto");
 
-const ISSUER_ID = "46781a73-a825-49fa-a503-82d6dabe8b5a";
-const KEY_ID = "ZSQK8UYFZ9";
-const PRIVATE_KEY_PATH = "./AuthKey_Cancel.p8";
+const { ISSUER_ID, KEY_ID, PRIVATE_KEY_PATH } = require("./asc-config");
 const SUBMISSION_ID = "9836d964-e5d6-467b-9907-229a510ecf84";
 const MONTHLY_IAP_ID = "193a8513-ace3-48df-a911-111217ae75a0";
 const BASE_URL = "https://api.appstoreconnect.apple.com/v1";

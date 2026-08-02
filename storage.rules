@@ -4,30 +4,51 @@ rules_version = '2';
 // This file is the source of truth for Firebase Storage rules.
 service firebase.storage {
   match /b/{bucket}/o {
+    // Deletes carry no resource payload, so size/type checks only apply to uploads.
+    function isImageUnder(maxBytes) {
+      return request.resource == null
+             || (request.resource.contentType.matches('image/.*')
+                 && request.resource.size <= maxBytes);
+    }
+
+    // Anonymous sign-in exists only so the AI proxy has a token to verify (see
+    // worker/README.md). There is no account behind an anonymous session, so
+    // `request.auth != null` on its own would grant every device that opens the app.
+    function isSignedIn() {
+      return request.auth != null
+             && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
     // Stuck of the Week submissions are community-visible.
     match /scan-submissions/{userId}/{allPaths=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                    && request.auth.uid == userId;
+      allow read: if isSignedIn();
+      allow write: if isSignedIn()
+                    && request.auth.uid == userId
+                    && isImageUnder(10 * 1024 * 1024);
     }
 
     // Profile photos are keyed by Firebase user ID.
     match /profiles/{userId}/{allPaths=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                    && request.auth.uid == userId;
+      allow read: if isSignedIn();
+      allow write: if isSignedIn()
+                    && request.auth.uid == userId
+                    && isImageUnder(5 * 1024 * 1024);
     }
 
     // These paths contain an adventure ID rather than an owner UID, so
     // authenticated writes are the narrowest rule the current data model supports.
+    // Any signed-in user can therefore overwrite another user's adventure image;
+    // re-keying these paths by owner UID is the real fix.
     match /adventures/{adventureId}/{allPaths=**} {
-      allow read, write: if request.auth != null;
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isImageUnder(10 * 1024 * 1024);
     }
 
     // These paths contain an event ID rather than an owner UID, so
     // authenticated writes are the narrowest rule the current data model supports.
     match /trail-events/{eventId}/{allPaths=**} {
-      allow read, write: if request.auth != null;
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isImageUnder(10 * 1024 * 1024);
     }
   }
 }

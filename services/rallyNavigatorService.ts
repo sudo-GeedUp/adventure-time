@@ -103,9 +103,11 @@ class RallyNavigatorService {
       return [];
     }
 
-    console.log(
-      `[Rally Navigator] Speed: ${currentSpeed.toFixed(1)} MPH, Heading: ${currentHeading}°, Altitude: ${currentAltitude.toFixed(0)} ft`,
-    );
+    if (__DEV__) {
+      console.log(
+        `[Rally Navigator] Speed: ${currentSpeed.toFixed(1)} MPH, Heading: ${currentHeading}°, Altitude: ${currentAltitude.toFixed(0)} ft`,
+      );
+    }
 
     // Check for speed advisories (lower threshold for off-road)
     if (currentSpeed > 30) {
@@ -201,7 +203,9 @@ class RallyNavigatorService {
       volume: 1.0,
     });
 
-    console.log("[Rally Navigator Audio] Speaking:", cleanMessage);
+    if (__DEV__) {
+      console.log("[Rally Navigator Audio] Speaking:", cleanMessage);
+    }
   }
 
   /**

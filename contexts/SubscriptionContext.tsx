@@ -59,9 +59,11 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
     const requestGeneration = ++generationRef.current;
 
     if (Platform.OS === "web") {
-      // Web users get free access (no IAP on web)
+      // No IAP on web, so there is no entitlement to read. Premium stays off:
+      // granting it here only unlocks the UI, and the AI proxy checks RevenueCat
+      // itself and would reject the request anyway (see worker/README.md).
       if (mountedRef.current && requestGeneration === generationRef.current) {
-        setIsPremium(true);
+        setIsPremium(false);
       }
       return;
     }
@@ -88,9 +90,9 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
     const initSubscriptions = async () => {
       try {
         if (Platform.OS === "web") {
-          // Web platform - no RevenueCat, grant free access
+          // No RevenueCat on web; see refreshStatus for why premium stays off.
           if (mountedRef.current) {
-            setIsPremium(true);
+            setIsPremium(false);
             setIsLoading(false);
           }
           return;
@@ -169,16 +171,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({
   const updatePremiumFromCustomerInfo = useCallback(
     (info: CustomerInfo | null): boolean => {
       generationRef.current += 1;
-      const activeEntitlements = Object.keys(info?.entitlements?.active ?? {});
       const hasPremium = !!info?.entitlements.active[ENTITLEMENT_IDS.PREMIUM];
-      console.warn(
-        "[SubscriptionContext] active entitlements:",
-        activeEntitlements,
-        "expected premium key:",
-        ENTITLEMENT_IDS.PREMIUM,
-        "hasPremium:",
-        hasPremium,
-      );
       if (mountedRef.current) {
         setIsPremium(hasPremium);
         setCustomerInfo(info);

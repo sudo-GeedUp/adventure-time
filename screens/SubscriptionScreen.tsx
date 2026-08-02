@@ -288,9 +288,10 @@ export default function SubscriptionScreen() {
       }
     } catch (error: any) {
       if (!error.userCancelled) {
+        console.error("Purchase failed:", error);
         Alert.alert(
           "Purchase Failed",
-          error.message || "Unable to complete purchase. Please try again.",
+          "We couldn't complete your purchase. You have not been charged. Please try again later.",
         );
       }
     } finally {

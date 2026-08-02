@@ -10,20 +10,24 @@ import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { storage } from "@/utils/storage";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { hapticFeedback } from "@/utils/haptics";
-import { isFirebaseAvailable, ScanSubmissionsService } from "@/utils/firebase";
+import { hasAccountAccess, ScanSubmissionsService } from "@/utils/firebase";
 import { analyticsService } from "@/services/analyticsService";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function AIScanScreen() {
   const navigation = useNavigation<any>();
   const { theme } = useTheme();
   const { isPremium } = useSubscription();
+  // Not the gate itself (hasAccountAccess is), but the trigger: the effects
+  // below re-subscribe when this flips, so signing in fills the screen
+  // without needing a restart.
+  const { isAuthenticated } = useAuth();
   const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [stuckOfTheWeek, setStuckOfTheWeek] = useState<any>(null);
   const [stuckOfTheWeekImageUri, setStuckOfTheWeekImageUri] = useState<
     string | undefined
   >();
   const [scanSubmissions, setScanSubmissions] = useState<any[]>([]);
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
 
   useEffect(() => {
     loadScanHistory();
@@ -35,7 +39,7 @@ export default function AIScanScreen() {
         const localScans = await storage.getCommunityScanSubmissions();
         setScanSubmissions(localScans || []);
 
-        if (isFirebaseAvailable()) {
+        if (hasAccountAccess()) {
           unsubscribe = ScanSubmissionsService.subscribeToScanSubmissions(
             (firebaseScans) => {
               setScanSubmissions((prev) => {
@@ -63,7 +67,7 @@ export default function AIScanScreen() {
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!scanSubmissions || scanSubmissions.length === 0) {
@@ -104,24 +108,6 @@ export default function AIScanScreen() {
   const loadScanHistory = async () => {
     const history = await storage.getScanHistory();
     setScanHistory(history);
-  };
-
-  const analyzeImage = async (imageUri: string) => {
-    // Mock analysis for development
-    return {
-      situationType: "Rock Crawl",
-      severity: "Moderate",
-      vehiclePosition: "High-centered on rocks",
-      recommendations: [
-        "Use rock sliders for protection",
-        "Air down tires for better traction",
-        "Use a spotter for guidance",
-        "Consider winching if stuck",
-      ],
-      safetyNotes: "Ensure vehicle is stable before attempting recovery",
-      estimatedRecoveryTime: "30-45 minutes",
-      requiredEquipment: ["Traction boards", "Winch", "Tow straps"],
-    };
   };
 
   const requestCameraPermission = async () => {
@@ -170,30 +156,9 @@ export default function AIScanScreen() {
       if (!result.canceled && result.assets[0]) {
         hapticFeedback.success();
         analyticsService.logAIScanUsage("camera", isPremium);
-        try {
-          const analysis = await analyzeImage(result.assets[0].uri);
-          setAnalysisResult(analysis);
-        } catch (error) {
-          console.warn("AI analysis not available in development mode:", error);
-          setAnalysisResult({
-            situationType: "Rock Crawl",
-            severity: "Moderate",
-            vehiclePosition: "High-centered on rocks",
-            recommendations: [
-              "Use rock sliders for protection",
-              "Air down tires for better traction",
-              "Use a spotter for guidance",
-              "Consider winching if stuck",
-            ],
-            safetyNotes: "Ensure vehicle is stable before attempting recovery",
-            estimatedRecoveryTime: "30-45 minutes",
-            requiredEquipment: ["Traction boards", "Winch", "Tow straps"],
-          });
-        }
         navigation.navigate("AIResults", {
           imageUri: result.assets[0].uri,
           imageBase64: result.assets[0].base64 || undefined,
-          analysisResult,
         });
       }
     } catch (error) {
