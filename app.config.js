@@ -5,7 +5,7 @@ export default {
     owner: "sinjingallegos",
     icon: "./assets/images/icon.png",
     reactCompiler: false,
-    version: "2.1.1",
+    version: "3.0.0",
 
     runtimeVersion: {
       policy: "sdkVersion",
